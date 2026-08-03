@@ -7,6 +7,31 @@ function stamp(){return new Date().toISOString()}
 function today(){return new Date().toISOString().slice(0,10)}
 function niceDate(d=new Date()){return new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long'}).format(d)}
 
+const cleaningTasks={
+  'Kök':['Plocka undan','Torka av bänkar','Rengöra diskbänk','Rengöra spis','Torka köksluckor','Rengöra kylskåp invändigt','Rensa kylskåp','Rengöra mikrovågsugn','Torka av vitvaror','Damma','Dammsuga','Torka golv','Tvätta fönster','Torka fönsterbrädor','Rensa en låda','Rensa ett skåp'],
+  'Vardagsrum':['Plocka undan','Damma','Damma lampor','Torka av bord','Torka fönsterbrädor','Dammsuga soffa','Dammsuga golv','Torka golv','Tvätta fönster','Putsa speglar','Vattna blommor','Rensa en hylla','Torka lister'],
+  'Gillestuga':['Plocka undan','Damma','Damma lampor','Torka av bord','Dammsuga möbler','Dammsuga golv','Torka golv','Tvätta fönster','Torka fönsterbrädor','Rensa en hylla','Torka lister'],
+  'Sovrum':['Bädda rent','Byta sängkläder','Vädra täcken och kuddar','Damma','Damma lampor','Torka nattduksbord','Torka fönsterbrädor','Dammsuga','Torka golv','Tvätta fönster','Rensa garderob','Rensa en låda','Torka lister'],
+  'Toalett':['Rengöra toalett','Rengöra handfat','Putsa spegel','Torka kranar','Torka av skåp','Damma','Dammsuga','Torka golv','Torka lister','Fylla på toalettpapper'],
+  'Badrum/dusch':['Rengöra dusch','Rengöra badkar','Rengöra handfat','Rengöra toalett','Putsa spegel','Torka kranar','Rengöra golvbrunn','Torka av skåp','Damma','Dammsuga','Torka golv','Tvätta duschväggar'],
+  'Tvättstuga':['Plocka undan','Torka av tvättmaskin','Torka av torktumlare','Rengöra tvättmedelsfack','Rensa filter','Torka av bänkar','Damma','Dammsuga','Torka golv','Rensa en hylla','Sortera tvätt'],
+  'Torkrum':['Plocka undan','Torka av ytor','Damma','Dammsuga','Torka golv','Rensa och sortera'],
+  'Källare':['Plocka undan','Damma','Dammsuga','Torka golv','Rensa en hylla','Sortera saker','Torka lister','Tvätta fönster'],
+  'Hall':['Plocka undan','Sortera skor','Torka av skohylla','Damma','Putsa spegel','Dammsuga','Torka golv','Torka lister','Tvätta fönster','Rensa jackor och ytterkläder'],
+  'Trappa':['Plocka undan','Damma räcke','Torka räcke','Dammsuga trappa','Torka trappsteg','Torka lister'],
+  'Annat':['Plocka undan','Damma','Dammsuga','Torka golv','Tvätta fönster','Putsa spegel','Rensa och sortera']
+};
+
+const cleaningRoom=document.querySelector('#cleaningRoom');
+const cleaningTask=document.querySelector('#cleaningTask');
+function updateCleaningTasks(){
+  if(!cleaningRoom||!cleaningTask)return;
+  const tasks=cleaningTasks[cleaningRoom.value]||[];
+  cleaningTask.innerHTML='<option value="">Välj göromål</option>'+tasks.map(task=>`<option>${task}</option>`).join('');
+  cleaningTask.disabled=tasks.length===0;
+}
+if(cleaningRoom) cleaningRoom.addEventListener('change',updateCleaningTasks);
+
 document.querySelector('#todayLabel').textContent=niceDate();
 document.querySelector('#todayButton').addEventListener('click',()=>show('overview'));
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
@@ -23,6 +48,7 @@ document.querySelectorAll('.record-form').forEach(form=>form.addEventListener('s
   data[type].unshift({...values,createdAt:stamp()});
   form.reset();
   if(type==='calendar') form.elements.date.value=today();
+  if(type==='cleaning') updateCleaningTasks();
   save();
 }));
 
