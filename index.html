@@ -104,7 +104,7 @@
       <h2>Städa i fyrkanter</h2>
       <form class="panel record-form" data-type="cleaning">
         <label>Rum
-          <select name="room" required>
+          <select name="room" id="cleaningRoom" required>
             <option value="">Välj rum</option>
             <option>Kök</option>
             <option>Vardagsrum</option>
@@ -120,7 +120,11 @@
             <option>Annat</option>
           </select>
         </label>
-        <label>Dagens fyrkant<input name="task" required placeholder="Till exempel diskbänk och spis"></label>
+        <label>Göromål
+          <select name="task" id="cleaningTask" required disabled>
+            <option value="">Välj rum först</option>
+          </select>
+        </label>
         <label>Ungefärlig tid i minuter<input name="minutes" type="number" min="1" step="1"></label>
         <button type="submit">Spara fyrkant</button>
       </form>
