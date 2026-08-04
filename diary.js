@@ -118,6 +118,31 @@
     }, 0);
   }, true);
 
+  window.deleteMeal = index => {
+    const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
+    const meal = meals[index];
+    if (!meal) return;
+    if (!confirm(`Ta bort ${meal.meal.toLowerCase()} – ${meal.food}?`)) return;
+    meals.splice(index, 1);
+    localStorage.setItem('malix-meals', JSON.stringify(meals));
+    window.renderMeals();
+  };
+
+  window.renderMeals = () => {
+    const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
+    const history = document.querySelector('#mealHistory');
+    if (!history) return;
+    history.innerHTML = meals.length
+      ? meals.slice(0, 10).map((meal, index) => `<article class="recipe-card">
+          <h3>${meal.meal}</h3>
+          <p>${meal.food}</p>
+          <small>${meal.portion || ''} ${meal.taste || ''} ${meal.satiety || ''}</small>
+          <div style="margin-top:12px"><button type="button" class="secondary" onclick="deleteMeal(${index})">Ta bort måltiden</button></div>
+        </article>`).join('')
+      : '<div class="empty">Du har inte sparat någon måltid ännu.</div>';
+  };
+
   renderGroups();
   renderSelected();
+  window.renderMeals();
 })();
