@@ -19,16 +19,36 @@
   function countMealsWith(words, meals) { return meals.filter(meal => words.some(word => (meal.food || '').toLowerCase().includes(word))).length; }
   function uniquePlants(meals) { const text = meals.map(m => m.food || '').join(' ').toLowerCase(); return [...new Set(plantWords.filter(word => text.includes(word)))]; }
 
+  function openMealLog(type) {
+    if (isLocked()) return;
+    window.malixSelectedDateKey = todayKey();
+    if (typeof show === 'function') show('foodLog');
+    else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'foodLog'));
+    requestAnimationFrame(() => {
+      const select = document.querySelector('#mealForm select[name="meal"]');
+      if (select) {
+        select.value = type;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        select.focus();
+      }
+      document.dispatchEvent(new CustomEvent('malix-log-date-changed', { detail: { key: todayKey() } }));
+    });
+  }
+
   function renderMealStatus(meals) {
     const target = document.querySelector('#mealStatus'); if (!target) return;
     const types = ['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
-    target.innerHTML = types.map(type => { const done = meals.some(m => m.meal === type); return `<div class="meal-status ${done ? 'done' : ''}"><span>${done ? '✓' : '○'}</span><strong>${type}</strong></div>`; }).join('');
+    target.innerHTML = types.map(type => {
+      const done = meals.some(m => m.meal === type);
+      return `<button type="button" class="meal-status ${done ? 'done' : ''}" data-meal-shortcut="${type}" ${isLocked() ? 'disabled' : ''} aria-label="${done ? 'Visa och lägg till mer till' : 'Logga'} ${type.toLowerCase()}"><span>${done ? '✓' : '○'}</span><strong>${type}</strong></button>`;
+    }).join('');
+    target.querySelectorAll('[data-meal-shortcut]').forEach(button => button.addEventListener('click', () => openMealLog(button.dataset.mealShortcut)));
   }
 
   function renderLockState() {
     const locked = isLocked(), button = document.querySelector('#dayLockButton'), status = document.querySelector('#dayLockStatus');
     if (button) { button.textContent = locked ? '🔒 Dagen är låst' : '🔒 Lås dagen'; button.disabled = locked; }
-    if (status) status.textContent = locked ? 'Dagen är avslutad och låst.' : 'Lås dagen först när du är säker på att du är färdig.';
+    if (status) status.textContent = locked ? 'Dagen är avslutad och låst.' : 'Tryck på Frukost, Lunch, Middag, Mellanmål eller Kvällsmål för att logga mat. Lås dagen först när du är säker på att du är färdig.';
   }
 
   function renderSummary() {
@@ -43,7 +63,7 @@
     set('#vitaminSummary', plants.length >= 5 ? 'Flera olika växtkällor – exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in' : 'Exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in');
     const note = document.querySelector('#dailyFoodNote');
     if (note) {
-      if (!meals.length) note.textContent = 'Börja med att logga en måltid. Översikten fylls på under dagen.';
+      if (!meals.length) note.textContent = 'Börja med att trycka på en måltid ovan. Översikten fylls på under dagen.';
       else if (plants.length >= 5 && proteinMeals >= 2) note.textContent = 'Dagens logg visar både flera växter och flera måltider med proteinkälla. Detta är en första översikt – inte ett betyg.';
       else note.textContent = 'Det här är en preliminär översikt byggd från orden i din matlogg. Exakta gram, kalorier och vitaminer kommer när livsmedelsdatabasen är kopplad.';
     }
