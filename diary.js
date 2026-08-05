@@ -9,42 +9,43 @@
   const isLocked = key => localStorage.getItem(`malix-day-finalized-${key}`) === 'true';
 
   const commonVegetables = ['Tomat','Gurka','Gul lök','Rödlök','Vitlök','Purjolök','Sallad','Paprika','Morot','Broccoli','Blomkål','Vitkål','Rödkål','Spetskål','Spenat','Ärtor','Majs','Zucchini','Aubergine','Champinjoner','Selleri','Sockerärtor','Haricots verts','Rödbetor','Avokado','Wokgrönsaker'];
-
   const catalog = {
     Frukost: {
-      'Bröd & gryn': ['Brödskiva', 'Knäckebröd', 'Rostat bröd', 'Müsli', 'Havregrynsgröt', 'Overnight oats'],
-      'Mejeri': ['Mjölk', 'Filmjölk', 'Yoghurt', 'Kvarg', 'Turkisk yoghurt'],
-      'Pålägg': ['Ostskiva', 'Ägg', 'Skinka', 'Kalkon', 'Brieost', 'Färskost'],
+      'Bröd & gryn': ['Brödskiva','Knäckebröd','Rostat bröd','Müsli','Havregrynsgröt','Overnight oats'],
+      'Mejeri': ['Mjölk','Filmjölk','Yoghurt','Kvarg','Turkisk yoghurt'],
+      'Pålägg': ['Ostskiva','Ägg','Skinka','Kalkon','Brieost','Färskost'],
       'Frukt & grönt': ['Banan','Äpple','Päron','Apelsin','Bär','Tomat','Gurka','Paprika','Sallad','Avokado','Rödlök'],
-      'Dryck': ['Kaffe', 'Te', 'Vatten', 'Juice']
+      'Dryck': ['Kaffe','Te','Vatten','Juice']
     },
     Lunch: {
-      'Maträtt': ['Maträtt från receptbanken', 'Soppa', 'Sallad', 'Smörgåsmåltid', 'Gryta'],
-      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser', 'Tofu'],
-      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Bröd', 'Bulgur', 'Couscous'],
+      'Maträtt': ['Maträtt från receptbanken','Soppa','Sallad','Smörgåsmåltid','Gryta'],
+      'Protein': ['Fisk','Kyckling','Kött','Köttfärs','Ägg','Bönor/linser','Tofu'],
+      'Tillbehör': ['Potatis','Ris','Pasta','Bröd','Bulgur','Couscous'],
       'Grönsaker': commonVegetables,
-      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Filmjölkssås', 'Vatten', 'Mjölk']
+      'Sås & dryck': ['Sås','Tzatziki','Fetaostkräm','Filmjölkssås','Vatten','Mjölk']
     },
     Middag: {
-      'Maträtt': ['Maträtt från receptbanken', 'Gryta', 'Soppa', 'Ugnsrätt', 'Pasta', 'Wok'],
-      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser', 'Tofu'],
-      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Rotfrukter', 'Bröd', 'Bulgur', 'Couscous'],
+      'Maträtt': ['Maträtt från receptbanken','Gryta','Soppa','Ugnsrätt','Pasta','Wok'],
+      'Protein': ['Fisk','Kyckling','Kött','Köttfärs','Ägg','Bönor/linser','Tofu'],
+      'Tillbehör': ['Potatis','Ris','Pasta','Rotfrukter','Bröd','Bulgur','Couscous'],
       'Grönsaker': commonVegetables,
-      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Filmjölkssås', 'Vatten', 'Mjölk']
+      'Sås & dryck': ['Sås','Tzatziki','Fetaostkräm','Filmjölkssås','Vatten','Mjölk']
     },
     Mellanmål: {
-      'Snabbt': ['Frukt', 'Yoghurt', 'Kvarg', 'Smörgås', 'Ägg', 'Smoothie'],
-      'Till': ['Müsli', 'Bär', 'Ostskiva', 'Tomat', 'Gurka', 'Paprika', 'Morot'],
-      'Dryck': ['Kaffe', 'Te', 'Vatten', 'Mjölk']
+      'Snabbt': ['Frukt','Yoghurt','Kvarg','Smörgås','Ägg','Smoothie'],
+      'Till': ['Müsli','Bär','Ostskiva','Tomat','Gurka','Paprika','Morot'],
+      'Dryck': ['Kaffe','Te','Vatten','Mjölk']
     },
     Kvällsmål: {
-      'Mat': ['Smörgås', 'Knäckebröd', 'Yoghurt', 'Filmjölk', 'Kvarg', 'Ägg', 'Gröt'],
-      'Till': ['Ostskiva', 'Frukt', 'Bär', 'Tomat', 'Gurka', 'Paprika', 'Avokado', 'Rödlök'],
-      'Dryck': ['Te', 'Vatten', 'Mjölk']
+      'Mat': ['Smörgås','Knäckebröd','Yoghurt','Filmjölk','Kvarg','Ägg','Gröt'],
+      'Till': ['Ostskiva','Frukt','Bär','Tomat','Gurka','Paprika','Avokado','Rödlök'],
+      'Dryck': ['Te','Vatten','Mjölk']
     }
   };
 
   const selected = [];
+  let editingStorageIndex = null;
+  const submitButton = form.querySelector('button[type="submit"]');
   const firstLabel = form.querySelector('label');
   const topDate = document.createElement('div');
   topDate.id = 'activeLogDateTop';
@@ -54,7 +55,7 @@
   const textareaLabel = form.querySelector('textarea[name="food"]').closest('label');
   const picker = document.createElement('section');
   picker.className = 'meal-picker';
-  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Valda knappar markeras tydligt. Tryck på <strong>Maträtt från receptbanken</strong> för att öppna recepten.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
+  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på det som ingick i måltiden. När du redigerar en sparad frukost, lunch eller middag visas samma val igen så att du kan lägga till det du glömde.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div><p id="editMealNotice" class="status"></p>`;
   form.insertBefore(picker, textareaLabel);
   textareaLabel.querySelector('textarea').required = false;
   textareaLabel.querySelector('textarea').placeholder = 'Skriv här om något saknas i listan';
@@ -63,6 +64,7 @@
   const mealSelect = form.querySelector('select[name="meal"]');
   const groupsEl = picker.querySelector('#foodGroups');
   const selectedEl = picker.querySelector('#selectedFoods');
+  const editNotice = picker.querySelector('#editMealNotice');
 
   function activeDateLabel() {
     const d = new Date(`${activeKey()}T12:00:00`);
@@ -71,9 +73,7 @@
 
   function renderActiveDate() {
     const key = activeKey();
-    topDate.innerHTML = isLocked(key)
-      ? `<strong>🔒 ${activeDateLabel()}</strong><span>Dagen är låst.</span>`
-      : `<strong>📅 ${activeDateLabel()}</strong><span>Det är den här dagen du loggar på.</span>`;
+    topDate.innerHTML = isLocked(key) ? `<strong>🔒 ${activeDateLabel()}</strong><span>Dagen är låst.</span>` : `<strong>📅 ${activeDateLabel()}</strong><span>Det är den här dagen du loggar på.</span>`;
     [...form.elements].forEach(el => { el.disabled = isLocked(key); });
   }
 
@@ -112,13 +112,47 @@
     if (/mjölk|fil|yoghurt|kvarg/i.test(food)) return '2 dl';
     if (/müsli|gröt|oats/i.test(food)) return '1 dl';
     if (/frukt|banan|äpple|päron|apelsin|ägg/i.test(food)) return '1 st';
-    if (/tomat|gurka|paprika|lök|morot|broccoli|blomkål|kål|spenat|zucchini|aubergine|champinjon|selleri|ärtor|majs|rödbet|avokado/i.test(food)) return '1 portion';
     return '1 portion';
   }
 
   function renderSelected() {
-    selectedEl.innerHTML = selected.length ? selected.map((item, index) => `<button type="button" data-remove="${index}" class="active">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
-    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { selected.splice(Number(button.dataset.remove), 1); renderSelected(); renderGroups(); }));
+    selectedEl.innerHTML = selected.length ? selected.map((item,index) => `<button type="button" data-remove="${index}" class="active">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
+    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { selected.splice(Number(button.dataset.remove),1); renderSelected(); renderGroups(); }));
+  }
+
+  function knownFoodsForMeal(type) {
+    return Object.values(catalog[type] || {}).flat().filter(x => x !== 'Maträtt från receptbanken');
+  }
+
+  function loadMealIntoPicker(meal) {
+    selected.length = 0;
+    mealSelect.value = meal.meal || 'Middag';
+    const textarea = form.querySelector('textarea[name="food"]');
+    textarea.value = '';
+    const parts = String(meal.food || '').split(/,\s*/).filter(Boolean);
+    const known = knownFoodsForMeal(mealSelect.value);
+    const unknown = [];
+    parts.forEach(part => {
+      const match = part.match(/^(.*?)\s*\((.*?)\)$/);
+      const food = (match ? match[1] : part).trim();
+      const quantity = match ? match[2].trim() : '';
+      if (known.includes(food) || (meal.recipeId && part === meal.food)) selected.push({food, quantity: quantity || meal.portion || '1 portion'});
+      else unknown.push(part);
+    });
+    if (!selected.length && meal.food) {
+      if (meal.recipeId) selected.push({food: meal.food, quantity: meal.portion || '1 portion'});
+      else textarea.value = unknown.join(', ');
+    } else textarea.value = unknown.join(', ');
+    form.querySelector('input[name="portion"]').value = meal.portion || '';
+    form.querySelector('select[name="taste"]').value = meal.taste || '';
+    form.querySelector('select[name="satiety"]').value = meal.satiety || '';
+    renderGroups(); renderSelected(); renderActiveDate();
+  }
+
+  function stopEditing() {
+    editingStorageIndex = null;
+    if (submitButton) submitButton.textContent = 'Spara måltid';
+    editNotice.textContent = '';
   }
 
   window.malixAddRecipeToMealLog = recipeName => {
@@ -129,27 +163,39 @@
     renderSelected(); renderGroups(); renderActiveDate();
     window.malixRecipeReturnToFoodLog = false;
     if (typeof show === 'function') show('foodLog');
-    else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'foodLog'));
   };
 
-  mealSelect.addEventListener('change', () => { selected.length = 0; renderGroups(); renderSelected(); });
+  mealSelect.addEventListener('change', () => {
+    if (editingStorageIndex !== null) return;
+    selected.length = 0; renderGroups(); renderSelected();
+  });
 
   form.addEventListener('submit', event => {
     event.preventDefault(); event.stopImmediatePropagation();
     const key = activeKey();
-    if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras. Välj en öppen dag i kalendern.'); return; }
+    if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras.'); return; }
     const textarea = form.querySelector('textarea[name="food"]');
     const ownText = textarea.value.trim();
     const pickedText = selected.map(item => `${item.food} (${item.quantity})`).join(', ');
-    textarea.value = [pickedText, ownText].filter(Boolean).join(', ');
-    if (!textarea.value) { alert('Välj minst ett livsmedel eller skriv vad du åt.'); return; }
+    const foodText = [pickedText, ownText].filter(Boolean).join(', ');
+    if (!foodText) { alert('Välj minst ett livsmedel eller skriv vad du åt.'); return; }
     const values = Object.fromEntries(new FormData(form).entries());
+    values.food = foodText;
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
-    const date = new Date(`${key}T12:00:00`);
-    meals.unshift({...values,date:date.toISOString()});
-    localStorage.setItem('malix-meals', JSON.stringify(meals.slice(0,500)));
-    form.reset(); selected.length = 0; renderSelected(); renderGroups(); renderActiveDate(); window.renderMeals();
-    const saved = document.querySelector('#mealSaved'); if (saved) saved.textContent = `Måltiden är sparad på ${activeDateLabel()} ✓`;
+
+    if (editingStorageIndex !== null && meals[editingStorageIndex]) {
+      const original = meals[editingStorageIndex];
+      meals[editingStorageIndex] = {...original, ...values, date: original.date};
+      localStorage.setItem('malix-meals', JSON.stringify(meals));
+      const saved = document.querySelector('#mealSaved'); if (saved) saved.textContent = `${values.meal} är uppdaterad ✓`;
+    } else {
+      const date = new Date(`${key}T12:00:00`);
+      meals.unshift({...values,date:date.toISOString()});
+      localStorage.setItem('malix-meals', JSON.stringify(meals.slice(0,500)));
+      const saved = document.querySelector('#mealSaved'); if (saved) saved.textContent = `Måltiden är sparad på ${activeDateLabel()} ✓`;
+    }
+
+    form.reset(); selected.length = 0; stopEditing(); renderSelected(); renderGroups(); renderActiveDate(); window.renderMeals();
     document.dispatchEvent(new CustomEvent('malix-day-changed'));
   }, true);
 
@@ -159,16 +205,12 @@
     if (!meal) return;
     const key = mealDateKey(meal);
     if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras.'); return; }
-    const food = prompt('Ändra eller lägg till det du åt:', meal.food || '');
-    if (food === null) return;
-    const portion = prompt('Ändra mängd / portion om du vill:', meal.portion || '');
-    if (portion === null) return;
-    meal.food = food.trim() || meal.food;
-    meal.portion = portion.trim();
-    meals[storageIndex] = meal;
-    localStorage.setItem('malix-meals', JSON.stringify(meals));
-    window.renderMeals();
-    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+    window.malixSelectedDateKey = key;
+    editingStorageIndex = storageIndex;
+    loadMealIntoPicker(meal);
+    if (submitButton) submitButton.textContent = `Spara ändringar i ${meal.meal.toLowerCase()}`;
+    editNotice.textContent = `✏️ Du redigerar ${meal.meal.toLowerCase()}. Lägg till eller ta bort val ovan och spara sedan ändringarna.`;
+    form.scrollIntoView({behavior:'smooth', block:'start'});
   };
 
   window.deleteMeal = storageIndex => {
@@ -177,18 +219,18 @@
     const key = mealDateKey(meal);
     if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras.'); return; }
     if (!confirm(`Ta bort ${meal.meal.toLowerCase()} – ${meal.food}?`)) return;
-    meals.splice(storageIndex, 1); localStorage.setItem('malix-meals', JSON.stringify(meals)); window.renderMeals(); document.dispatchEvent(new CustomEvent('malix-day-changed'));
+    meals.splice(storageIndex,1); localStorage.setItem('malix-meals',JSON.stringify(meals)); stopEditing(); window.renderMeals(); document.dispatchEvent(new CustomEvent('malix-day-changed'));
   };
 
   window.renderMeals = () => {
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
     const history = document.querySelector('#mealHistory'); if (!history) return;
     const key = activeKey();
-    const shown = meals.map((meal, storageIndex) => ({meal, storageIndex})).filter(x => mealDateKey(x.meal) === key);
-    history.innerHTML = shown.length ? shown.map(({meal, storageIndex}) => `<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small>${isLocked(key)?'<div class="badge">🔒 Låst dag</div>':`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" onclick="editMeal(${storageIndex})">✏️ Redigera / lägg till</button><button type="button" class="secondary" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div>`}</article>`).join('') : `<div class="empty">Ingen måltid sparad på ${activeDateLabel()} ännu.</div>`;
+    const shown = meals.map((meal,storageIndex)=>({meal,storageIndex})).filter(x=>mealDateKey(x.meal)===key);
+    history.innerHTML = shown.length ? shown.map(({meal,storageIndex}) => `<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small>${isLocked(key)?'<div class="badge">🔒 Låst dag</div>':`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" onclick="editMeal(${storageIndex})">✏️ Öppna ${meal.meal.toLowerCase()}</button><button type="button" class="secondary" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div>`}</article>`).join('') : `<div class="empty">Ingen måltid sparad på ${activeDateLabel()} ännu.</div>`;
     renderActiveDate();
   };
 
-  document.addEventListener('malix-log-date-changed', () => { selected.length=0; renderSelected(); renderGroups(); window.renderMeals(); renderActiveDate(); });
+  document.addEventListener('malix-log-date-changed', () => { selected.length=0; stopEditing(); renderSelected(); renderGroups(); window.renderMeals(); renderActiveDate(); });
   renderGroups(); renderSelected(); renderActiveDate(); window.renderMeals();
 })();
