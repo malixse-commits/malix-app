@@ -2,35 +2,39 @@
   const form = document.querySelector('#mealForm');
   if (!form) return;
 
+  const localKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const mealDateKey = meal => meal.date ? localKey(new Date(meal.date)) : localKey(new Date());
+  const todayKey = () => localKey(new Date());
+
   const catalog = {
     Frukost: {
-      'Bröd & gryn': ['Brödskiva', 'Knäckebröd', 'Rostat bröd', 'Müsli', 'Havregrynsgröt'],
-      'Mejeri': ['Mjölk', 'Filmjölk', 'Yoghurt', 'Kvarg'],
-      'Pålägg': ['Ostskiva', 'Ägg', 'Skinka', 'Kalkon', 'Brieost'],
-      'Frukt & grönt': ['Banan', 'Äpple', 'Bär', 'Tomat', 'Gurka', 'Sallad'],
+      'Bröd & gryn': ['Brödskiva', 'Knäckebröd', 'Rostat bröd', 'Müsli', 'Havregrynsgröt', 'Overnight oats'],
+      'Mejeri': ['Mjölk', 'Filmjölk', 'Yoghurt', 'Kvarg', 'Turkisk yoghurt'],
+      'Pålägg': ['Ostskiva', 'Ägg', 'Skinka', 'Kalkon', 'Brieost', 'Färskost'],
+      'Frukt & grönt': ['Banan', 'Äpple', 'Bär', 'Tomat', 'Gurka', 'Sallad', 'Paprika'],
       'Dryck': ['Kaffe', 'Te', 'Vatten', 'Juice']
     },
     Lunch: {
-      'Maträtt': ['Maträtt från receptbanken', 'Soppa', 'Sallad', 'Smörgåsmåltid'],
-      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser'],
-      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Bröd'],
-      'Grönsaker': ['Sallad', 'Morot', 'Ärtor', 'Majs', 'Paprika', 'Wokgrönsaker'],
-      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Vatten', 'Mjölk']
+      'Maträtt': ['Maträtt från receptbanken', 'Soppa', 'Sallad', 'Smörgåsmåltid', 'Gryta'],
+      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser', 'Tofu'],
+      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Bröd', 'Bulgur', 'Couscous'],
+      'Grönsaker': ['Sallad', 'Morot', 'Ärtor', 'Majs', 'Paprika', 'Broccoli', 'Kål', 'Wokgrönsaker'],
+      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Filmjölkssås', 'Vatten', 'Mjölk']
     },
     Middag: {
-      'Maträtt': ['Maträtt från receptbanken', 'Gryta', 'Soppa', 'Ugnsrätt'],
-      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser'],
-      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Rotfrukter', 'Bröd'],
-      'Grönsaker': ['Sallad', 'Morot', 'Ärtor', 'Majs', 'Paprika', 'Kål', 'Wokgrönsaker'],
-      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Vatten', 'Mjölk']
+      'Maträtt': ['Maträtt från receptbanken', 'Gryta', 'Soppa', 'Ugnsrätt', 'Pasta', 'Wok'],
+      'Protein': ['Fisk', 'Kyckling', 'Kött', 'Köttfärs', 'Ägg', 'Bönor/linser', 'Tofu'],
+      'Tillbehör': ['Potatis', 'Ris', 'Pasta', 'Rotfrukter', 'Bröd', 'Bulgur', 'Couscous'],
+      'Grönsaker': ['Sallad', 'Morot', 'Ärtor', 'Majs', 'Paprika', 'Kål', 'Broccoli', 'Wokgrönsaker'],
+      'Sås & dryck': ['Sås', 'Tzatziki', 'Fetaostkräm', 'Filmjölkssås', 'Vatten', 'Mjölk']
     },
     Mellanmål: {
-      'Snabbt': ['Frukt', 'Yoghurt', 'Kvarg', 'Smörgås', 'Ägg'],
+      'Snabbt': ['Frukt', 'Yoghurt', 'Kvarg', 'Smörgås', 'Ägg', 'Smoothie'],
       'Till': ['Müsli', 'Bär', 'Ostskiva', 'Grönsaker'],
       'Dryck': ['Kaffe', 'Te', 'Vatten', 'Mjölk']
     },
     Kvällsmål: {
-      'Mat': ['Smörgås', 'Knäckebröd', 'Yoghurt', 'Filmjölk', 'Kvarg', 'Ägg'],
+      'Mat': ['Smörgås', 'Knäckebröd', 'Yoghurt', 'Filmjölk', 'Kvarg', 'Ägg', 'Gröt'],
       'Till': ['Ostskiva', 'Frukt', 'Bär', 'Tomat', 'Gurka'],
       'Dryck': ['Te', 'Vatten', 'Mjölk']
     }
@@ -40,14 +44,7 @@
   const textareaLabel = form.querySelector('textarea[name="food"]').closest('label');
   const picker = document.createElement('section');
   picker.className = 'meal-picker';
-  picker.innerHTML = `
-    <h3>Välj det som ingick</h3>
-    <p class="note">Tryck på ett livsmedel och välj mängd. Du kan också skriva något eget längre ner.</p>
-    <div id="foodGroups"></div>
-    <div class="panel calm" style="margin:12px 0">
-      <strong>Din måltid</strong>
-      <div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div>
-    </div>`;
+  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Du kan också skriva något eget längre ner.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
   form.insertBefore(picker, textareaLabel);
   textareaLabel.querySelector('textarea').required = false;
   textareaLabel.querySelector('textarea').placeholder = 'Skriv här om något saknas i listan';
@@ -59,8 +56,7 @@
 
   function renderGroups() {
     groupsEl.innerHTML = '';
-    const groups = catalog[mealSelect.value] || {};
-    Object.entries(groups).forEach(([group, foods]) => {
+    Object.entries(catalog[mealSelect.value] || {}).forEach(([group, foods]) => {
       const block = document.createElement('fieldset');
       block.innerHTML = `<legend>${group}</legend><div class="chips">${foods.map(food => `<button type="button" data-food="${food}">${food}</button>`).join('')}</div>`;
       groupsEl.appendChild(block);
@@ -76,73 +72,48 @@
   }
 
   function defaultAmount(food) {
-    if (/bröd|knäcke/i.test(food)) return '1 skiva';
-    if (/ost/i.test(food)) return '1 skiva';
+    if (/bröd|knäcke|ost/i.test(food)) return '1 skiva';
     if (/kaffe|te/i.test(food)) return '1 kopp';
     if (/mjölk|fil|yoghurt|kvarg/i.test(food)) return '2 dl';
-    if (/müsli|gröt/i.test(food)) return '1 dl';
+    if (/müsli|gröt|oats/i.test(food)) return '1 dl';
     if (/frukt|banan|äpple|ägg/i.test(food)) return '1 st';
     return '1 portion';
   }
 
   function renderSelected() {
-    selectedEl.innerHTML = selected.length
-      ? selected.map((item, index) => `<button type="button" data-remove="${index}">${item.food}: ${item.quantity} ×</button>`).join('')
-      : '<span class="note">Inget valt ännu.</span>';
-    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => {
-      selected.splice(Number(button.dataset.remove), 1);
-      renderSelected();
-    }));
+    selectedEl.innerHTML = selected.length ? selected.map((item, index) => `<button type="button" data-remove="${index}">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
+    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { selected.splice(Number(button.dataset.remove), 1); renderSelected(); }));
   }
 
-  mealSelect.addEventListener('change', () => {
-    selected.length = 0;
-    renderGroups();
-    renderSelected();
-  });
+  mealSelect.addEventListener('change', () => { selected.length = 0; renderGroups(); renderSelected(); });
 
   form.addEventListener('submit', event => {
     const textarea = form.querySelector('textarea[name="food"]');
     const ownText = textarea.value.trim();
     const pickedText = selected.map(item => `${item.food} (${item.quantity})`).join(', ');
     textarea.value = [pickedText, ownText].filter(Boolean).join(', ');
-    if (!textarea.value) {
-      event.preventDefault();
-      alert('Välj minst ett livsmedel eller skriv vad du åt.');
-      return;
-    }
-    setTimeout(() => {
-      selected.length = 0;
-      renderSelected();
-      renderGroups();
-    }, 0);
+    if (!textarea.value) { event.preventDefault(); alert('Välj minst ett livsmedel eller skriv vad du åt.'); return; }
+    setTimeout(() => { selected.length = 0; renderSelected(); renderGroups(); }, 0);
   }, true);
 
-  window.deleteMeal = index => {
+  window.deleteMeal = storageIndex => {
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
-    const meal = meals[index];
+    const meal = meals[storageIndex];
     if (!meal) return;
     if (!confirm(`Ta bort ${meal.meal.toLowerCase()} – ${meal.food}?`)) return;
-    meals.splice(index, 1);
+    meals.splice(storageIndex, 1);
     localStorage.setItem('malix-meals', JSON.stringify(meals));
     window.renderMeals();
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
   };
 
   window.renderMeals = () => {
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
     const history = document.querySelector('#mealHistory');
     if (!history) return;
-    history.innerHTML = meals.length
-      ? meals.slice(0, 10).map((meal, index) => `<article class="recipe-card">
-          <h3>${meal.meal}</h3>
-          <p>${meal.food}</p>
-          <small>${meal.portion || ''} ${meal.taste || ''} ${meal.satiety || ''}</small>
-          <div style="margin-top:12px"><button type="button" class="secondary" onclick="deleteMeal(${index})">Ta bort måltiden</button></div>
-        </article>`).join('')
-      : '<div class="empty">Du har inte sparat någon måltid ännu.</div>';
+    const todays = meals.map((meal, storageIndex) => ({meal, storageIndex})).filter(x => mealDateKey(x.meal) === todayKey());
+    history.innerHTML = todays.length ? todays.map(({meal, storageIndex}) => `<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small><div style="margin-top:12px"><button type="button" class="secondary" data-delete-meal="${storageIndex}" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div></article>`).join('') : '<div class="empty">Du har inte sparat någon måltid idag ännu.</div>';
   };
 
-  renderGroups();
-  renderSelected();
-  window.renderMeals();
+  renderGroups(); renderSelected(); window.renderMeals();
 })();
