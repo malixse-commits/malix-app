@@ -153,6 +153,24 @@
     document.dispatchEvent(new CustomEvent('malix-day-changed'));
   }, true);
 
+  window.editMeal = storageIndex => {
+    const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
+    const meal = meals[storageIndex];
+    if (!meal) return;
+    const key = mealDateKey(meal);
+    if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras.'); return; }
+    const food = prompt('Ändra eller lägg till det du åt:', meal.food || '');
+    if (food === null) return;
+    const portion = prompt('Ändra mängd / portion om du vill:', meal.portion || '');
+    if (portion === null) return;
+    meal.food = food.trim() || meal.food;
+    meal.portion = portion.trim();
+    meals[storageIndex] = meal;
+    localStorage.setItem('malix-meals', JSON.stringify(meals));
+    window.renderMeals();
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+  };
+
   window.deleteMeal = storageIndex => {
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
     const meal = meals[storageIndex]; if (!meal) return;
@@ -167,7 +185,7 @@
     const history = document.querySelector('#mealHistory'); if (!history) return;
     const key = activeKey();
     const shown = meals.map((meal, storageIndex) => ({meal, storageIndex})).filter(x => mealDateKey(x.meal) === key);
-    history.innerHTML = shown.length ? shown.map(({meal, storageIndex}) => `<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small>${isLocked(key)?'<div class="badge">🔒 Låst dag</div>':`<div style="margin-top:12px"><button type="button" class="secondary" data-delete-meal="${storageIndex}" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div>`}</article>`).join('') : `<div class="empty">Ingen måltid sparad på ${activeDateLabel()} ännu.</div>`;
+    history.innerHTML = shown.length ? shown.map(({meal, storageIndex}) => `<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small>${isLocked(key)?'<div class="badge">🔒 Låst dag</div>':`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" onclick="editMeal(${storageIndex})">✏️ Redigera / lägg till</button><button type="button" class="secondary" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div>`}</article>`).join('') : `<div class="empty">Ingen måltid sparad på ${activeDateLabel()} ännu.</div>`;
     renderActiveDate();
   };
 
