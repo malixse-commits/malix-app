@@ -37,9 +37,16 @@
   }
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
 
-  const loader=document.createElement('script');
-  loader.src='smart-kitchen.js';
-  loader.onload=()=>{
+  function loadScript(src,onload){
+    if(document.querySelector(`script[data-malix-addon="${src}"]`)) return;
+    const script=document.createElement('script');
+    script.src=src;
+    script.dataset.malixAddon=src;
+    if(onload) script.onload=onload;
+    document.body.appendChild(script);
+  }
+
+  loadScript('smart-kitchen.js',()=>{
     function currentRecipe(){
       const heading=document.querySelector('#recipeDetail h2');
       if(!heading||typeof recipes==='undefined') return null;
@@ -73,6 +80,9 @@
     }
     document.addEventListener('click',()=>setTimeout(ensureCookButton,0),true);
     ensureCookButton();
-  };
-  document.body.appendChild(loader);
+  });
+
+  // Dessa funktioner skapades tidigare men måste laddas av sidan för att synas.
+  loadScript('food-preferences.js');
+  loadScript('dashboard-cleanup.js');
 })();
