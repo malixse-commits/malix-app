@@ -102,15 +102,16 @@
   mealSelect.addEventListener('change', () => { selected.length = 0; renderGroups(); renderSelected(); });
 
   form.addEventListener('submit', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
     const key = activeKey();
-    if (isLocked(key)) { event.preventDefault(); alert('Den här dagen är låst. Välj en öppen dag i kalendern.'); return; }
+    if (isLocked(key)) { alert('Den här dagen är låst. Välj en öppen dag i kalendern.'); return; }
     const textarea = form.querySelector('textarea[name="food"]');
     const ownText = textarea.value.trim();
     const pickedText = selected.map(item => `${item.food} (${item.quantity})`).join(', ');
     textarea.value = [pickedText, ownText].filter(Boolean).join(', ');
-    if (!textarea.value) { event.preventDefault(); alert('Välj minst ett livsmedel eller skriv vad du åt.'); return; }
+    if (!textarea.value) { alert('Välj minst ett livsmedel eller skriv vad du åt.'); return; }
 
-    event.preventDefault();
     const values = Object.fromEntries(new FormData(form).entries());
     const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
     const date = new Date(`${key}T12:00:00`);
