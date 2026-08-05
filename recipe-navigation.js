@@ -14,6 +14,32 @@
     return active && active.id && active.id !== 'recipe' ? active.id : 'recipeBank';
   }
 
+  function activeDateKey() {
+    if (window.malixSelectedDateKey) return window.malixSelectedDateKey;
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function addRecipeToDiary(recipe) {
+    const key = activeDateKey();
+    if (localStorage.getItem(`malix-day-finalized-${key}`) === 'true') {
+      alert('Den valda dagen är låst. Välj en öppen dag i Matöversikten först.');
+      return;
+    }
+    const meal = prompt('Vilken måltid ska receptet läggas till på?', 'Middag');
+    if (meal === null) return;
+    const allowed = ['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
+    const normalized = allowed.find(x => x.toLowerCase() === meal.trim().toLowerCase()) || 'Middag';
+    const portion = prompt('Hur mycket åt du?', '1 portion');
+    if (portion === null) return;
+    const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
+    const date = new Date(`${key}T12:00:00`);
+    meals.unshift({meal: normalized, food: recipe.name, portion: portion.trim() || '1 portion', date: date.toISOString(), recipeId: recipe.id});
+    localStorage.setItem('malix-meals', JSON.stringify(meals.slice(0,500)));
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+    alert(`${recipe.name} är tillagd som ${normalized.toLowerCase()} i matdagboken.`);
+  }
+
   function leftoverIdeas(recipe) {
     const text = [recipe.name, ...(recipe.ingredients || []), ...(recipe.tags || [])].join(' ').toLowerCase();
     if (text.includes('köttfärssås') || text.includes('bolognese')) return ['Soppa – låt lite köttfärssås ge smak och fyllighet.', 'Crêpes – fyll pannkakor med köttfärssås, tomat, lök och ost och gratinera med ost ovanpå.', 'Gratäng – använd såsen tillsammans med pasta eller potatis.', 'Varma smörgåsar – lite köttfärssås och ost blir en snabb ny måltid.'];
@@ -29,11 +55,7 @@
   window.openRecipe = id => {
     const recipe = recipeById(id);
     const detail = document.querySelector('#recipeDetail');
-    if (!recipe || !detail) {
-      alert('Receptet kunde inte öppnas.');
-      return;
-    }
-
+    if (!recipe || !detail) { alert('Receptet kunde inte öppnas.'); return; }
     returnView = sourceView();
     const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
     const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
@@ -42,42 +64,25 @@
 
     detail.innerHTML = `
       <article class="recipe-detail">
-        <div class="meta">
-          <span class="badge">${esc(recipe.emoji || '🍽️')}</span>
-          <span class="badge">⏱️ ${esc(recipe.time || '–')} min</span>
-          <span class="badge">${recipe.budget === 'low' ? '💰 Billigt' : recipe.budget === 'mid' ? '💰💰 Mellan' : 'Pris varierar'}</span>
-          ${reuse.length ? '<span class="badge">♻️ Bra att laga extra</span>' : ''}
-        </div>
+        <div class="meta"><span class="badge">${esc(recipe.emoji || '🍽️')}</span><span class="badge">⏱️ ${esc(recipe.time || '–')} min</span><span class="badge">${recipe.budget === 'low' ? '💰 Billigt' : recipe.budget === 'mid' ? '💰💰 Mellan' : 'Pris varierar'}</span>${reuse.length ? '<span class="badge">♻️ Bra att laga extra</span>' : ''}</div>
         <h2>${esc(recipe.name)}</h2>
+        <div style="margin:14px 0"><button type="button" class="primary" id="addRecipeToDiary">📝 Lägg till i matdagboken</button></div>
         ${recipe.tip ? `<p class="note"><strong>Malix tips:</strong> ${esc(recipe.tip)}</p>` : ''}
         ${tags.length ? `<div class="chips">${tags.map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>` : ''}
-        <h3>Ingredienser</h3>
-        <ul class="ingredient-list">${ingredients.map(item => `<li>${esc(item)}</li>`).join('')}</ul>
-        <h3>Gör så här</h3>
-        <ol class="steps">${steps.map(step => `<li>${esc(step)}</li>`).join('')}</ol>
+        <h3>Ingredienser</h3><ul class="ingredient-list">${ingredients.map(item => `<li>${esc(item)}</li>`).join('')}</ul>
+        <h3>Gör så här</h3><ol class="steps">${steps.map(step => `<li>${esc(step)}</li>`).join('')}</ol>
         ${reuse.length ? `<section class="panel" style="margin-top:18px"><h3>♻️ Laga gärna extra – det kan bli något nytt</h3><p>Om du ändå lagar den här rätten kan en extra portion eller en del av tillbehöret göra nästa måltid enklare.</p><ul class="ingredient-list">${reuse.map(item => `<li>${esc(item)}</li>`).join('')}</ul><p class="note"><strong>Tänk på morgondagen:</strong> kyl rester som ska sparas så snart det är praktiskt möjligt och förvara dem kallt.</p></section>` : ''}
-        <section class="panel calm" style="margin-top:18px">
-          <h3>Två sätt att tänka kring måltiden</h3>
-          <p><strong>🍽️ Som vanligt</strong> – laga och servera rätten som den är.</p>
-          <p><strong>🌿 Mer näring & mättnad</strong> – komplettera gärna med en tydlig proteinkälla om den saknas, mer grönsaker eller frukt och en fiberrik del som passar rätten.</p>
-        </section>
+        <section class="panel calm" style="margin-top:18px"><h3>Två sätt att tänka kring måltiden</h3><p><strong>🍽️ Som vanligt</strong> – laga och servera rätten som den är.</p><p><strong>🌿 Mer näring & mättnad</strong> – komplettera gärna med en tydlig proteinkälla om den saknas, mer grönsaker eller frukt och en fiberrik del som passar rätten.</p></section>
       </article>`;
-
+    detail.querySelector('#addRecipeToDiary')?.addEventListener('click', () => addRecipeToDiary(recipe));
     if (typeof show === 'function') show('recipe');
-    else {
-      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'recipe'));
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
+    else { document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'recipe')); window.scrollTo({top:0,behavior:'smooth'}); }
   };
 
   const back = document.querySelector('#recipe .back');
   if (back) {
-    back.removeAttribute('data-open');
-    back.textContent = '← Tillbaka till förslagen';
-    back.addEventListener('click', () => {
-      if (typeof show === 'function') show(returnView);
-      else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === returnView));
-    });
+    back.removeAttribute('data-open'); back.textContent = '← Tillbaka till förslagen';
+    back.addEventListener('click', () => { if (typeof show === 'function') show(returnView); else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === returnView)); });
   }
 
   document.addEventListener('click', event => {
@@ -85,8 +90,6 @@
     if (!button) return;
     const match = button.getAttribute('onclick')?.match(/openRecipe\(['"]([^'"]+)['"]\)/);
     if (!match) return;
-    event.preventDefault();
-    event.stopPropagation();
-    window.openRecipe(match[1]);
+    event.preventDefault(); event.stopPropagation(); window.openRecipe(match[1]);
   }, true);
 })();
