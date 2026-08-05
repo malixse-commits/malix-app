@@ -1,7 +1,7 @@
 (() => {
   const localDateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const todayKey = () => localDateKey();
-  const lockKey = () => `malix-day-locked-${todayKey()}`;
+  const lockKey = () => `malix-day-finalized-${todayKey()}`;
   const getMeals = () => { try { return JSON.parse(localStorage.getItem('malix-meals') || '[]'); } catch { return []; } };
   const mealDateKey = meal => {
     if (!meal.date) return todayKey();
@@ -26,12 +26,9 @@
   }
 
   function renderLockState() {
-    const locked = isLocked(), button = document.querySelector('#dayLockButton'), status = document.querySelector('#dayLockStatus'), form = document.querySelector('#mealForm'), notice = document.querySelector('#foodLogLockNotice');
-    if (button) button.textContent = locked ? '🔓 Lås upp dagen' : '🔒 Lås dagen';
-    if (status) status.textContent = locked ? 'Dagen är låst. Du kan läsa den i kalendern och låsa upp om något behöver rättas.' : 'När du är färdig för dagen kan du låsa den.';
-    if (form) [...form.elements].forEach(el => { el.disabled = locked; });
-    if (notice) notice.hidden = !locked;
-    document.querySelectorAll('[data-delete-meal]').forEach(btn => { btn.disabled = locked; btn.textContent = locked ? 'Dagen är låst' : 'Ta bort måltiden'; });
+    const locked = isLocked(), button = document.querySelector('#dayLockButton'), status = document.querySelector('#dayLockStatus');
+    if (button) { button.textContent = locked ? '🔒 Dagen är låst' : '🔒 Lås dagen'; button.disabled = locked; }
+    if (status) status.textContent = locked ? 'Dagen är avslutad och låst.' : 'Lås dagen först när du är säker på att du är färdig.';
   }
 
   function renderSummary() {
@@ -54,21 +51,12 @@
   }
 
   document.querySelector('#dayLockButton')?.addEventListener('click', () => {
-    const next = !isLocked();
-    if (next && !confirm('Låsa dagens mat? Du kan låsa upp dagen igen om du behöver ändra något.')) return;
-    localStorage.setItem(lockKey(), String(next));
+    if (isLocked()) return;
+    if (!confirm('Vill du låsa dagens mat? När dagen är låst går den inte att öppna igen.')) return;
+    localStorage.setItem(lockKey(), 'true');
     renderSummary();
     document.dispatchEvent(new CustomEvent('malix-day-changed'));
   });
-  document.querySelector('#mealForm')?.addEventListener('submit', event => {
-    if (isLocked()) { event.preventDefault(); event.stopImmediatePropagation(); alert('Dagen är låst. Lås upp den på startsidan först.'); return; }
-    setTimeout(() => { renderSummary(); document.dispatchEvent(new CustomEvent('malix-day-changed')); }, 120);
-  });
-  document.querySelector('#mealHistory')?.addEventListener('click', event => {
-    if (!event.target.closest('[data-delete-meal]')) return;
-    if (isLocked()) { event.preventDefault(); event.stopImmediatePropagation(); alert('Dagen är låst. Lås upp den på startsidan först.'); }
-    else setTimeout(() => { renderSummary(); document.dispatchEvent(new CustomEvent('malix-day-changed')); }, 120);
-  }, true);
 
   window.addEventListener('storage', renderSummary);
   window.malixLocalDateKey = localDateKey;
