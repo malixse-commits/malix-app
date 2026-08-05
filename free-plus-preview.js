@@ -1,6 +1,11 @@
 (() => {
   const home = document.querySelector('#home');
   if (!home) return;
+
+  // Ta bort den tillfälliga dubbla lager-rutan. Lager ska bara finnas i Mitt kök.
+  document.querySelector('[data-open="inventory"]')?.remove();
+  document.querySelector('#inventory')?.remove();
+
   const hero = home.querySelector('.hero-card');
   const compare = document.createElement('section');
   compare.className = 'panel plan-preview';
@@ -16,5 +21,30 @@
   document.querySelectorAll('#home [data-open]').forEach(card => {const view=card.dataset.open;const tag=document.createElement('span');tag.className='tier-tag '+(plusViews.has(view)?'tier-plus':'tier-free');tag.textContent=plusViews.has(view)?'PLUS':'GRATIS';card.appendChild(tag);if(plusViews.has(view))card.title=plusLabels[view]||'Plus-funktion';});
   function setPreview(plan){document.body.dataset.planPreview=plan;document.querySelectorAll('.plan-test').forEach(b=>b.classList.toggle('active',b.dataset.plan===plan));compare.querySelector('.plan-note').textContent=plan==='free'?'Gratisförhandsvisning: Plus-delarna tonas ned men är fortfarande öppna så att vi kan testa appen.':'Plusförhandsvisning: hela Mat-upplevelsen visas. Inget köp krävs i testversionen.';}
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
-  const loader=document.createElement('script');loader.src='smart-kitchen.js';document.body.appendChild(loader);
+
+  const loader=document.createElement('script');
+  loader.src='smart-kitchen.js';
+  loader.onload=()=>{
+    // Koppla alla recept till det befintliga Mitt kök, inte till ett separat lager.
+    const originalOpen=window.openRecipe;
+    if(typeof originalOpen==='function'&&!window.__malixKitchenRecipeHook){
+      window.__malixKitchenRecipeHook=true;
+      window.openRecipe=id=>{
+        originalOpen(id);
+        const recipe=(typeof recipes!=='undefined'?recipes:[]).find(r=>String(r.id)===String(id));
+        const detail=document.querySelector('#recipeDetail');
+        if(!recipe||!detail||detail.querySelector('[data-cook-from-kitchen]'))return;
+        const panel=document.createElement('div');
+        panel.className='panel calm';
+        panel.innerHTML=`<h3>🧊 Mitt kök</h3><p>När maten är lagad kan du räkna ner det du använde från kyl, frys och skafferi.</p><button type="button" class="primary" data-cook-from-kitchen>✓ Jag lagade detta</button>`;
+        panel.querySelector('[data-cook-from-kitchen]').addEventListener('click',()=>{
+          if(typeof window.malixCookRecipeFromKitchen==='function'){
+            if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`))window.malixCookRecipeFromKitchen(recipe);
+          }
+        });
+        detail.appendChild(panel);
+      };
+    }
+  };
+  document.body.appendChild(loader);
 })();
