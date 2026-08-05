@@ -30,6 +30,12 @@
     renderCalendar();
   }
 
+  function unlockDay(key) {
+    localStorage.removeItem(`malix-day-locked-${key}`);
+    setSelectedDay(key);
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+  }
+
   function renderCalendar() {
     monthLabel.textContent = new Intl.DateTimeFormat('sv-SE',{month:'long',year:'numeric'}).format(cursor);
     const year = cursor.getFullYear(), month = cursor.getMonth();
@@ -48,18 +54,16 @@
     renderDay(window.malixSelectedDateKey || today(), false);
   }
 
-  function renderDay(key, userClick=true) {
+  function renderDay(key) {
     const meals=mealsFor(key), ref=reflectionFor(key), date=new Date(`${key}T12:00:00`), title=new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(date), isLocked=locked(key);
     const mealHtml = meals.length ? meals.map(m=>`<article class="history-meal"><strong>${m.meal}</strong><p>${m.food || ''}</p>${m.portion?`<small>${m.portion}</small>`:''}${m.taste||m.satiety?`<small>${[m.taste,m.satiety].filter(Boolean).join(' · ')}</small>`:''}</article>`).join('') : '<p>Ingen mat sparad den här dagen.</p>';
     const refHtml = ref ? `<div class="calendar-reflection"><h4>🌙 Reflektion</h4>${ref.good?`<p><strong>Det som blev bra:</strong> ${ref.good}</p>`:''}${ref.different?`<p><strong>Annorlunda nästa gång:</strong> ${ref.different}</p>`:''}${ref.keep?`<p><strong>Det jag tar med mig:</strong> ${ref.keep}</p>`:''}</div>` : '';
     const action = isLocked
-      ? '<p class="note">Den här dagen är låst. Du kan läsa den, men inte lägga till eller ändra mat.</p>'
+      ? `<button type="button" class="secondary" id="unlockThisDay">🔓 Lås upp dagen</button><p class="note">Dagen är låst. Lås upp den om du behöver komplettera eller rätta något.</p>`
       : `<button type="button" class="primary" id="logThisDay">📝 Logga mat på den här dagen</button><p class="note">Dagen är öppen. Du kan lägga till sådant du glömde att logga.</p>`;
     detail.innerHTML = `<div class="dashboard-heading"><div><p class="eyebrow">${key===today()?'Idag':'Kalenderdag'}</p><h3>${title}</h3></div><span class="badge">${isLocked?'🔒 Låst':'Öppen'}</span></div>${mealHtml}${refHtml}${action}`;
-    if (!isLocked) {
-      document.querySelector('#logThisDay')?.addEventListener('click', () => setSelectedDay(key));
-      if (userClick && key===window.malixSelectedDateKey) setSelectedDay(key);
-    }
+    document.querySelector('#logThisDay')?.addEventListener('click', () => setSelectedDay(key));
+    document.querySelector('#unlockThisDay')?.addEventListener('click', () => unlockDay(key));
   }
 
   document.querySelector('#calendarPrev')?.addEventListener('click',()=>{cursor.setMonth(cursor.getMonth()-1);renderCalendar();});
