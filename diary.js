@@ -6,7 +6,7 @@
   const mealDateKey = meal => meal.date ? localKey(new Date(meal.date)) : localKey(new Date());
   const todayKey = () => localKey(new Date());
   const activeKey = () => window.malixSelectedDateKey || todayKey();
-  const isLocked = key => localStorage.getItem(`malix-day-locked-${key}`) === 'true';
+  const isLocked = key => localStorage.getItem(`malix-day-finalized-${key}`) === 'true';
 
   const catalog = {
     Frukost: {
@@ -105,7 +105,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     const key = activeKey();
-    if (isLocked(key)) { alert('Den här dagen är låst. Välj en öppen dag i kalendern.'); return; }
+    if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras. Välj en öppen dag i kalendern.'); return; }
     const textarea = form.querySelector('textarea[name="food"]');
     const ownText = textarea.value.trim();
     const pickedText = selected.map(item => `${item.food} (${item.quantity})`).join(', ');
@@ -132,7 +132,7 @@
     const meal = meals[storageIndex];
     if (!meal) return;
     const key = mealDateKey(meal);
-    if (isLocked(key)) { alert('Den här dagen är låst.'); return; }
+    if (isLocked(key)) { alert('Den här dagen är låst och kan inte ändras.'); return; }
     if (!confirm(`Ta bort ${meal.meal.toLowerCase()} – ${meal.food}?`)) return;
     meals.splice(storageIndex, 1);
     localStorage.setItem('malix-meals', JSON.stringify(meals));
