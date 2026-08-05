@@ -43,10 +43,16 @@
   };
 
   const selected = [];
+  const firstLabel = form.querySelector('label');
+  const topDate = document.createElement('div');
+  topDate.id = 'activeLogDateTop';
+  topDate.className = 'active-log-date';
+  form.insertBefore(topDate, firstLabel);
+
   const textareaLabel = form.querySelector('textarea[name="food"]').closest('label');
   const picker = document.createElement('section');
   picker.className = 'meal-picker';
-  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Du kan också skriva något eget längre ner.</p><div id="activeLogDate" class="note"></div><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
+  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Valda knappar markeras tydligt. Du kan också skriva något eget längre ner.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
   form.insertBefore(picker, textareaLabel);
   textareaLabel.querySelector('textarea').required = false;
   textareaLabel.querySelector('textarea').placeholder = 'Skriv här om något saknas i listan';
@@ -55,7 +61,6 @@
   const mealSelect = form.querySelector('select[name="meal"]');
   const groupsEl = picker.querySelector('#foodGroups');
   const selectedEl = picker.querySelector('#selectedFoods');
-  const activeDateEl = picker.querySelector('#activeLogDate');
 
   function activeDateLabel() {
     const d = new Date(`${activeKey()}T12:00:00`);
@@ -64,25 +69,39 @@
 
   function renderActiveDate() {
     const key = activeKey();
-    activeDateEl.textContent = isLocked(key) ? `🔒 ${activeDateLabel()} är låst.` : `📅 Du loggar på ${activeDateLabel()}.`;
+    topDate.innerHTML = isLocked(key)
+      ? `<strong>🔒 ${activeDateLabel()}</strong><span>Dagen är låst.</span>`
+      : `<strong>📅 ${activeDateLabel()}</strong><span>Det är den här dagen du loggar på.</span>`;
     [...form.elements].forEach(el => { el.disabled = isLocked(key); });
+  }
+
+  function isFoodSelected(food) {
+    return selected.some(item => item.food === food);
   }
 
   function renderGroups() {
     groupsEl.innerHTML = '';
     Object.entries(catalog[mealSelect.value] || {}).forEach(([group, foods]) => {
       const block = document.createElement('fieldset');
-      block.innerHTML = `<legend>${group}</legend><div class="chips">${foods.map(food => `<button type="button" data-food="${food}">${food}</button>`).join('')}</div>`;
+      block.innerHTML = `<legend>${group}</legend><div class="chips">${foods.map(food => `<button type="button" class="${isFoodSelected(food) ? 'active' : ''}" data-food="${food}" aria-pressed="${isFoodSelected(food)}">${food}</button>`).join('')}</div>`;
       groupsEl.appendChild(block);
     });
     groupsEl.querySelectorAll('[data-food]').forEach(button => button.addEventListener('click', () => addFood(button.dataset.food)));
   }
 
   function addFood(food) {
+    const existingIndex = selected.findIndex(item => item.food === food);
+    if (existingIndex >= 0) {
+      selected.splice(existingIndex, 1);
+      renderSelected();
+      renderGroups();
+      return;
+    }
     const quantity = prompt(`Hur mycket ${food.toLowerCase()}?`, defaultAmount(food));
     if (quantity === null) return;
     selected.push({ food, quantity: quantity.trim() || '1 portion' });
     renderSelected();
+    renderGroups();
   }
 
   function defaultAmount(food) {
@@ -95,8 +114,12 @@
   }
 
   function renderSelected() {
-    selectedEl.innerHTML = selected.length ? selected.map((item, index) => `<button type="button" data-remove="${index}">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
-    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { selected.splice(Number(button.dataset.remove), 1); renderSelected(); }));
+    selectedEl.innerHTML = selected.length ? selected.map((item, index) => `<button type="button" data-remove="${index}" class="active">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
+    selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => {
+      selected.splice(Number(button.dataset.remove), 1);
+      renderSelected();
+      renderGroups();
+    }));
   }
 
   mealSelect.addEventListener('change', () => { selected.length = 0; renderGroups(); renderSelected(); });
@@ -150,7 +173,7 @@
     renderActiveDate();
   };
 
-  document.addEventListener('malix-log-date-changed', () => { selected.length=0; renderSelected(); window.renderMeals(); renderActiveDate(); });
+  document.addEventListener('malix-log-date-changed', () => { selected.length=0; renderSelected(); renderGroups(); window.renderMeals(); renderActiveDate(); });
 
   renderGroups(); renderSelected(); renderActiveDate(); window.renderMeals();
 })();
