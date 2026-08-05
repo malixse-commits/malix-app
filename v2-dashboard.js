@@ -11,13 +11,8 @@
   const produceWords = ['morot','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','vitlök','avokado','äpple','banan','bär','frukt','citron','rödbet','palsternack','blomkål','potatis'];
   const plantWords = ['morot','vitkål','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','vitlök','avokado','äpple','banan','bär','citron','rödbeta','palsternacka','blomkål','potatis','ris','havre','bönor','linser','kikärtor','dill','rosmarin','timjan','chili'];
 
-  function countMealsWith(words, meals) {
-    return meals.filter(meal => words.some(word => (meal.food || '').toLowerCase().includes(word))).length;
-  }
-  function uniquePlants(meals) {
-    const text = meals.map(m => m.food || '').join(' ').toLowerCase();
-    return [...new Set(plantWords.filter(word => text.includes(word)))];
-  }
+  function countMealsWith(words, meals) { return meals.filter(meal => words.some(word => (meal.food || '').toLowerCase().includes(word))).length; }
+  function uniquePlants(meals) { const text = meals.map(m => m.food || '').join(' ').toLowerCase(); return [...new Set(plantWords.filter(word => text.includes(word)))]; }
 
   function renderMealStatus(meals) {
     const target = document.querySelector('#mealStatus');
@@ -27,6 +22,19 @@
       const done = meals.some(m => m.meal === type);
       return `<div class="meal-status ${done ? 'done' : ''}"><span>${done ? '✓' : '○'}</span><strong>${type}</strong></div>`;
     }).join('');
+  }
+
+  function renderLockState() {
+    const locked = isLocked();
+    const button = document.querySelector('#dayLockButton');
+    const status = document.querySelector('#dayLockStatus');
+    const form = document.querySelector('#mealForm');
+    const notice = document.querySelector('#foodLogLockNotice');
+    if (button) button.textContent = locked ? '🔓 Lås upp dagen' : '🔒 Lås dagen';
+    if (status) status.textContent = locked ? 'Dagen är låst. Måltiderna ligger kvar men kan inte ändras förrän du låser upp.' : 'När du är färdig för dagen kan du låsa den.';
+    if (form) [...form.elements].forEach(el => { el.disabled = locked; });
+    if (notice) notice.hidden = !locked;
+    document.querySelectorAll('[data-delete-meal]').forEach(btn => { btn.disabled = locked; btn.textContent = locked ? 'Dagen är låst' : 'Ta bort måltiden'; });
   }
 
   function renderSummary() {
@@ -48,19 +56,6 @@
     renderLockState();
   }
 
-  function renderLockState() {
-    const locked = isLocked();
-    const button = document.querySelector('#dayLockButton');
-    const status = document.querySelector('#dayLockStatus');
-    const form = document.querySelector('#mealForm');
-    const notice = document.querySelector('#foodLogLockNotice');
-    if (button) button.textContent = locked ? '🔓 Lås upp dagen' : '🔒 Lås dagen';
-    if (status) status.textContent = locked ? 'Dagen är låst. Måltiderna ligger kvar men kan inte ändras förrän du låser upp.' : 'När du är färdig för dagen kan du låsa den.';
-    if (form) [...form.elements].forEach(el => { el.disabled = locked; });
-    if (notice) notice.hidden = !locked;
-    document.querySelectorAll('[data-delete-meal]').forEach(btn => { btn.disabled = locked; btn.textContent = locked ? 'Dagen är låst' : 'Ta bort måltiden'; });
-  }
-
   document.querySelector('#dayLockButton')?.addEventListener('click', () => {
     const next = !isLocked();
     if (next && !confirm('Låsa dagens mat? Du kan låsa upp dagen igen om du behöver ändra något.')) return;
@@ -70,18 +65,14 @@
 
   document.querySelector('#mealForm')?.addEventListener('submit', event => {
     if (isLocked()) { event.preventDefault(); event.stopImmediatePropagation(); alert('Dagen är låst. Lås upp den på startsidan först.'); return; }
-    setTimeout(renderSummary, 80);
+    setTimeout(renderSummary, 120);
   });
 
   document.querySelector('#mealHistory')?.addEventListener('click', event => {
     if (!event.target.closest('[data-delete-meal]')) return;
     if (isLocked()) { event.preventDefault(); event.stopImmediatePropagation(); alert('Dagen är låst. Lås upp den på startsidan först.'); }
-    else setTimeout(renderSummary, 80);
+    else setTimeout(renderSummary, 120);
   }, true);
-
-  const observer = new MutationObserver(() => { renderLockState(); renderSummary(); });
-  const history = document.querySelector('#mealHistory');
-  if (history) observer.observe(history, {childList:true, subtree:true});
 
   window.addEventListener('storage', renderSummary);
   renderSummary();
