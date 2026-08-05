@@ -1,86 +1,83 @@
 (() => {
   const localDateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const todayKey = () => localDateKey();
-  const lockKey = () => `malix-day-finalized-${todayKey()}`;
+  let overviewKey = todayKey();
   const getMeals = () => { try { return JSON.parse(localStorage.getItem('malix-meals') || '[]'); } catch { return []; } };
-  const mealDateKey = meal => {
-    if (!meal.date) return todayKey();
-    const d = new Date(meal.date);
-    return Number.isNaN(d.getTime()) ? String(meal.date).slice(0,10) : localDateKey(d);
-  };
-  const todayMeals = () => getMeals().filter(m => mealDateKey(m) === todayKey());
-  const isLocked = () => localStorage.getItem(lockKey()) === 'true';
+  const mealDateKey = meal => { if (!meal.date) return todayKey(); const d = new Date(meal.date); return Number.isNaN(d.getTime()) ? String(meal.date).slice(0,10) : localDateKey(d); };
+  const mealsFor = key => getMeals().filter(m => mealDateKey(m) === key);
+  const isLocked = key => localStorage.getItem(`malix-day-finalized-${key}`) === 'true';
 
   const proteinWords = ['fisk','lax','torsk','fiskpanett','kyckling','kött','köttfärs','korv','ägg','ost','kvarg','yoghurt','filmjölk','mjölk','bön','linser','kikärt','jordnöt'];
   const fiberWords = ['fullkorn','havre','müsli','knäck','bön','linser','kikärt','grönsak','morot','kål','broccoli','ärtor','majs','paprika','frukt','äpple','banan','bär','potatis'];
-  const produceWords = ['morot','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','vitlök','avokado','äpple','banan','bär','frukt','citron','rödbet','palsternack','blomkål','potatis'];
-  const plantWords = ['morot','vitkål','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','vitlök','avokado','äpple','banan','bär','citron','rödbeta','palsternacka','blomkål','potatis','ris','havre','bönor','linser','kikärtor','dill','rosmarin','timjan','chili'];
+  const produceWords = ['morot','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','rödlök','vitlök','purjolök','avokado','zucchini','aubergine','svamp','blomkål','selleri','sockerärtor','haricots verts','äpple','banan','bär','frukt','citron','rödbet','palsternack','potatis'];
+  const plantWords = ['morot','vitkål','kål','broccoli','ärtor','majs','paprika','tomat','gurka','sallad','spenat','lök','rödlök','vitlök','purjolök','avokado','zucchini','aubergine','svamp','blomkål','selleri','sockerärtor','haricots verts','äpple','banan','bär','citron','rödbeta','palsternacka','potatis','ris','havre','bönor','linser','kikärtor','dill','rosmarin','timjan','chili'];
 
-  function countMealsWith(words, meals) { return meals.filter(meal => words.some(word => (meal.food || '').toLowerCase().includes(word))).length; }
-  function uniquePlants(meals) { const text = meals.map(m => m.food || '').join(' ').toLowerCase(); return [...new Set(plantWords.filter(word => text.includes(word)))]; }
+  function dateFromKey(key){ return new Date(`${key}T12:00:00`); }
+  function offsetKey(key,days){ const d=dateFromKey(key); d.setDate(d.getDate()+days); return localDateKey(d); }
+  function dateLabel(key){ return new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(dateFromKey(key)); }
+  function relationLabel(key){ if(key===todayKey()) return 'Idag'; if(key===offsetKey(todayKey(),-1)) return 'Igår'; if(key===offsetKey(todayKey(),1)) return 'Imorgon'; return 'Vald dag'; }
+  function countMealsWith(words, meals){ return meals.filter(meal => words.some(word => (meal.food || '').toLowerCase().includes(word))).length; }
+  function uniquePlants(meals){ const text=meals.map(m=>m.food||'').join(' ').toLowerCase(); return [...new Set(plantWords.filter(word=>text.includes(word)))]; }
 
-  function openMealLog(type) {
-    if (isLocked()) return;
-    window.malixSelectedDateKey = todayKey();
-    if (typeof show === 'function') show('foodLog');
-    else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'foodLog'));
-    requestAnimationFrame(() => {
-      const select = document.querySelector('#mealForm select[name="meal"]');
-      if (select) {
-        select.value = type;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-        select.focus();
-      }
-      document.dispatchEvent(new CustomEvent('malix-log-date-changed', { detail: { key: todayKey() } }));
+  function ensureDateNavigation(){
+    const heading=document.querySelector('.dashboard-panel .dashboard-heading > div');
+    if(!heading || document.querySelector('#overviewDateNav')) return;
+    const eyebrow=heading.querySelector('.eyebrow'); if(eyebrow) eyebrow.id='overviewRelationLabel';
+    const title=heading.querySelector('h2'); if(title) title.textContent='🍽️ Matöversikt';
+    const oldDate=document.querySelector('#todayDateLabel'); if(!oldDate) return;
+    const nav=document.createElement('div'); nav.id='overviewDateNav'; nav.className='overview-date-nav';
+    nav.innerHTML=`<button type="button" class="secondary overview-arrow" id="overviewPrev" aria-label="Föregående dag">‹</button><div class="overview-date-center"><strong id="overviewDateText"></strong><small id="overviewDateHint"></small></div><button type="button" class="secondary overview-arrow" id="overviewNext" aria-label="Nästa dag">›</button>`;
+    oldDate.replaceWith(nav);
+    document.querySelector('#overviewPrev')?.addEventListener('click',()=>{overviewKey=offsetKey(overviewKey,-1);renderSummary();});
+    document.querySelector('#overviewNext')?.addEventListener('click',()=>{overviewKey=offsetKey(overviewKey,1);renderSummary();});
+  }
+
+  function openMealLog(type){
+    if(isLocked(overviewKey)) return;
+    window.malixSelectedDateKey=overviewKey;
+    if(typeof show==='function') show('foodLog'); else document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id==='foodLog'));
+    requestAnimationFrame(()=>{
+      const select=document.querySelector('#mealForm select[name="meal"]');
+      if(select){ select.value=type; select.dispatchEvent(new Event('change',{bubbles:true})); select.focus(); }
+      document.dispatchEvent(new CustomEvent('malix-log-date-changed',{detail:{key:overviewKey}}));
     });
   }
 
-  function renderMealStatus(meals) {
-    const target = document.querySelector('#mealStatus'); if (!target) return;
-    const types = ['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
-    target.innerHTML = types.map(type => {
-      const done = meals.some(m => m.meal === type);
-      return `<button type="button" class="meal-status ${done ? 'done' : ''}" data-meal-shortcut="${type}" ${isLocked() ? 'disabled' : ''} aria-label="${done ? 'Visa och lägg till mer till' : 'Logga'} ${type.toLowerCase()}"><span>${done ? '✓' : '○'}</span><strong>${type}</strong></button>`;
-    }).join('');
-    target.querySelectorAll('[data-meal-shortcut]').forEach(button => button.addEventListener('click', () => openMealLog(button.dataset.mealShortcut)));
+  function renderMealStatus(meals){
+    const target=document.querySelector('#mealStatus'); if(!target) return;
+    const types=['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
+    target.innerHTML=types.map(type=>{const done=meals.some(m=>m.meal===type);return `<button type="button" class="meal-status ${done?'done':''}" data-meal-shortcut="${type}" ${isLocked(overviewKey)?'disabled':''}><span>${done?'✓':'○'}</span><strong>${type}</strong></button>`;}).join('');
+    target.querySelectorAll('[data-meal-shortcut]').forEach(button=>button.addEventListener('click',()=>openMealLog(button.dataset.mealShortcut)));
   }
 
-  function renderLockState() {
-    const locked = isLocked(), button = document.querySelector('#dayLockButton'), status = document.querySelector('#dayLockStatus');
-    if (button) { button.textContent = locked ? '🔒 Dagen är låst' : '🔒 Lås dagen'; button.disabled = locked; }
-    if (status) status.textContent = locked ? 'Dagen är avslutad och låst.' : 'Tryck på Frukost, Lunch, Middag, Mellanmål eller Kvällsmål för att logga mat. Lås dagen först när du är säker på att du är färdig.';
+  function renderLockState(){
+    const locked=isLocked(overviewKey), button=document.querySelector('#dayLockButton'), status=document.querySelector('#dayLockStatus');
+    if(button){button.textContent=locked?'🔒 Dagen är låst':'🔒 Lås dagen';button.disabled=locked;}
+    if(status) status.textContent=locked?`${dateLabel(overviewKey)} är avslutad och låst.`:`Du tittar på ${dateLabel(overviewKey)}. Tryck på en måltid för att logga mat.`;
   }
 
-  function renderSummary() {
-    const meals = todayMeals(); renderMealStatus(meals);
-    const proteinMeals = countMealsWith(proteinWords, meals), fiberMeals = countMealsWith(fiberWords, meals), produceMeals = countMealsWith(produceWords, meals), plants = uniquePlants(meals);
+  function renderSummary(){
+    ensureDateNavigation();
+    const meals=mealsFor(overviewKey); renderMealStatus(meals);
+    const proteinMeals=countMealsWith(proteinWords,meals), fiberMeals=countMealsWith(fiberWords,meals), produceMeals=countMealsWith(produceWords,meals), plants=uniquePlants(meals);
     const set=(id,text)=>{const e=document.querySelector(id);if(e)e.textContent=text};
-    set('#todayDateLabel', new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date()));
-    set('#proteinSummary', meals.length ? `${proteinMeals} av ${meals.length} måltider med tydlig proteinkälla` : 'Ingen mat loggad ännu');
-    set('#fiberSummary', meals.length ? `${fiberMeals} av ${meals.length} måltider med tydlig fiberkälla` : 'Ingen mat loggad ännu');
-    set('#produceSummary', meals.length ? `${produceMeals} måltider med frukt/grönt i loggen` : 'Ingen mat loggad ännu');
-    set('#plantSummary', meals.length ? `${plants.length} olika växter hittade i dagens logg` : 'Ingen mat loggad ännu');
-    set('#vitaminSummary', plants.length >= 5 ? 'Flera olika växtkällor – exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in' : 'Exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in');
-    const note = document.querySelector('#dailyFoodNote');
-    if (note) {
-      if (!meals.length) note.textContent = 'Börja med att trycka på en måltid ovan. Översikten fylls på under dagen.';
-      else if (plants.length >= 5 && proteinMeals >= 2) note.textContent = 'Dagens logg visar både flera växter och flera måltider med proteinkälla. Detta är en första översikt – inte ett betyg.';
-      else note.textContent = 'Det här är en preliminär översikt byggd från orden i din matlogg. Exakta gram, kalorier och vitaminer kommer när livsmedelsdatabasen är kopplad.';
-    }
+    set('#overviewRelationLabel',relationLabel(overviewKey)); set('#overviewDateText',dateLabel(overviewKey)); set('#overviewDateHint',overviewKey===todayKey()?'Dagens datum':'Du kan logga på den här dagen om den inte är låst');
+    set('#proteinSummary',meals.length?`${proteinMeals} av ${meals.length} måltider med tydlig proteinkälla`:'Ingen mat loggad ännu');
+    set('#fiberSummary',meals.length?`${fiberMeals} av ${meals.length} måltider med tydlig fiberkälla`:'Ingen mat loggad ännu');
+    set('#produceSummary',meals.length?`${produceMeals} måltider med frukt/grönt i loggen`:'Ingen mat loggad ännu');
+    set('#plantSummary',meals.length?`${plants.length} olika växter hittade i loggen`:'Ingen mat loggad ännu');
+    set('#vitaminSummary',plants.length>=5?'Flera olika växtkällor – exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in':'Exakt vitamin/mineraldata kommer när livsmedelsdatabasen kopplas in');
+    const note=document.querySelector('#dailyFoodNote'); if(note) note.textContent=!meals.length?'Börja med att trycka på en måltid ovan. Översikten fylls på när du loggar.':'Det här är en preliminär översikt byggd från orden i matloggen.';
     renderLockState();
   }
 
-  document.querySelector('#dayLockButton')?.addEventListener('click', () => {
-    if (isLocked()) return;
-    if (!confirm('Vill du låsa dagens mat? När dagen är låst går den inte att öppna igen.')) return;
-    localStorage.setItem(lockKey(), 'true');
-    renderSummary();
-    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+  document.querySelector('#dayLockButton')?.addEventListener('click',()=>{
+    if(isLocked(overviewKey)) return;
+    if(!confirm(`Vill du låsa ${dateLabel(overviewKey)}? När dagen är låst går den inte att ändra.`)) return;
+    localStorage.setItem(`malix-day-finalized-${overviewKey}`,'true'); renderSummary(); document.dispatchEvent(new CustomEvent('malix-day-changed'));
   });
-
-  window.addEventListener('storage', renderSummary);
-  window.malixLocalDateKey = localDateKey;
-  window.malixMealDateKey = mealDateKey;
-  window.malixRenderToday = renderSummary;
+  document.addEventListener('malix-day-changed',renderSummary);
+  window.addEventListener('storage',renderSummary);
+  window.malixLocalDateKey=localDateKey; window.malixMealDateKey=mealDateKey; window.malixRenderToday=renderSummary;
   renderSummary();
 })();
