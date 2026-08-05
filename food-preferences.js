@@ -32,24 +32,47 @@
     input.addEventListener('change',()=>{const p=getPrefs();p.glutenFree=input.checked;savePrefs(p);document.dispatchEvent(new CustomEvent('malix-food-preference-changed'));});
   }
 
-  function addBreakfast(){
-    if(typeof recipes==='undefined'||recipes.some(r=>r.id==='frukostflingor'))return;
-    recipes.push({id:'frukostflingor',name:'Frukost med flingor, fil eller yoghurt',emoji:'🥣',time:3,budget:'low',tags:['snabbt','vegetariskt','frukost'],ingredients:['fil, yoghurt eller mjölk','valfria flingor','frukt eller bär'],leftovers:[],plants:2,tip:'Välj den sort du tycker om. Lägg gärna till frukt eller bär om du har hemma.',steps:['Häll upp fil, yoghurt eller mjölk.','Välj flingor: cornflakes, havrefras, müsli, granola, havregryn eller en annan sort du tycker om.','Lägg gärna till frukt eller bär.']});
-  }
+  function addBreakfastQuickChoices(){
+    const foodLog=document.querySelector('#foodLog');
+    const mealForm=document.querySelector('#mealForm');
+    if(!foodLog||!mealForm||document.querySelector('#breakfastQuickChoices'))return;
 
-  function addBreakfastFilter(){
-    const chips=document.querySelector('#recipeBank .chips');
-    if(!chips||chips.querySelector('[data-breakfast-filter]'))return;
-    const button=document.createElement('button');
-    button.type='button';button.dataset.breakfastFilter='1';button.textContent='Frukost';
-    button.addEventListener('click',()=>{
-      if(typeof renderBank==='function') renderBank(recipes.filter(r=>(r.tags||[]).includes('frukost')));
+    const groups={
+      'Bröd & gryn':['Brödskiva','Knäckebröd','Rostat bröd','Cornflakes','Havrefras','Müsli','Granola','Havregrynsgröt','Overnight oats'],
+      'Mejeri':['Mjölk','Filmjölk','Yoghurt','Kvarg','Turkisk yoghurt'],
+      'Pålägg':['Ostskiva','Ägg','Skinka','Kalkon','Brieost','Färskost','Kaviar','Leverpastej','Makrill i tomatsås','Salami','Mjukost','Messmör','Jordnötssmör','Marmelad','Lingonsylt','Jordgubbssylt','Hallonsylt','Blåbärssylt','Blandsylt','Honung','Avokado','Hummus'],
+      'Frukt & grönt':['Banan','Äpple','Päron','Apelsin','Bär','Tomat','Gurka','Paprika','Sallad','Avokado','Rödlök'],
+      'Dryck':['Kaffe','Te','Vatten','Juice']
+    };
+
+    const panel=document.createElement('section');
+    panel.id='breakfastQuickChoices';
+    panel.className='panel calm';
+    panel.innerHTML=`<p class="eyebrow">Snabbval</p><h3>🥣 Bygg min frukost</h3><p>Välj en eller flera saker. Du kan ändra text och mängd innan du sparar.</p>${Object.entries(groups).map(([name,items])=>`<fieldset style="margin:14px 0"><legend><strong>${name}</strong></legend><div class="chips">${items.map(item=>`<button type="button" data-breakfast-item="${item}">${item}</button>`).join('')}</div></fieldset>`).join('')}<div class="chips"><button type="button" class="primary" id="useBreakfastChoices">Använd i matloggen</button><button type="button" class="secondary" id="clearBreakfastChoices">Rensa val</button></div><p id="breakfastChoiceStatus" class="status"></p>`;
+
+    mealForm.closest('.panel')?.insertAdjacentElement('beforebegin',panel);
+    const selected=new Set();
+    panel.querySelectorAll('[data-breakfast-item]').forEach(button=>button.addEventListener('click',()=>{
+      const item=button.dataset.breakfastItem;
+      if(selected.has(item)){selected.delete(item);button.classList.remove('active')}else{selected.add(item);button.classList.add('active')}
+      panel.querySelector('#breakfastChoiceStatus').textContent=selected.size?`${selected.size} valda`:'Inget valt ännu';
+    }));
+
+    panel.querySelector('#clearBreakfastChoices').addEventListener('click',()=>{
+      selected.clear();panel.querySelectorAll('[data-breakfast-item]').forEach(b=>b.classList.remove('active'));panel.querySelector('#breakfastChoiceStatus').textContent='Valen är rensade.';
     });
-    chips.appendChild(button);
-  }
 
-  function refreshRecipeBank(){
-    if(typeof renderBank==='function') renderBank(recipes);
+    panel.querySelector('#useBreakfastChoices').addEventListener('click',()=>{
+      if(!selected.size){panel.querySelector('#breakfastChoiceStatus').textContent='Välj minst en sak först.';return}
+      const mealSelect=mealForm.querySelector('[name="meal"]');
+      const foodField=mealForm.querySelector('[name="food"]');
+      const portionField=mealForm.querySelector('[name="portion"]');
+      if(mealSelect)mealSelect.value='Frukost';
+      if(foodField)foodField.value=[...selected].map(adapt).join(', ');
+      if(portionField&&!portionField.value)portionField.placeholder='t.ex. 2 skivor, 2,5 dl eller 1 portion';
+      panel.querySelector('#breakfastChoiceStatus').textContent='Frukosten är införd i matloggen. Kontrollera mängden och spara.';
+      foodField?.focus();
+    });
   }
 
   function decorateRecipe(){
@@ -61,7 +84,8 @@
     if(gf){const note=document.createElement('p');note.dataset.gfNote='1';note.className='note';note.innerHTML='<strong>🌾 Glutenfritt valt:</strong> receptet visar glutenfria byten där det behövs. Kontrollera alltid märkningen på färdiga produkter, såser, buljong, flingor och andra sammansatta livsmedel.';detail.querySelector('h2')?.insertAdjacentElement('afterend',note)}
   }
 
-  addBreakfast();addBreakfastFilter();addSettings();refreshRecipeBank();
+  addSettings();
+  addBreakfastQuickChoices();
   const detail=document.querySelector('#recipeDetail');if(detail)new MutationObserver(()=>queueMicrotask(decorateRecipe)).observe(detail,{childList:true,subtree:true});
   document.addEventListener('malix-food-preference-changed',decorateRecipe);
 })();
