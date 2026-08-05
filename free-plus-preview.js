@@ -36,31 +36,6 @@
   }
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
 
-  // Frukostval ska finnas i Logga min mat, inte som ett eget recept.
-  const mealForm=document.querySelector('#mealForm');
-  if(mealForm&&!document.querySelector('#breakfastQuickChoices')){
-    const box=document.createElement('section');
-    box.id='breakfastQuickChoices';
-    box.className='panel calm';
-    box.style.marginBottom='16px';
-    box.innerHTML=`<p class="eyebrow">Snabbval för frukost</p><h3>🥣 Flingor, fil och yoghurt</h3><p>Välj det du åt så fylls matfältet i automatiskt. Du kan ändra texten innan du sparar.</p><label>Bas<select id="breakfastBase"><option value="">Välj</option><option>Filmjölk</option><option>Yoghurt</option><option>Mjölk</option><option>Kvarg</option></select></label><label>Flingor<select id="breakfastCereal"><option value="">Välj</option><option>Cornflakes</option><option>Havrefras</option><option>Müsli</option><option>Granola</option><option>Havregryn</option><option>Glutenfria cornflakes</option><option>Glutenfri müsli</option><option>Glutenfri granola</option><option>Glutenfria havregryn</option><option>Annat</option></select></label><label>Frukt eller bär<input id="breakfastFruit" placeholder="t.ex. banan, päron eller blåbär"></label><button type="button" class="secondary" id="useBreakfastChoice">Använd i matloggen</button>`;
-    mealForm.parentElement.insertBefore(box,mealForm);
-    box.querySelector('#useBreakfastChoice').addEventListener('click',()=>{
-      const mealSelect=mealForm.querySelector('[name="meal"]');
-      const food=mealForm.querySelector('[name="food"]');
-      const portion=mealForm.querySelector('[name="portion"]');
-      const base=box.querySelector('#breakfastBase').value;
-      const cereal=box.querySelector('#breakfastCereal').value;
-      const fruit=box.querySelector('#breakfastFruit').value.trim();
-      const parts=[base,cereal,fruit].filter(Boolean);
-      if(!parts.length){alert('Välj minst en sak till frukosten.');return;}
-      mealSelect.value='Frukost';
-      food.value=parts.join(' med ');
-      if(!portion.value) portion.value='1 portion';
-      food.focus();
-    });
-  }
-
   function loadScript(src,onload){
     if(document.querySelector(`script[data-malix-addon="${src}"]`)) return;
     const script=document.createElement('script');
@@ -103,5 +78,6 @@
   });
 
   loadScript('food-preferences.js');
+  loadScript('meal-log-polish.js');
   loadScript('dashboard-cleanup.js');
 })();
