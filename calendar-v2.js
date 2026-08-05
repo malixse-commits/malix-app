@@ -7,6 +7,7 @@
   const localKey = window.malixLocalDateKey || (d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
   const mealKey = window.malixMealDateKey || (m => m.date ? localKey(new Date(m.date)) : localKey(new Date()));
   const today = () => localKey(new Date());
+  window.malixSelectedDateKey = window.malixSelectedDateKey || today();
   let cursor = new Date();
   cursor.setDate(1);
 
@@ -23,6 +24,12 @@
     });
   }
 
+  function setSelectedDay(key) {
+    window.malixSelectedDateKey = key;
+    document.dispatchEvent(new CustomEvent('malix-log-date-changed', { detail: { key } }));
+    renderCalendar();
+  }
+
   function renderCalendar() {
     monthLabel.textContent = new Intl.DateTimeFormat('sv-SE',{month:'long',year:'numeric'}).format(cursor);
     const year = cursor.getFullYear(), month = cursor.getMonth();
@@ -33,19 +40,26 @@
     let html = headers;
     for(let i=0;i<startOffset;i++) html += '<div></div>';
     for(let day=1;day<=last.getDate();day++){
-      const d = new Date(year,month,day), key = localKey(d), count=mealsFor(key).length, isToday=key===today(), isLocked=locked(key);
-      html += `<button type="button" class="calendar-day ${isToday?'today':''} ${isLocked?'locked':''}" data-day="${key}"><strong>${day}</strong><small>${count ? `${count} måltid${count===1?'':'er'}` : ''}${isLocked?' 🔒':''}</small></button>`;
+      const d = new Date(year,month,day), key = localKey(d), count=mealsFor(key).length, isToday=key===today(), isLocked=locked(key), selected=key===window.malixSelectedDateKey;
+      html += `<button type="button" class="calendar-day ${isToday?'today':''} ${isLocked?'locked':''} ${selected?'selected':''}" data-day="${key}"><strong>${day}</strong><small>${count ? `${count} måltid${count===1?'':'er'}` : ''}${isLocked?' 🔒':''}</small></button>`;
     }
     grid.innerHTML = html;
     grid.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>renderDay(b.dataset.day)));
-    renderDay(today());
+    renderDay(window.malixSelectedDateKey || today(), false);
   }
 
-  function renderDay(key) {
-    const meals=mealsFor(key), ref=reflectionFor(key), date=new Date(`${key}T12:00:00`), title=new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(date);
+  function renderDay(key, userClick=true) {
+    const meals=mealsFor(key), ref=reflectionFor(key), date=new Date(`${key}T12:00:00`), title=new Intl.DateTimeFormat('sv-SE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(date), isLocked=locked(key);
     const mealHtml = meals.length ? meals.map(m=>`<article class="history-meal"><strong>${m.meal}</strong><p>${m.food || ''}</p>${m.portion?`<small>${m.portion}</small>`:''}${m.taste||m.satiety?`<small>${[m.taste,m.satiety].filter(Boolean).join(' · ')}</small>`:''}</article>`).join('') : '<p>Ingen mat sparad den här dagen.</p>';
     const refHtml = ref ? `<div class="calendar-reflection"><h4>🌙 Reflektion</h4>${ref.good?`<p><strong>Det som blev bra:</strong> ${ref.good}</p>`:''}${ref.different?`<p><strong>Annorlunda nästa gång:</strong> ${ref.different}</p>`:''}${ref.keep?`<p><strong>Det jag tar med mig:</strong> ${ref.keep}</p>`:''}</div>` : '';
-    detail.innerHTML = `<div class="dashboard-heading"><div><p class="eyebrow">${key===today()?'Idag':'Historik'}</p><h3>${title}</h3></div><span class="badge">${locked(key)?'🔒 Låst':'Öppen'}</span></div>${mealHtml}${refHtml}${key!==today()?'<p class="note">Tidigare dagar är historik. Ny mat loggas på dagens datum.</p>':''}`;
+    const action = isLocked
+      ? '<p class="note">Den här dagen är låst. Du kan läsa den, men inte lägga till eller ändra mat.</p>'
+      : `<button type="button" class="primary" id="logThisDay">📝 Logga mat på den här dagen</button><p class="note">Dagen är öppen. Du kan lägga till sådant du glömde att logga.</p>`;
+    detail.innerHTML = `<div class="dashboard-heading"><div><p class="eyebrow">${key===today()?'Idag':'Kalenderdag'}</p><h3>${title}</h3></div><span class="badge">${isLocked?'🔒 Låst':'Öppen'}</span></div>${mealHtml}${refHtml}${action}`;
+    if (!isLocked) {
+      document.querySelector('#logThisDay')?.addEventListener('click', () => setSelectedDay(key));
+      if (userClick && key===window.malixSelectedDateKey) setSelectedDay(key);
+    }
   }
 
   document.querySelector('#calendarPrev')?.addEventListener('click',()=>{cursor.setMonth(cursor.getMonth()-1);renderCalendar();});
