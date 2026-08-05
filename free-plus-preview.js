@@ -36,22 +36,30 @@
   }
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
 
-  // Frukost med olika sorters flingor läggs in direkt i receptbanken.
-  if(typeof recipes!=='undefined'&&!recipes.some(r=>r.id==='frukostflingor')){
-    recipes.push({id:'frukostflingor',name:'Frukost med flingor, fil eller yoghurt',emoji:'🥣',time:3,budget:'low',tags:['snabbt','vegetariskt','frukost'],ingredients:['fil, yoghurt eller mjölk','valfria flingor','frukt eller bär'],leftovers:[],plants:2,tip:'Välj den sort du tycker om. Lägg gärna till frukt eller bär om du har hemma.',steps:['Häll upp fil, yoghurt eller mjölk.','Välj flingor: cornflakes, havrefras, müsli, granola, havregryn eller en annan sort du tycker om.','Lägg gärna till frukt eller bär.']});
-  }
-  const breakfastChips=document.querySelector('#recipeBank .chips');
-  if(breakfastChips&&!breakfastChips.querySelector('[data-breakfast-direct]')){
-    const breakfastButton=document.createElement('button');
-    breakfastButton.type='button';
-    breakfastButton.dataset.breakfastDirect='1';
-    breakfastButton.textContent='Frukost';
-    breakfastButton.addEventListener('click',()=>{
-      if(typeof renderBank==='function') renderBank(recipes.filter(r=>(r.tags||[]).includes('frukost')));
+  // Frukostval ska finnas i Logga min mat, inte som ett eget recept.
+  const mealForm=document.querySelector('#mealForm');
+  if(mealForm&&!document.querySelector('#breakfastQuickChoices')){
+    const box=document.createElement('section');
+    box.id='breakfastQuickChoices';
+    box.className='panel calm';
+    box.style.marginBottom='16px';
+    box.innerHTML=`<p class="eyebrow">Snabbval för frukost</p><h3>🥣 Flingor, fil och yoghurt</h3><p>Välj det du åt så fylls matfältet i automatiskt. Du kan ändra texten innan du sparar.</p><label>Bas<select id="breakfastBase"><option value="">Välj</option><option>Filmjölk</option><option>Yoghurt</option><option>Mjölk</option><option>Kvarg</option></select></label><label>Flingor<select id="breakfastCereal"><option value="">Välj</option><option>Cornflakes</option><option>Havrefras</option><option>Müsli</option><option>Granola</option><option>Havregryn</option><option>Glutenfria cornflakes</option><option>Glutenfri müsli</option><option>Glutenfri granola</option><option>Glutenfria havregryn</option><option>Annat</option></select></label><label>Frukt eller bär<input id="breakfastFruit" placeholder="t.ex. banan, päron eller blåbär"></label><button type="button" class="secondary" id="useBreakfastChoice">Använd i matloggen</button>`;
+    mealForm.parentElement.insertBefore(box,mealForm);
+    box.querySelector('#useBreakfastChoice').addEventListener('click',()=>{
+      const mealSelect=mealForm.querySelector('[name="meal"]');
+      const food=mealForm.querySelector('[name="food"]');
+      const portion=mealForm.querySelector('[name="portion"]');
+      const base=box.querySelector('#breakfastBase').value;
+      const cereal=box.querySelector('#breakfastCereal').value;
+      const fruit=box.querySelector('#breakfastFruit').value.trim();
+      const parts=[base,cereal,fruit].filter(Boolean);
+      if(!parts.length){alert('Välj minst en sak till frukosten.');return;}
+      mealSelect.value='Frukost';
+      food.value=parts.join(' med ');
+      if(!portion.value) portion.value='1 portion';
+      food.focus();
     });
-    breakfastChips.appendChild(breakfastButton);
   }
-  if(typeof renderBank==='function') renderBank(recipes);
 
   function loadScript(src,onload){
     if(document.querySelector(`script[data-malix-addon="${src}"]`)) return;
