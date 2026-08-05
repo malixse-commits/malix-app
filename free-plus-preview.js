@@ -2,7 +2,7 @@
   const home = document.querySelector('#home');
   if (!home) return;
 
-  // Ta bort den tillfälliga dubbla lager-rutan. Lager ska bara finnas i Mitt kök.
+  // Lager ska bara finnas i Mitt kök.
   document.querySelector('[data-open="inventory"]')?.remove();
   document.querySelector('#inventory')?.remove();
 
@@ -16,35 +16,63 @@
       <article class="plan-card plus-card"><span class="plan-label">PLUS</span><h3>Mat Plus</h3><p class="plan-price">Pris bestäms senare</p><ul><li>✓ Allt i Gratis</li><li>📚 Hela receptbanken</li><li>🍽️ Portionsval och näringsöversikt</li><li>🧊 Mitt kök: kyl, frys & skafferi</li><li>🛒 Smart handlingslista kopplad till maten hemma</li><li>♻️ Fler restkedjor och Rädda maten</li><li>📅 Flera smarta veckomatsedlar</li><li>💰 Köp extra, frys in eller laga två rätter</li><li>🌿 Gör måltiden mer komplett</li><li>📊 Veckosammanfattning när den är klar</li></ul><button type="button" class="primary plan-test" data-plan="plus">Se Plus-markeringar</button></article>
     </div><p class="note plan-note">Det här är en förhandsvisning. Vi testar gränsen mellan Gratis och Plus innan betalning eller riktiga lås byggs in.</p>`;
   hero.insertAdjacentElement('afterend', compare);
+
   const plusViews = new Set(['recipeBank','leftovers','weekPlan']);
   const plusLabels = {recipeBank:'PLUS · hela receptbanken',leftovers:'PLUS · fördjupad resthjälp',weekPlan:'PLUS · smarta veckomatsedlar'};
-  document.querySelectorAll('#home [data-open]').forEach(card => {const view=card.dataset.open;const tag=document.createElement('span');tag.className='tier-tag '+(plusViews.has(view)?'tier-plus':'tier-free');tag.textContent=plusViews.has(view)?'PLUS':'GRATIS';card.appendChild(tag);if(plusViews.has(view))card.title=plusLabels[view]||'Plus-funktion';});
-  function setPreview(plan){document.body.dataset.planPreview=plan;document.querySelectorAll('.plan-test').forEach(b=>b.classList.toggle('active',b.dataset.plan===plan));compare.querySelector('.plan-note').textContent=plan==='free'?'Gratisförhandsvisning: Plus-delarna tonas ned men är fortfarande öppna så att vi kan testa appen.':'Plusförhandsvisning: hela Mat-upplevelsen visas. Inget köp krävs i testversionen.';}
+  document.querySelectorAll('#home [data-open]').forEach(card => {
+    const view=card.dataset.open;
+    const tag=document.createElement('span');
+    tag.className='tier-tag '+(plusViews.has(view)?'tier-plus':'tier-free');
+    tag.textContent=plusViews.has(view)?'PLUS':'GRATIS';
+    card.appendChild(tag);
+    if(plusViews.has(view)) card.title=plusLabels[view]||'Plus-funktion';
+  });
+
+  function setPreview(plan){
+    document.body.dataset.planPreview=plan;
+    document.querySelectorAll('.plan-test').forEach(b=>b.classList.toggle('active',b.dataset.plan===plan));
+    compare.querySelector('.plan-note').textContent=plan==='free'
+      ?'Gratisförhandsvisning: Plus-delarna tonas ned men är fortfarande öppna så att vi kan testa appen.'
+      :'Plusförhandsvisning: hela Mat-upplevelsen visas. Inget köp krävs i testversionen.';
+  }
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
 
   const loader=document.createElement('script');
   loader.src='smart-kitchen.js';
   loader.onload=()=>{
-    // Koppla alla recept till det befintliga Mitt kök, inte till ett separat lager.
-    const originalOpen=window.openRecipe;
-    if(typeof originalOpen==='function'&&!window.__malixKitchenRecipeHook){
-      window.__malixKitchenRecipeHook=true;
-      window.openRecipe=id=>{
-        originalOpen(id);
-        const recipe=(typeof recipes!=='undefined'?recipes:[]).find(r=>String(r.id)===String(id));
-        const detail=document.querySelector('#recipeDetail');
-        if(!recipe||!detail||detail.querySelector('[data-cook-from-kitchen]'))return;
-        const panel=document.createElement('div');
-        panel.className='panel calm';
-        panel.innerHTML=`<h3>🧊 Mitt kök</h3><p>När maten är lagad kan du räkna ner det du använde från kyl, frys och skafferi.</p><button type="button" class="primary" data-cook-from-kitchen>✓ Jag lagade detta</button>`;
-        panel.querySelector('[data-cook-from-kitchen]').addEventListener('click',()=>{
-          if(typeof window.malixCookRecipeFromKitchen==='function'){
-            if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`))window.malixCookRecipeFromKitchen(recipe);
-          }
-        });
-        detail.appendChild(panel);
-      };
+    function currentRecipe(){
+      const heading=document.querySelector('#recipeDetail h2');
+      if(!heading||typeof recipes==='undefined') return null;
+      return recipes.find(r=>r.name===heading.textContent.trim())||null;
     }
+
+    function ensureCookButton(){
+      const detail=document.querySelector('#recipeDetail');
+      const recipe=currentRecipe();
+      if(!detail||!recipe||detail.querySelector('[data-cook-from-kitchen]')) return;
+      const panel=document.createElement('section');
+      panel.className='panel calm';
+      panel.style.marginTop='18px';
+      panel.innerHTML=`<h3>🧊 Mitt kök</h3><p>När du faktiskt har lagat rätten kan appen räkna ner det du använde från kyl, frys och skafferi.</p><button type="button" class="primary" data-cook-from-kitchen>✓ Jag lagade detta</button>`;
+      panel.querySelector('[data-cook-from-kitchen]').addEventListener('click',()=>{
+        if(typeof window.malixCookRecipeFromKitchen!=='function'){
+          alert('Mitt kök kunde inte nås. Ladda om sidan och försök igen.');
+          return;
+        }
+        if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`)){
+          window.malixCookRecipeFromKitchen(recipe);
+        }
+      });
+      detail.appendChild(panel);
+    }
+
+    const detail=document.querySelector('#recipeDetail');
+    if(detail){
+      const observer=new MutationObserver(()=>queueMicrotask(ensureCookButton));
+      observer.observe(detail,{childList:true,subtree:true});
+    }
+    document.addEventListener('click',()=>setTimeout(ensureCookButton,0),true);
+    ensureCookButton();
   };
   document.body.appendChild(loader);
 })();
