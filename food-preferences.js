@@ -37,6 +37,21 @@
     recipes.push({id:'frukostflingor',name:'Frukost med flingor, fil eller yoghurt',emoji:'🥣',time:3,budget:'low',tags:['snabbt','vegetariskt','frukost'],ingredients:['fil, yoghurt eller mjölk','valfria flingor','frukt eller bär'],leftovers:[],plants:2,tip:'Välj den sort du tycker om. Lägg gärna till frukt eller bär om du har hemma.',steps:['Häll upp fil, yoghurt eller mjölk.','Välj flingor: cornflakes, havrefras, müsli, granola, havregryn eller en annan sort du tycker om.','Lägg gärna till frukt eller bär.']});
   }
 
+  function addBreakfastFilter(){
+    const chips=document.querySelector('#recipeBank .chips');
+    if(!chips||chips.querySelector('[data-breakfast-filter]'))return;
+    const button=document.createElement('button');
+    button.type='button';button.dataset.breakfastFilter='1';button.textContent='Frukost';
+    button.addEventListener('click',()=>{
+      if(typeof renderBank==='function') renderBank(recipes.filter(r=>(r.tags||[]).includes('frukost')));
+    });
+    chips.appendChild(button);
+  }
+
+  function refreshRecipeBank(){
+    if(typeof renderBank==='function') renderBank(recipes);
+  }
+
   function decorateRecipe(){
     const detail=document.querySelector('#recipeDetail');if(!detail)return;
     const gf=getPrefs().glutenFree;
@@ -46,7 +61,7 @@
     if(gf){const note=document.createElement('p');note.dataset.gfNote='1';note.className='note';note.innerHTML='<strong>🌾 Glutenfritt valt:</strong> receptet visar glutenfria byten där det behövs. Kontrollera alltid märkningen på färdiga produkter, såser, buljong, flingor och andra sammansatta livsmedel.';detail.querySelector('h2')?.insertAdjacentElement('afterend',note)}
   }
 
-  addBreakfast();addSettings();
+  addBreakfast();addBreakfastFilter();addSettings();refreshRecipeBank();
   const detail=document.querySelector('#recipeDetail');if(detail)new MutationObserver(()=>queueMicrotask(decorateRecipe)).observe(detail,{childList:true,subtree:true});
   document.addEventListener('malix-food-preference-changed',decorateRecipe);
 })();
