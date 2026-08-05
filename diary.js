@@ -54,7 +54,7 @@
   const textareaLabel = form.querySelector('textarea[name="food"]').closest('label');
   const picker = document.createElement('section');
   picker.className = 'meal-picker';
-  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Valda knappar markeras tydligt. Du kan också skriva något eget längre ner.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
+  picker.innerHTML = `<h3>Välj det som ingick</h3><p class="note">Tryck på ett livsmedel och välj mängd. Valda knappar markeras tydligt. Tryck på <strong>Maträtt från receptbanken</strong> för att öppna recepten.</p><div id="foodGroups"></div><div class="panel calm" style="margin:12px 0"><strong>Din måltid</strong><div id="selectedFoods" class="chips"><span class="note">Inget valt ännu.</span></div></div>`;
   form.insertBefore(picker, textareaLabel);
   textareaLabel.querySelector('textarea').required = false;
   textareaLabel.querySelector('textarea').placeholder = 'Skriv här om något saknas i listan';
@@ -90,6 +90,14 @@
   }
 
   function addFood(food) {
+    if (food === 'Maträtt från receptbanken') {
+      window.malixRecipeReturnToFoodLog = true;
+      window.malixRecipeLogMealType = mealSelect.value;
+      window.malixRecipeLogDateKey = activeKey();
+      if (typeof show === 'function') show('recipeBank');
+      else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'recipeBank'));
+      return;
+    }
     const existingIndex = selected.findIndex(item => item.food === food);
     if (existingIndex >= 0) { selected.splice(existingIndex, 1); renderSelected(); renderGroups(); return; }
     const quantity = prompt(`Hur mycket ${food.toLowerCase()}?`, defaultAmount(food));
@@ -112,6 +120,17 @@
     selectedEl.innerHTML = selected.length ? selected.map((item, index) => `<button type="button" data-remove="${index}" class="active">${item.food}: ${item.quantity} ×</button>`).join('') : '<span class="note">Inget valt ännu.</span>';
     selectedEl.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { selected.splice(Number(button.dataset.remove), 1); renderSelected(); renderGroups(); }));
   }
+
+  window.malixAddRecipeToMealLog = recipeName => {
+    if (!recipeName) return;
+    if (!selected.some(item => item.food === recipeName)) selected.push({food: recipeName, quantity:'1 portion'});
+    if (window.malixRecipeLogDateKey) window.malixSelectedDateKey = window.malixRecipeLogDateKey;
+    if (window.malixRecipeLogMealType) mealSelect.value = window.malixRecipeLogMealType;
+    renderSelected(); renderGroups(); renderActiveDate();
+    window.malixRecipeReturnToFoodLog = false;
+    if (typeof show === 'function') show('foodLog');
+    else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'foodLog'));
+  };
 
   mealSelect.addEventListener('change', () => { selected.length = 0; renderGroups(); renderSelected(); });
 
