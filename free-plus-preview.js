@@ -2,7 +2,6 @@
   const home = document.querySelector('#home');
   if (!home) return;
 
-  // Lager ska bara finnas i Mitt kök.
   document.querySelector('[data-open="inventory"]')?.remove();
   document.querySelector('#inventory')?.remove();
 
@@ -37,6 +36,23 @@
   }
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
 
+  // Frukost med olika sorters flingor läggs in direkt i receptbanken.
+  if(typeof recipes!=='undefined'&&!recipes.some(r=>r.id==='frukostflingor')){
+    recipes.push({id:'frukostflingor',name:'Frukost med flingor, fil eller yoghurt',emoji:'🥣',time:3,budget:'low',tags:['snabbt','vegetariskt','frukost'],ingredients:['fil, yoghurt eller mjölk','valfria flingor','frukt eller bär'],leftovers:[],plants:2,tip:'Välj den sort du tycker om. Lägg gärna till frukt eller bär om du har hemma.',steps:['Häll upp fil, yoghurt eller mjölk.','Välj flingor: cornflakes, havrefras, müsli, granola, havregryn eller en annan sort du tycker om.','Lägg gärna till frukt eller bär.']});
+  }
+  const breakfastChips=document.querySelector('#recipeBank .chips');
+  if(breakfastChips&&!breakfastChips.querySelector('[data-breakfast-direct]')){
+    const breakfastButton=document.createElement('button');
+    breakfastButton.type='button';
+    breakfastButton.dataset.breakfastDirect='1';
+    breakfastButton.textContent='Frukost';
+    breakfastButton.addEventListener('click',()=>{
+      if(typeof renderBank==='function') renderBank(recipes.filter(r=>(r.tags||[]).includes('frukost')));
+    });
+    breakfastChips.appendChild(breakfastButton);
+  }
+  if(typeof renderBank==='function') renderBank(recipes);
+
   function loadScript(src,onload){
     if(document.querySelector(`script[data-malix-addon="${src}"]`)) return;
     const script=document.createElement('script');
@@ -52,7 +68,6 @@
       if(!heading||typeof recipes==='undefined') return null;
       return recipes.find(r=>r.name===heading.textContent.trim())||null;
     }
-
     function ensureCookButton(){
       const detail=document.querySelector('#recipeDetail');
       const recipe=currentRecipe();
@@ -66,13 +81,10 @@
           alert('Mitt kök kunde inte nås. Ladda om sidan och försök igen.');
           return;
         }
-        if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`)){
-          window.malixCookRecipeFromKitchen(recipe);
-        }
+        if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`)) window.malixCookRecipeFromKitchen(recipe);
       });
       detail.appendChild(panel);
     }
-
     const detail=document.querySelector('#recipeDetail');
     if(detail){
       const observer=new MutationObserver(()=>queueMicrotask(ensureCookButton));
@@ -82,7 +94,6 @@
     ensureCookButton();
   });
 
-  // Dessa funktioner skapades tidigare men måste laddas av sidan för att synas.
   loadScript('food-preferences.js');
   loadScript('dashboard-cleanup.js');
 })();
