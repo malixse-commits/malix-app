@@ -4,7 +4,9 @@
   const pieceFoods=/ägg|banan|äpple|päron|apelsin|avokado|tomat|paprika|potatis/i;
   const breadFoods=/brödskiva|rostat bröd|knäckebröd|\bbröd\b|limpa/i;
   const defaults=[
-    [/kaviar/i,'15 g'],[/messmör/i,'15 g'],[/mjukost/i,'15 g'],[/färskost/i,'20 g'],[/leverpastej/i,'20 g'],[/hummus/i,'30 g'],[/jordnötssmör/i,'15 g'],[/marmelad|sylt|honung/i,'15 g'],[/brie/i,'30 g'],[/ostskiva/i,'1 skiva'],[/skinka|kalkon|salami/i,'30 g'],[/makrill/i,'60 g'],[/kvarg/i,'200 g'],[/mjölk|filmjölk|yoghurt/i,'200 ml'],[/juice/i,'200 ml'],[/ägg/i,'1 st'],[/banan|äpple|päron|apelsin/i,'1 st'],[/kyckling|köttfärs|\bkött\b|\bfisk\b|lax|torsk|sej|tofu|bönor|linser/i,'150 g']
+    [/kaviar/i,'15 g'],[/messmör/i,'15 g'],[/mjukost/i,'15 g'],[/färskost/i,'20 g'],[/leverpastej/i,'20 g'],[/hummus/i,'30 g'],[/jordnötssmör/i,'15 g'],[/marmelad|sylt|honung/i,'15 g'],[/brie/i,'30 g'],
+    [/ostskiva/i,'2 skivor'],[/skinka/i,'2 skivor'],[/kalkon/i,'2 skivor'],[/salami/i,'3 skivor'],[/makrill/i,'60 g'],
+    [/kvarg/i,'200 g'],[/mjölk|filmjölk|yoghurt/i,'200 ml'],[/juice/i,'200 ml'],[/ägg/i,'1 st'],[/banan|äpple|päron|apelsin/i,'1 st'],[/kyckling|köttfärs|\bkött\b|\bfisk\b|lax|torsk|sej|tofu|bönor|linser/i,'150 g']
   ];
   const originalPrompt=window.prompt.bind(window);
   window.prompt=(message,defaultValue)=>{
