@@ -47,6 +47,7 @@
 
   loadScript('smart-kitchen.js',()=>{
     loadScript('oil-stock-fix.js');
+    loadScript('bread-unit-fix.js');
     loadScript('meal-kitchen-sync.js',()=>loadScript('meal-stock-bridge.js'));
     function currentRecipe(){
       const heading=document.querySelector('#recipeDetail h2');
