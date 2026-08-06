@@ -82,4 +82,5 @@
   loadScript('food-preferences.js');
   loadScript('meal-log-polish.js');
   loadScript('dashboard-cleanup.js');
+  loadScript('movement-recovery.js');
 })();
