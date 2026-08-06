@@ -21,5 +21,5 @@
     loadScript('smart-week-plan.js');
     loadScript('tab-navigation.js');
   });
-  loadScript('food-preferences.js');loadScript('meal-log-polish.js');loadScript('dashboard-cleanup.js');loadScript('movement-recovery.js');
+  loadScript('food-preferences.js');loadScript('meal-log-polish.js');loadScript('dashboard-cleanup.js');loadScript('movement-recovery.js');loadScript('evening-reflection.js');
 })();
