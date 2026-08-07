@@ -11,23 +11,25 @@
     ingredients:[
       '500 g blandfärs',
       'tacokrydda',
-      'tortillabröd eller tacoskal',
-      'sallad',
+      'tacoskal',
+      'crème fraîche eller gräddfil',
       'tomat',
       'gurka',
+      'gul lök',
+      'sallad',
       'majs',
-      'riven ost',
+      'pepperoni',
       'tacosås',
-      'gräddfil eller crème fraiche'
+      'riven ost'
     ],
     leftovers:['tacofärs','grönsaker','riven ost'],
-    plants:5,
-    tip:'Ställ fram tillbehören var för sig så kan alla bygga sin egen taco. Det som blir över går bra att använda till tacotallrik, quesadillas eller lunch dagen efter.',
+    plants:6,
+    tip:'Ställ fram allt i små skålar så kan var och en bygga sin taco med de tillbehör den tycker om. Det som blir över kan bli tacotallrik eller lunch nästa dag.',
     steps:[
       'Bryn blandfärsen tills den är helt genomstekt.',
       'Tillsätt tacokrydda och den mängd vatten som behövs enligt kryddningen. Låt puttra några minuter.',
-      'Skär sallad, tomat och gurka och ställ fram majs, ost, tacosås och gräddfil.',
-      'Värm tortillabröd eller tacoskal och låt var och en fylla sin taco med det den tycker om.'
+      'Hacka tomat, gurka, lök och sallad. Ställ fram majs, pepperoni, tacosås, ost och crème fraîche eller gräddfil.',
+      'Värm tacoskalen och låt var och en fylla sin taco med det den tycker om.'
     ]
   });
   if (typeof renderRecipes === 'function') renderRecipes();
