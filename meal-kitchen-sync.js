@@ -2,7 +2,7 @@
   const KITCHEN_KEY='malix-smart-kitchen-v1';
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
   const aliases={
-    'ostskiva':['ost','ostskiva'], 'skinka':['skinka'], 'kalkon':['kalkon'], 'salami':['salami'], 'makrill i tomatsas':['makrill','makrill i tomatsas'],
+    'ostskiva':['ost','ostskiva'], 'brieost':['brieost','brie','brie ost'], 'brie':['brieost','brie','brie ost'], 'skinka':['skinka'], 'kalkon':['kalkon'], 'salami':['salami'], 'makrill i tomatsas':['makrill','makrill i tomatsas'],
     'brodskiva':['brod'], 'rostat brod':['brod'], 'knackebrod':['knackebrod','brod'],
     'filmjolk':['filmjolk','fil'], 'turkisk yoghurt':['turkisk yoghurt','yoghurt'], 'musli':['musli'],
     'cornflakes':['cornflakes'], 'havrefras':['havrefras'], 'granola':['granola'], 'agg':['agg'],
