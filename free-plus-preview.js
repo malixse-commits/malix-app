@@ -13,6 +13,7 @@
   function setPreview(plan){document.body.dataset.planPreview=plan;document.querySelectorAll('.plan-test').forEach(b=>b.classList.toggle('active',b.dataset.plan===plan));compare.querySelector('.plan-note').textContent=plan==='free'?'Gratisförhandsvisning: Plus-delarna tonas ned men är fortfarande öppna så att vi kan testa appen.':'Plusförhandsvisning: hela Mat-upplevelsen visas. Inget köp krävs i testversionen.'}
   compare.addEventListener('click',e=>{const b=e.target.closest('.plan-test');if(b)setPreview(b.dataset.plan)});
   function loadScript(src,onload){if(document.querySelector(`script[data-malix-addon="${src}"]`))return;const s=document.createElement('script');s.src=src;s.dataset.malixAddon=src;if(onload)s.onload=onload;document.body.appendChild(s)}
+  loadScript('taco-recipe.js');
   loadScript('smart-kitchen.js',()=>{
     loadScript('oil-stock-fix.js');loadScript('bread-unit-fix.js');loadScript('natural-food-units.js');loadScript('meal-kitchen-sync.js',()=>loadScript('meal-stock-bridge.js'));
     function currentRecipe(){const h=document.querySelector('#recipeDetail h2');if(!h||typeof recipes==='undefined')return null;return recipes.find(r=>r.name===h.textContent.trim())||null}
