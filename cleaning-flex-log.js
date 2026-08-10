@@ -1,0 +1,34 @@
+(() => {
+ const KEY='malix-cleaning-square-v2';
+ const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+ const save=s=>localStorage.setItem(KEY,JSON.stringify(s));
+ const dateKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+ const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ function weekDates(){const now=new Date(),day=now.getDay()||7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day+1);return Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d})}
+ function ensureState(){const s=load();s.activityLog=s.activityLog||{};return s}
+ function roomList(){const s=ensureState();return Object.keys(s.rooms||{}).length?Object.keys(s.rooms):['Kök','Sovrum','Badrum / toalett','Vardagsrum','Hall','Övrigt']}
+ function inject(){const clean=document.querySelector('#cleaning');if(!clean)return;
+   if(!clean.querySelector('#freeCleaningLog')){
+     const schedule=clean.querySelector('#cleanSchedule')?.closest('section.panel');
+     const section=document.createElement('section');section.id='freeCleaningLog';section.className='panel';section.style.marginTop='18px';
+     section.innerHTML=`<h3>✏️ Jag gjorde något annat idag</h3><p class="note">All städning behöver inte följa planen. Skriv det du faktiskt gjorde så kommer det med i veckans summering.</p><label>Vilket rum?<select id="freeCleanRoom"></select></label><label>Vad gjorde du?<textarea id="freeCleanText" rows="2" placeholder="t.ex. städade och möblerade om, tvättade fönster, rensade en låda"></textarea></label><button type="button" class="secondary" id="saveFreeClean">Spara det jag gjorde</button><p id="freeCleanSaved" class="status"></p>`;
+     (schedule||clean.querySelector('#cleanToday'))?.insertAdjacentElement('afterend',section);
+     fillRooms();section.querySelector('#saveFreeClean').onclick=saveEntry;
+   }
+   if(!clean.querySelector('#cleanWeekSummary')){
+     const history=clean.querySelector('#cleanReflectionHistory')?.closest('section.panel');
+     const section=document.createElement('section');section.id='cleanWeekSummary';section.className='panel';section.style.marginTop='18px';section.innerHTML='<h3>📊 Det här har jag gjort i veckan</h3><div id="cleanWeekSummaryBody"></div>';
+     history?.insertAdjacentElement('beforebegin',section);
+   }
+   fillRooms();renderSummary();renderAlreadyDone();
+ }
+ function fillRooms(){const sel=document.querySelector('#freeCleanRoom');if(!sel)return;const current=sel.value;sel.innerHTML=roomList().map(r=>`<option ${r===current?'selected':''}>${esc(r)}</option>`).join('')}
+ function saveEntry(){const room=document.querySelector('#freeCleanRoom')?.value,text=document.querySelector('#freeCleanText')?.value.trim();if(!room||!text)return;const s=ensureState(),key=dateKey(new Date());s.activityLog[key]=s.activityLog[key]||[];s.activityLog[key].push({room,text,createdAt:Date.now()});save(s);document.querySelector('#freeCleanText').value='';const msg=document.querySelector('#freeCleanSaved');if(msg)msg.textContent='Sparat ✓';renderSummary();renderAlreadyDone()}
+ function checkedForDate(s,key){return Object.entries(s.done?.[key]||{}).filter(([,v])=>v).map(([id])=>{const [room,...task]=id.split('::');return {room,task:task.join('::')}})}
+ function renderSummary(){const root=document.querySelector('#cleanWeekSummaryBody');if(!root)return;const s=ensureState(),dates=weekDates();let total=0,rooms=new Set(),extras=[];
+   const rows=dates.map(d=>{const key=dateKey(d),checked=checkedForDate(s,key),free=s.activityLog?.[key]||[];checked.forEach(x=>rooms.add(x.room));free.forEach(x=>{rooms.add(x.room);extras.push(x)});total+=checked.length+free.length;const things=[...checked.map(x=>x.task),...free.map(x=>x.text)];const weekday=d.toLocaleDateString('sv-SE',{weekday:'long'});return `<article class="recipe-card"><strong>${weekday.charAt(0).toUpperCase()+weekday.slice(1)}</strong>${things.length?`<ul>${things.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:'<p class="note">Inget registrerat.</p>'}</article>`}).join('');
+   root.innerHTML=`<p><strong>${rooms.size} rum · ${total} saker registrerade den här veckan</strong></p><p class="note">En sak i taget kan bli ganska mycket tillsammans.</p><div class="recipe-grid">${rows}</div>${extras.length?`<div class="panel calm" style="margin-top:14px"><strong>Extra den här veckan</strong><ul>${extras.map(x=>`<li>${esc(x.room)}: ${esc(x.text)}</li>`).join('')}</ul></div>`:''}`;
+ }
+ function renderAlreadyDone(){const today=document.querySelector('#cleanToday');if(!today)return;today.querySelector('[data-already-week]')?.remove();const heading=[...today.querySelectorAll('h3')].find(h=>h.textContent.startsWith('Idag:'));if(!heading)return;const room=heading.textContent.replace('Idag:','').trim(),s=ensureState(),dates=weekDates(),todayKey=dateKey(new Date()),items=[];dates.forEach(d=>{const key=dateKey(d);if(key===todayKey)return;(s.activityLog?.[key]||[]).filter(x=>x.room===room).forEach(x=>items.push(x.text));checkedForDate(s,key).filter(x=>x.room===room).forEach(x=>items.push(x.task))});if(!items.length)return;const box=document.createElement('section');box.dataset.alreadyWeek='1';box.className='panel calm';box.style.marginTop='14px';box.innerHTML=`<h3>✓ Redan gjort i ${esc(room)} den här veckan</h3><p class="note">Det här kan hjälpa dig att se vad du kanske inte behöver göra igen idag.</p><ul>${[...new Set(items)].map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;today.querySelector('section.panel')?.insertAdjacentElement('afterend',box)}
+ const obs=new MutationObserver(()=>{clearTimeout(window.__malixCleanFlexTimer);window.__malixCleanFlexTimer=setTimeout(inject,0)});obs.observe(document.body,{childList:true,subtree:true});inject();
+})();
