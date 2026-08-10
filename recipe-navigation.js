@@ -1,0 +1,197 @@
+(() => {
+  let returnView = 'recipeBank';
+  let currentRecipeId = null;
+  let currentServings = 4;
+
+  function esc(value='') {
+    return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function recipeById(id) {
+    return typeof recipes !== 'undefined' ? recipes.find(r => String(r.id) === String(id)) : null;
+  }
+
+  function sourceView() {
+    const active = document.querySelector('.view.active-view');
+    return active && active.id && active.id !== 'recipe' ? active.id : 'recipeBank';
+  }
+
+  function activeDateKey() {
+    if (window.malixSelectedDateKey) return window.malixSelectedDateKey;
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function addRecipeToDiary(recipe) {
+    const key = activeDateKey();
+    if (localStorage.getItem(`malix-day-finalized-${key}`) === 'true') {
+      alert('Den valda dagen är låst. Välj en öppen dag i Matöversikten först.');
+      return;
+    }
+    const meal = prompt('Vilken måltid ska receptet läggas till på?', 'Middag');
+    if (meal === null) return;
+    const allowed = ['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
+    const normalized = allowed.find(x => x.toLowerCase() === meal.trim().toLowerCase()) || 'Middag';
+    const portion = prompt('Hur mycket åt du?', '1 portion');
+    if (portion === null) return;
+    const meals = JSON.parse(localStorage.getItem('malix-meals') || '[]');
+    const date = new Date(`${key}T12:00:00`);
+    meals.unshift({meal: normalized, food: recipe.name, portion: portion.trim() || '1 portion', date: date.toISOString(), recipeId: recipe.id});
+    localStorage.setItem('malix-meals', JSON.stringify(meals.slice(0,500)));
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
+    alert(`${recipe.name} är tillagd som ${normalized.toLowerCase()} i matdagboken.`);
+  }
+
+  function scaleNumber(value, servings) {
+    const scaled = value * servings / 4;
+    if (scaled >= 10) return Math.round(scaled);
+    if (Math.abs(scaled - Math.round(scaled)) < 0.05) return Math.round(scaled);
+    return Math.round(scaled * 10) / 10;
+  }
+
+  function amountForIngredient(item, servings, recipe) {
+    const s = String(item).toLowerCase();
+    const amount = (n, unit) => `${scaleNumber(n, servings)} ${unit}`;
+    if (/salt|peppar|kanel|paprikapulver|spiskummin|curry|timjan|rosmarin|basilika|dragon|örter|chili|dill|persilja/.test(s)) return 'efter smak';
+    if (/citron|lime/.test(s)) return amount(1, 'st');
+    if (/vitlök/.test(s)) return amount(2, 'klyftor');
+    if (/gul lök|rödlök|purjolök/.test(s)) return amount(1, 'st');
+    if (/ägg/.test(s)) return amount(4, 'st');
+    if (/kyckling|köttfärs|grytkött|nötkött|fläsk|kebabkött|korv|skinka/.test(s)) return amount(500, 'g');
+    if (/lax|torsk|sej|vit fisk|fiskfilé|fiskburgare/.test(s)) return amount(500, 'g');
+    if (/räkor|musslor|tonfisk/.test(s)) return amount(400, 'g');
+    if (/pasta|spaghetti|makaron|nudlar|ris|bulgur|couscous/.test(s)) return amount(320, 'g torrvikt');
+    if (/lasagneplattor/.test(s)) return amount(250, 'g');
+    if (/potatis|rotfrukter/.test(s)) return amount(800, 'g');
+    if (/morot|broccoli|blomkål|vitkål|rödkål|spetskål|zucchini|aubergine|paprika|spenat|ärtor|majs|wokgrönsaker|grönsaker/.test(s)) return amount(300, 'g');
+    if (/tomat(?!puré)|tomater/.test(s)) return amount(4, 'st');
+    if (/krossade tomater/.test(s)) return amount(400, 'g');
+    if (/tomatpuré/.test(s)) return amount(2, 'msk');
+    if (/linser|bönor|kikärtor/.test(s)) return amount(400, 'g kokta');
+    if (/havregryn/.test(s)) return amount(4, 'dl');
+    if (/mjöl/.test(s)) return amount(2, 'dl');
+    if (/ströbröd/.test(s)) return amount(1, 'dl');
+    if (/mjölk|filmjölk/.test(s)) return amount(4, 'dl');
+    if (/grädde|kokosmjölk/.test(s)) return amount(3, 'dl');
+    if (/crème fraîche|yoghurt|kvarg|turkisk yoghurt/.test(s)) return amount(2, 'dl');
+    if (/ost|fetaost|mozzarella|parmesan/.test(s)) return amount(150, 'g');
+    if (/smör/.test(s)) return amount(25, 'g');
+    if (/olivolja|olja/.test(s)) return amount(1, 'msk');
+    if (/buljong/.test(s)) return amount((recipe.tags||[]).includes('soppa') ? 10 : 5, 'dl');
+    if (/bröd|tortilla|hamburgerbröd/.test(s)) return amount(4, 'portioner');
+    if (/banan|äpple|päron|apelsin|avokado/.test(s)) return amount(2, 'st');
+    if (/bär/.test(s)) return amount(4, 'dl');
+    if (/sallad/.test(s)) return amount(150, 'g');
+    if (/dressing|sås/.test(s)) return amount(2, 'dl');
+    return 'lagom mängd';
+  }
+
+  function overnightOatsIngredients(servings) {
+    return [
+      `${scaleNumber(1, servings)} dl havregryn`,
+      `${scaleNumber(1.5, servings)} dl mjölk eller annan dryck`,
+      `${scaleNumber(0.5, servings)} dl yoghurt eller kvarg`,
+      `${scaleNumber(1, servings)} dl bär eller frukt`,
+      'eventuellt kanel eller annan smaksättning'
+    ];
+  }
+
+  function ingredientLines(recipe, servings) {
+    if (/overnight oats/i.test(recipe.name)) return overnightOatsIngredients(servings);
+    return (recipe.ingredients || []).map(item => `${amountForIngredient(item, servings, recipe)} – ${item}`);
+  }
+
+  function nutritionProfile(recipe) {
+    const text = [recipe.name, ...(recipe.ingredients || []), ...(recipe.tags || [])].join(' ').toLowerCase();
+    let kcal = 450, protein = 20, fiber = 5;
+    if (/soppa/.test(text)) kcal -= 90;
+    if (/sallad/.test(text)) kcal -= 70;
+    if (/pasta|lasagne|gratäng|paj/.test(text)) kcal += 80;
+    if (/grädde|ost|fetaost|kokosmjölk/.test(text)) kcal += 60;
+    if (/friter|stekt/.test(text)) kcal += 70;
+    if (/kyckling|kött|köttfärs|lax|torsk|sej|fisk|räkor|musslor|tonfisk/.test(text)) protein += 10;
+    if (/ägg|bön|linser|kikärt|tofu|kvarg|yoghurt/.test(text)) protein += 5;
+    if (/bön|linser|kikärt|havre|fullkorn/.test(text)) fiber += 3;
+    if (/morot|broccoli|kål|paprika|spenat|ärtor|majs|tomat|gurka|zucchini|aubergine|rödbet|potatis/.test(text)) fiber += 2;
+    const nutrients = [];
+    if (/paprika|broccoli|kål|citron|lime|tomat|potatis/.test(text)) nutrients.push('vitamin C');
+    if (/morot|spenat|broccoli/.test(text)) nutrients.push('vitamin A/betakaroten');
+    if (/lax|makrill|fisk|ägg/.test(text)) nutrients.push('vitamin D');
+    if (/kött|köttfärs|lever|bön|linser|spenat/.test(text)) nutrients.push('järn');
+    if (/mjölk|yoghurt|kvarg|ost|fetaost/.test(text)) nutrients.push('kalcium');
+    if (/fisk|kött|ägg|mjölk|ost|yoghurt/.test(text)) nutrients.push('vitamin B12');
+    if (/lax|makrill/.test(text)) nutrients.push('omega-3');
+    if (/bön|linser|spenat|broccoli/.test(text)) nutrients.push('folat');
+    if (/potatis|banan|avokado/.test(text)) nutrients.push('kalium');
+    return {kcal: Math.max(200, Math.round(kcal/10)*10), protein: Math.max(5, protein), fiber: Math.max(2, fiber), nutrients:[...new Set(nutrients)].slice(0,6)};
+  }
+
+  function leftoverIdeas(recipe) {
+    const text = [recipe.name, ...(recipe.ingredients || []), ...(recipe.tags || [])].join(' ').toLowerCase();
+    if (text.includes('köttfärssås') || text.includes('bolognese')) return ['Soppa – låt lite köttfärssås ge smak och fyllighet.', 'Crêpes – fyll pannkakor med köttfärssås, tomat, lök och ost och gratinera med ost ovanpå.', 'Gratäng – använd såsen tillsammans med pasta eller potatis.', 'Varma smörgåsar – lite köttfärssås och ost blir en snabb ny måltid.'];
+    if (text.includes('pannkak')) return ['Crêpes – spara några pannkakor och fyll dem nästa dag.', 'Kvällsmys – servera kalla eller uppvärmda med det tillbehör du tycker om.', 'Frukost eller mellanmål – förvara kallt och använd nästa dag.'];
+    if (text.includes('potatis') || text.includes('potatismos')) return ['Potatisbullar – särskilt bra av överblivet mos.', 'Potatissoppa – använd kokt potatis eller mos som grund.', 'Stekt potatis eller pytt – kokt potatis är redan förberedd.', 'Potatissallad – ett enkelt sätt att använda kall kokt potatis.'];
+    if (text.includes('pasta') || text.includes('spaghetti') || text.includes('makaron')) return ['Soppa – lägg den kokta pastan i mot slutet.', 'Pastagratäng – blanda med sås, grönsaker och det du har hemma.', 'Pastasallad – kyl snabbt och använd kall nästa dag.'];
+    if (text.includes('ris')) return ['Stekt ris – använd kallt ris tillsammans med exempelvis ägg och grönsaker.', 'Rissallad – blanda med grönsaker och en enkel dressing.', 'Ny måltid – spara en portion som tillbehör nästa dag.'];
+    if (text.includes('kyckling')) return ['Wrap eller smörgås – skiva kall tillagad kyckling och komplettera med grönsaker.', 'Sallad – använd resterna kalla tillsammans med det du har hemma.', 'Gryta eller soppa – tillsätt den färdiga kycklingen mot slutet så den bara blir varm.'];
+    if (text.includes('gryta') || text.includes('soppa')) return ['Lunch nästa dag – många grytor och soppor passar bra att kyla snabbt och värma igen.', 'Frys en portion – märk med innehåll och datum för en dag när tiden eller orken är mindre.'];
+    return [];
+  }
+
+  function renderRecipe(recipe, servings=4) {
+    const detail = document.querySelector('#recipeDetail');
+    const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+    const tags = Array.isArray(recipe.tags) ? recipe.tags : [];
+    const reuse = leftoverIdeas(recipe);
+    const nutrition = nutritionProfile(recipe);
+    const ingredientHtml = ingredientLines(recipe, servings).map(item => `<li>${esc(item)}</li>`).join('');
+    detail.innerHTML = `
+      <article class="recipe-detail">
+        <div class="meta"><span class="badge">${esc(recipe.emoji || '🍽️')}</span><span class="badge">⏱️ ${esc(recipe.time || '–')} min</span><span class="badge">${recipe.budget === 'low' ? '💰 Billigt' : recipe.budget === 'mid' ? '💰💰 Mellan' : 'Pris varierar'}</span>${reuse.length ? '<span class="badge">♻️ Bra att laga extra</span>' : ''}</div>
+        <h2>${esc(recipe.name)}</h2>
+        <div class="panel calm" style="margin:14px 0">
+          <strong>Portioner</strong>
+          <div class="chips" id="servingButtons" style="margin-top:8px">${[1,2,4,6].map(n => `<button type="button" data-servings="${n}" class="${n===servings?'active':''}">${n} portion${n===1?'':'er'}</button>`).join('')}</div>
+        </div>
+        <div style="margin:14px 0"><button type="button" class="primary" id="addRecipeToDiary">📝 Lägg till i matdagboken</button></div>
+        ${recipe.tip ? `<p class="note"><strong>Malix tips:</strong> ${esc(recipe.tip)}</p>` : ''}
+        ${tags.length ? `<div class="chips">${tags.map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>` : ''}
+        <h3>Ingredienser – ${servings} portion${servings===1?'':'er'}</h3><ul class="ingredient-list">${ingredientHtml}</ul>
+        <h3>Gör så här</h3><ol class="steps">${steps.map(step => `<li>${esc(step)}</li>`).join('')}</ol>
+        <section class="panel" style="margin-top:18px"><h3>🥗 Ungefärlig näring per portion</h3><div class="dashboard-grid"><article class="summary-card"><span>⚡ Energi</span><strong>ca ${nutrition.kcal} kcal</strong></article><article class="summary-card"><span>🥩 Protein</span><strong>ca ${nutrition.protein} g</strong></article><article class="summary-card"><span>🥬 Fiber</span><strong>ca ${nutrition.fiber} g</strong></article></div><p><strong>Vitaminer/mineraler som rätten kan bidra med:</strong> ${nutrition.nutrients.length ? esc(nutrition.nutrients.join(', ')) : 'varierar beroende på råvaror och tillbehör'}.</p><p class="note">Näringsvärdena är uppskattningar för en normal portion och kan skilja sig beroende på märken, exakta mängder och tillagning. De är tänkta som vägledning, inte som exakta analysvärden.</p></section>
+        ${reuse.length ? `<section class="panel" style="margin-top:18px"><h3>♻️ Laga gärna extra – det kan bli något nytt</h3><p>Om du ändå lagar den här rätten kan en extra portion eller en del av tillbehöret göra nästa måltid enklare.</p><ul class="ingredient-list">${reuse.map(item => `<li>${esc(item)}</li>`).join('')}</ul><p class="note"><strong>Tänk på morgondagen:</strong> kyl rester som ska sparas så snart det är praktiskt möjligt och förvara dem kallt.</p></section>` : ''}
+        <section class="panel calm" style="margin-top:18px"><h3>Två sätt att tänka kring måltiden</h3><p><strong>🍽️ Som vanligt</strong> – laga och servera rätten som den är.</p><p><strong>🌿 Mer näring & mättnad</strong> – komplettera gärna med en tydlig proteinkälla om den saknas, mer grönsaker eller frukt och en fiberrik del som passar rätten.</p></section>
+      </article>`;
+    detail.querySelector('#addRecipeToDiary')?.addEventListener('click', () => addRecipeToDiary(recipe));
+    detail.querySelectorAll('[data-servings]').forEach(button => button.addEventListener('click', () => {
+      currentServings = Number(button.dataset.servings) || 4;
+      renderRecipe(recipe, currentServings);
+    }));
+  }
+
+  window.openRecipe = id => {
+    const recipe = recipeById(id);
+    const detail = document.querySelector('#recipeDetail');
+    if (!recipe || !detail) { alert('Receptet kunde inte öppnas.'); return; }
+    returnView = sourceView();
+    currentRecipeId = id;
+    currentServings = 4;
+    renderRecipe(recipe, currentServings);
+    if (typeof show === 'function') show('recipe');
+    else { document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === 'recipe')); window.scrollTo({top:0,behavior:'smooth'}); }
+  };
+
+  const back = document.querySelector('#recipe .back');
+  if (back) {
+    back.removeAttribute('data-open'); back.textContent = '← Tillbaka till förslagen';
+    back.addEventListener('click', () => { if (typeof show === 'function') show(returnView); else document.querySelectorAll('.view').forEach(v => v.classList.toggle('active-view', v.id === returnView)); });
+  }
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('button[onclick*="openRecipe"]');
+    if (!button) return;
+    const match = button.getAttribute('onclick')?.match(/openRecipe\(['"]([^'"]+)['"]\)/);
+    if (!match) return;
+    event.preventDefault(); event.stopPropagation(); window.openRecipe(match[1]);
+  }, true);
+})();
