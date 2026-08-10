@@ -8,4 +8,22 @@
   loadScript('taco-recipe.js');
   loadScript('smart-kitchen.js',()=>{loadScript('oil-stock-fix.js');loadScript('bread-unit-fix.js');loadScript('natural-food-units.js');loadScript('meal-kitchen-sync.js',()=>loadScript('meal-stock-bridge.js'));function currentRecipe(){const h=document.querySelector('#recipeDetail h2');if(!h||typeof recipes==='undefined')return null;return recipes.find(r=>r.name===h.textContent.trim())||null}function ensureCookButton(){const detail=document.querySelector('#recipeDetail'),recipe=currentRecipe();if(!detail||!recipe||detail.querySelector('[data-cook-from-kitchen]'))return;const panel=document.createElement('section');panel.className='panel calm';panel.style.marginTop='18px';panel.innerHTML=`<h3>🧊 Mitt kök</h3><p>När du faktiskt har lagat rätten kan appen räkna ner det du använde från kyl, frys och skafferi.</p><button type="button" class="primary" data-cook-from-kitchen>✓ Jag lagade detta</button>`;panel.querySelector('[data-cook-from-kitchen]').addEventListener('click',()=>{if(typeof window.malixCookRecipeFromKitchen!=='function'){alert('Mitt kök kunde inte nås. Ladda om sidan och försök igen.');return}if(confirm(`Markera ${recipe.name} som lagad? Det du använder räknas ner från Mitt kök.`))window.malixCookRecipeFromKitchen(recipe)});detail.appendChild(panel)}const detail=document.querySelector('#recipeDetail');if(detail){const observer=new MutationObserver(()=>queueMicrotask(ensureCookButton));observer.observe(detail,{childList:true,subtree:true})}document.addEventListener('click',()=>setTimeout(ensureCookButton,0),true);ensureCookButton();loadScript('smart-week-plan.js');loadScript('tab-navigation.js')});
   loadScript('food-preferences.js');loadScript('meal-log-polish.js',()=>{loadScript('takeaway-meals.js');loadScript('ready-made-foods.js')});loadScript('dashboard-cleanup.js');loadScript('movement-recovery.js');loadScript('evening-reflection.js',()=>loadScript('diary-history.js'));loadScript('cleaning-square.js');
+
+  // Direct fallback: keep Mitt hem visible even if the separate cleaning add-on fails.
+  const ensureCleaningFallback=()=>{
+    const grid=document.querySelector('#home .choice-grid');
+    if(grid&&!grid.querySelector('[data-open="cleaning"]')){
+      const b=document.createElement('button');b.type='button';b.className='choice-card';b.dataset.open='cleaning';b.innerHTML='<span>🧹</span><strong>Mitt hem</strong><small>Städa en sak, en fyrkant eller ett rum i taget.</small>';grid.appendChild(b);
+    }
+    if(!document.querySelector('#cleaning')){
+      const sec=document.createElement('section');sec.id='cleaning';sec.className='view';sec.innerHTML='<button type="button" class="back" data-cleaning-back>← Tillbaka</button><h2>🧹 Mitt hem – en sak i taget</h2><p class="note">Du behöver inte göra allt. Välj det som passar idag.</p><div class="panel calm"><h3>Vad orkar du idag?</h3><div class="chips"><button type="button">En liten sak</button><button type="button">En fyrkant</button><button type="button">Hela rummet</button></div></div><div class="panel"><h3>Städrummen laddas här</h3><p>Om du ser den här sidan fungerar nu själva fyrkanten. Därefter kopplar vi in rummen och dina egna städrader.</p></div>';
+      document.querySelector('main')?.appendChild(sec);
+    }
+  };
+  ensureCleaningFallback();
+  new MutationObserver(ensureCleaningFallback).observe(document.querySelector('#home'),{childList:true,subtree:true});
+  document.addEventListener('click',e=>{
+    if(e.target.closest('[data-open="cleaning"]')){e.preventDefault();document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));document.querySelector('#cleaning')?.classList.add('active-view');window.scrollTo({top:0,behavior:'smooth'});}
+    if(e.target.closest('[data-cleaning-back]')){e.preventDefault();document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));document.querySelector('#home')?.classList.add('active-view');window.scrollTo({top:0,behavior:'smooth'});}
+  },true);
 })();
