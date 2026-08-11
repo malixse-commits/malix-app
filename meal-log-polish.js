@@ -2,40 +2,11 @@
   const clean=s=>String(s||'').trim();
   const extraGrains=['Cornflakes','Havrefras','Granola','Glutenfri müsli','Glutenfria flingor','Glutenfria havregryn','Glutenfritt bröd','Glutenfritt knäckebröd'];
   const vegetables=['Morot','Broccoli','Blomkål','Vitkål','Rödkål','Spenat','Majs','Ärtor','Gröna bönor','Zucchini','Aubergine','Svamp','Gul lök','Purjolök'];
-  const fruits=['Kiwi','Vindruvor','Melon','Mango','Jordgubbar','Blåbär','Hallon'];
+  const fruits=['Banan','Äpple','Päron','Apelsin','Clementin','Mandarin','Kiwi','Vindruvor','Melon','Vattenmelon','Honungsmelon','Galiamelon','Mango','Ananas','Persika','Nektarin','Plommon','Grapefrukt','Granatäpple','Passionsfrukt','Papaya','Jordgubbar','Blåbär','Hallon','Björnbär','Vinbär'];
   const treats=['Glass','Chips','Popcorn','Jordnötter','Nötter/frön','Choklad','Godis','Kaka','Bulle'];
-  const defaultAmount=food=>/glass/i.test(food)?'1 dl':/chips|popcorn|jordnötter|nötter|choklad|godis/i.test(food)?'30 g':/kaka|bulle/i.test(food)?'1 st':/bär|jordgubbar|blåbär|hallon/i.test(food)?'1 dl':/morot|kiwi/i.test(food)?'1 st':'100 g';
-  function addToFreeText(food){
-    const form=document.querySelector('#mealForm');if(!form)return;
-    const q=prompt(`Hur mycket ${food.toLowerCase()}?`,defaultAmount(food));if(q===null)return;
-    const ta=form.querySelector('textarea[name="food"]');if(!ta)return;
-    const entry=`${food} (${q.trim()||defaultAmount(food)})`;
-    ta.value=ta.value.trim()?`${ta.value.trim()}, ${entry}`:entry;
-  }
-  function addButtons(target,labels,loggable=false){
-    const existing=new Set([...target.querySelectorAll('button')].map(b=>clean(b.textContent)));
-    labels.forEach(label=>{if(existing.has(label))return;const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;if(loggable)b.addEventListener('click',()=>addToFreeText(label));target.appendChild(b);});
-  }
-  function init(){
-    document.querySelector('#breakfastQuickChoices')?.remove();
-    const form=document.querySelector('#mealForm');if(!form||document.body.dataset.mealPolishReady==='1')return;
-    const container=form.parentElement;
-    const headings=[...container.querySelectorAll('h3,h4,strong,p,legend')];
-    const grainHeading=headings.find(x=>clean(x.textContent)==='Bröd & gryn');
-    if(grainHeading){const group=grainHeading.parentElement;addButtons(group.querySelector('.chips')||group,extraGrains,true);}
-    const fgHeading=headings.find(x=>clean(x.textContent)==='Frukt & grönt');
-    if(fgHeading){const group=fgHeading.parentElement;addButtons(group.querySelector('.chips')||group,[...vegetables,...fruits],true);}
-    const picker=container.querySelector('.meal-picker');
-    if(picker&&!picker.querySelector('[data-treats-group]')){
-      const group=document.createElement('section');group.dataset.treatsGroup='1';group.className='panel calm';group.style.margin='14px 0';
-      group.innerHTML='<h3>🍦 Något gott</h3><p class="note">Glass, chips, popcorn, nötter, choklad, godis eller fika kan också vara en del av dagen.</p><div class="chips"></div>';
-      addButtons(group.querySelector('.chips'),treats,true);
-      const selected=picker.querySelector('#selectedFoods')?.closest('.panel');
-      if(selected)selected.insertAdjacentElement('beforebegin',group);else picker.appendChild(group);
-    }
-    const labels=['Bröd & gryn','Mejeri','Pålägg','Frukt & grönt','Dryck'];
-    labels.forEach(label=>{const heading=[...container.querySelectorAll('h3,h4,strong,p,legend')].find(x=>clean(x.textContent)===label);if(!heading)return;const group=heading.parentElement,body=document.createElement('div');body.hidden=true;[...group.children].filter(x=>x!==heading).forEach(x=>body.appendChild(x));group.appendChild(body);heading.style.cursor='pointer';heading.tabIndex=0;heading.setAttribute('role','button');heading.textContent=label+' ▸';const toggle=()=>{body.hidden=!body.hidden;heading.textContent=label+(body.hidden?' ▸':' ▾');};heading.addEventListener('click',toggle);heading.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});});
-    document.body.dataset.mealPolishReady='1';
-  }
+  const defaultAmount=food=>/glass/i.test(food)?'1 dl':/chips|popcorn|jordnötter|nötter|choklad|godis/i.test(food)?'30 g':/kaka|bulle/i.test(food)?'1 st':/bär|jordgubbar|blåbär|hallon|björnbär|vinbär|vindruvor|melon|mango|ananas|papaya/i.test(food)?'100 g':/banan|äpple|päron|apelsin|clementin|mandarin|kiwi|persika|nektarin|plommon|grapefrukt|granatäpple|passionsfrukt|morot/i.test(food)?'1 st':'100 g';
+  function addToFreeText(food){const form=document.querySelector('#mealForm');if(!form)return;const q=prompt(`Hur mycket ${food.toLowerCase()}?`,defaultAmount(food));if(q===null)return;const ta=form.querySelector('textarea[name="food"]');if(!ta)return;const entry=`${food} (${q.trim()||defaultAmount(food)})`;ta.value=ta.value.trim()?`${ta.value.trim()}, ${entry}`:entry;}
+  function addButtons(target,labels,loggable=false){const existing=new Set([...target.querySelectorAll('button')].map(b=>clean(b.textContent)));labels.forEach(label=>{if(existing.has(label))return;const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;if(loggable)b.addEventListener('click',()=>addToFreeText(label));target.appendChild(b);});}
+  function init(){document.querySelector('#breakfastQuickChoices')?.remove();const form=document.querySelector('#mealForm');if(!form||document.body.dataset.mealPolishReady==='1')return;const container=form.parentElement;const headings=[...container.querySelectorAll('h3,h4,strong,p,legend')];const grainHeading=headings.find(x=>clean(x.textContent)==='Bröd & gryn');if(grainHeading){const group=grainHeading.parentElement;addButtons(group.querySelector('.chips')||group,extraGrains,true);}const fgHeading=headings.find(x=>clean(x.textContent)==='Frukt & grönt');if(fgHeading){const group=fgHeading.parentElement;addButtons(group.querySelector('.chips')||group,[...vegetables,...fruits],true);const fruitBox=document.createElement('div');fruitBox.className='panel calm';fruitBox.style.marginTop='12px';fruitBox.innerHTML='<strong>🍎 Frukt</strong><p class="note">Välj den frukt du åt. Färsk eller fryst går lika bra där det passar.</p><div class="chips"></div>';addButtons(fruitBox.querySelector('.chips'),fruits,true);group.appendChild(fruitBox);}const picker=container.querySelector('.meal-picker');if(picker&&!picker.querySelector('[data-treats-group]')){const group=document.createElement('section');group.dataset.treatsGroup='1';group.className='panel calm';group.style.margin='14px 0';group.innerHTML='<h3>🍦 Något gott</h3><p class="note">Glass, chips, popcorn, nötter, choklad, godis eller fika kan också vara en del av dagen.</p><div class="chips"></div>';addButtons(group.querySelector('.chips'),treats,true);const selected=picker.querySelector('#selectedFoods')?.closest('.panel');if(selected)selected.insertAdjacentElement('beforebegin',group);else picker.appendChild(group);}const labels=['Bröd & gryn','Mejeri','Pålägg','Frukt & grönt','Dryck'];labels.forEach(label=>{const heading=[...container.querySelectorAll('h3,h4,strong,p,legend')].find(x=>clean(x.textContent)===label);if(!heading)return;const group=heading.parentElement,body=document.createElement('div');body.hidden=true;[...group.children].filter(x=>x!==heading).forEach(x=>body.appendChild(x));group.appendChild(body);heading.style.cursor='pointer';heading.tabIndex=0;heading.setAttribute('role','button');heading.textContent=label+' ▸';const toggle=()=>{body.hidden=!body.hidden;heading.textContent=label+(body.hidden?' ▸':' ▾');};heading.addEventListener('click',toggle);heading.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});});document.body.dataset.mealPolishReady='1';}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
