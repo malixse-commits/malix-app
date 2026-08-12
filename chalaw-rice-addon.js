@@ -1,0 +1,6 @@
+(() => {
+ if(typeof recipes==='undefined')return;
+ if(!recipes.some(r=>r.id==='chalaw-afghanskt-ris'))recipes.push({id:'chalaw-afghanskt-ris',name:'Chalaw – afghanskt inspirerat ris',emoji:'🍚',time:35,budget:'low',tags:['vegetariskt','budget','tillbehör','grundrecept'],ingredients:['basmatiris','rikligt med vatten','salt'],leftovers:['ris'],tip:'Variera riset om du vill: gurkmeja ger färg och mild smak, curry ger tydligare kryddning. Du kan också prova lite spiskummin, kardemumma eller saffran. Kryddorna är variationer – de behövs inte för grundreceptet.',steps:['Skölj basmatiriset tills vattnet blir klarare.','Koka riset i rikligt med saltat vatten tills det är nästan färdigt.','Häll av vattnet ordentligt.','Lägg tillbaka riset i kastrullen och låt det ånga färdigt under lock på mycket låg värme eller med värmen avstängd.','Lufta försiktigt med en gaffel före servering.']});
+ const s=recipes.find(r=>/korvstroganoff/i.test(r.name||''));if(s){s.tip=(s.tip?s.tip+' ':'')+'Servera med vanligt ris, chalaw eller kryddat chalaw. Kryddat chalaw kan varieras med till exempel gurkmeja, curry, spiskummin, kardemumma eller saffran.';}
+ if(typeof renderRecipes==='function')renderRecipes();
+})();
