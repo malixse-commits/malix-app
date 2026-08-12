@@ -1,6 +1,5 @@
 (() => {
   const home = document.querySelector('#home'); if (!home) return;
-  document.querySelector('[data-open="inventory"]')?.remove();document.querySelector('#inventory')?.remove();
   const hero=home.querySelector('.hero-card');const compare=document.createElement('section');compare.className='panel plan-preview';compare.innerHTML=`<div class="plan-preview-head"><div><p class="eyebrow">Test av upplägget</p><h3>Välj hur mycket hjälp du vill ha</h3><p>Gratis ska fungera i vardagen. Plus ger mer planering, fler recept och smartare hjälp med rester, ekonomi och näring.</p></div><span class="badge">Inget är låst ännu</span></div><div class="plan-grid"><article class="plan-card"><span class="plan-label">GRATIS</span><h3>En sak i taget – Mat</h3><p class="plan-price">0 kr</p></article><article class="plan-card plus-card"><span class="plan-label">PLUS</span><h3>Mat Plus</h3><p class="plan-price">Pris bestäms senare</p></article></div>`;hero.insertAdjacentElement('afterend',compare);
   function loadScript(src,onload){if(document.querySelector(`script[data-malix-addon="${src}"]`))return;const s=document.createElement('script');s.src=src;s.dataset.malixAddon=src;if(onload)s.onload=onload;document.body.appendChild(s)}
   loadScript('taco-recipe.js');loadScript('tomato-sauce-addon.js');loadScript('chalaw-rice-addon.js');
