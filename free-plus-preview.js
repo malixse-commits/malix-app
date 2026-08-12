@@ -5,5 +5,5 @@
   loadScript('taco-recipe.js');loadScript('tomato-sauce-addon.js');loadScript('chalaw-rice-addon.js');
   loadScript('smart-kitchen.js',()=>{loadScript('oil-stock-fix.js');loadScript('bread-unit-fix.js');loadScript('natural-food-units.js');loadScript('meal-kitchen-sync.js',()=>loadScript('meal-stock-bridge.js'));loadScript('smart-week-plan.js');loadScript('tab-navigation.js');loadScript('cook-from-kitchen.js')});
   loadScript('food-preferences.js');loadScript('meal-log-polish.js',()=>{loadScript('takeaway-meals.js');loadScript('ready-made-foods.js')});loadScript('dashboard-cleanup.js');loadScript('movement-recovery.js');loadScript('evening-reflection.js',()=>loadScript('diary-history.js'));loadScript('cleaning-square.js',()=>loadScript('cleaning-flex-log.js'));
-  setTimeout(()=>loadScript('calm-navigation.js',()=>{loadScript('cleaning-tips.js');loadScript('self-care.js',()=>loadScript('presence-care.js'))}),250);
+  setTimeout(()=>loadScript('calm-navigation.js',()=>{loadScript('cleaning-tips.js');loadScript('self-care.js',()=>{loadScript('presence-care.js');loadScript('sleep-care.js')})}),250);
 })();
