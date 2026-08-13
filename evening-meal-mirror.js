@@ -1,16 +1,5 @@
 (()=>{
-  function setup(){
-    const form=document.querySelector('#mealForm');
-    const select=form?.querySelector('select[name="meal"]');
-    if(!form||!select)return;
-    const toggleExtras=()=>{
-      const show=select.value==='Lunch'||select.value==='Middag';
-      form.querySelector('[data-ready-foods]')?.toggleAttribute('hidden',!show);
-      form.querySelector('[data-takeaway-box]')?.toggleAttribute('hidden',!show);
-    };
-    select.addEventListener('change',toggleExtras);
-    toggleExtras();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});
-  else setup();
+ function mealExtras(){const form=document.querySelector('#mealForm'),select=form?.querySelector('select[name="meal"]');if(!form||!select)return;const t=()=>{const show=select.value==='Lunch'||select.value==='Middag';form.querySelector('[data-ready-foods]')?.toggleAttribute('hidden',!show);form.querySelector('[data-takeaway-box]')?.toggleAttribute('hidden',!show)};select.addEventListener('change',t);t()}
+ function care(){const KEY='malix-self-care-v1',load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}},save=a=>localStorage.setItem(KEY,JSON.stringify(a));['careTraining','careEveryday'].forEach(id=>{const sec=document.querySelector('#'+id);if(!sec||sec.dataset.fixed)return;const btn=sec.querySelector('[data-save-activity]');if(!btn)return;sec.dataset.fixed='1';btn.removeAttribute('data-save-activity');const box=document.createElement('div');box.innerHTML='<label>Hur länge?<input data-min type="number" min="1" placeholder="minuter"></label><label>Hur långt? <small>valfritt</small><input data-dist type="number" min="0" step="0.1" placeholder="t.ex. 3.5"></label><label>Enhet<select data-unit><option value="km">km</option><option value="m">meter</option></select></label><label>Hur kändes det?<select data-feel><option value="">Välj om du vill</option><option>Lätt</option><option>Lagom</option><option>Ansträngande</option><option>Skönt</option><option>Mer energi</option></select></label>';btn.before(box);sec.querySelectorAll('[data-activity]').forEach(b=>b.onclick=()=>{sec.dataset.chosen=b.dataset.activity||b.textContent.trim();sec.querySelectorAll('[data-activity]').forEach(x=>x.classList.toggle('selected',x===b))});btn.onclick=()=>{const status=sec.querySelector('[data-care-status]'),other=sec.querySelector('input[id$="Other"]')?.value.trim()||'',activity=other||sec.dataset.chosen||'',minutes=Number(sec.querySelector('[data-min]').value||0),distance=Number(sec.querySelector('[data-dist]').value||0),unit=sec.querySelector('[data-unit]').value,feeling=sec.querySelector('[data-feel]').value;if(!activity){status.textContent='Välj en aktivitet eller skriv vad du gjorde.';return}if(!minutes&&!distance){status.textContent='Fyll i hur länge eller hur långt.';return}const a=load(),type=id==='careTraining'?'🏃 Träning':'🚶 Vardagsrörelse';a.unshift({id:Date.now(),date:new Date().toISOString(),type,text:activity,minutes:minutes||null,distance:distance||null,unit,feeling,extra:[minutes?minutes+' min':'',distance?distance+' '+unit:'',feeling].filter(Boolean).join(' · ')});save(a);status.textContent='Sparat. Det du gjorde räknas.';sec.dataset.chosen='';sec.querySelectorAll('[data-activity]').forEach(x=>x.classList.remove('selected'))}})}
+ mealExtras();let n=0;const r=()=>{care();if(n++<20&&(!document.querySelector('#careTraining')||!document.querySelector('#careEveryday')))setTimeout(r,150)};r();
 })();
