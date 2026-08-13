@@ -1,1 +1,44 @@
-(()=>{})();
+(()=>{
+  const groups={
+    'Bröd & gryn':['Brödskiva','Knäckebröd','Rostat bröd','Müsli','Havregrynsgröt','Overnight oats'],
+    'Mejeri':['Mjölk','Filmjölk','Yoghurt','Kvarg','Turkisk yoghurt'],
+    'Pålägg':['Ostskiva','Ägg','Skinka','Kalkon','Brieost','Färskost','Kaviar','Leverpastej','Makrill i tomatsås','Salami','Mjukost','Messmör','Jordnötssmör','Marmelad','Lingonsylt','Jordgubbssylt','Hallonsylt','Blåbärssylt','Blandsylt','Honung','Avokado','Hummus'],
+    'Frukt & grönt':['Banan','Äpple','Päron','Apelsin','Bär','Tomat','Gurka','Paprika','Sallad','Avokado','Rödlök'],
+    'Dryck':['Kaffe','Te','Vatten','Juice']
+  };
+  function addFood(label){
+    const form=document.querySelector('#mealForm');
+    const ta=form?.querySelector('textarea[name="food"]');
+    if(!ta)return;
+    const amount=prompt(`Hur mycket ${label.toLowerCase()}?`,'1 portion');
+    if(amount===null)return;
+    const text=`${label} (${amount.trim()||'1 portion'})`;
+    ta.value=ta.value.trim()?`${ta.value.trim()}, ${text}`:text;
+  }
+  function init(){
+    const form=document.querySelector('#mealForm');
+    const select=form?.querySelector('select[name="meal"]');
+    if(!form||!select)return;
+    let box=document.querySelector('#eveningFullChoices');
+    if(!box){
+      box=document.createElement('section');
+      box.id='eveningFullChoices';
+      box.className='panel calm';
+      box.style.margin='14px 0';
+      box.innerHTML='<h3>🌙 Kvällsmål</h3><p class="note">Samma val som i frukosten.</p>';
+      Object.entries(groups).forEach(([title,items])=>{
+        const g=document.createElement('div');
+        g.innerHTML=`<h4>${title}</h4><div class="chips"></div>`;
+        items.forEach(item=>{
+          const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=item;
+          b.onclick=()=>addFood(item);g.querySelector('.chips').appendChild(b);
+        });
+        box.appendChild(g);
+      });
+      form.insertAdjacentElement('beforebegin',box);
+    }
+    const show=()=>box.hidden=select.value!=='Kvällsmål';
+    select.addEventListener('change',show);show();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
