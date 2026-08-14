@@ -1,6 +1,6 @@
 // Publik konfiguration för En sak i taget.
-// Fylls i när Supabase-projektet är skapat. Använd endast den publika anon-nyckeln här.
+// Endast Project URL och Supabase Publishable key används i webbläsaren.
 window.MALIX_CLOUD = window.MALIX_CLOUD || {
-  url: '',
-  anonKey: ''
+  url: 'https://ggkyemfzrckapkauvewa.supabase.co',
+  anonKey: 'sb_publishable_WUoN25UK3tmB2jLdGQsXJg_FThBP1Vs'
 };
