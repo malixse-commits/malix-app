@@ -1,0 +1,4 @@
+(()=>{
+ function fix(){const hub=document.querySelector('#kitchenHub');if(!hub)return setTimeout(fix,150);const buttons=[...hub.querySelectorAll('[data-calm-open]')];const b=buttons.find(x=>x.textContent.includes('Handlingslista'));if(!b)return;b.dataset.calmOpen='freeShoppingList';b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));document.querySelector('#freeShoppingList')?.classList.add('active-view');window.scrollTo({top:0,behavior:'auto'})},true)}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
+})();
