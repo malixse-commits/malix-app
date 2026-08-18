@@ -1,7 +1,5 @@
 (() => {
-  // Transitional bootstrap: this file is still referenced by index.html,
-  // but it no longer changes the UI or adds a PLUS preview panel.
-  // It only loads the active feature modules in one deterministic order.
+  // Central bootstrap. Den laddar aktiva moduler i bestämd ordning men bygger inget eget UI.
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -17,7 +15,7 @@
   }
 
   async function start() {
-    // Synk/data först. Fel här ska inte hindra den lokala appen från att fungera.
+    // Synkning får aldrig hindra den lokala appen.
     try {
       await loadScript('cloud-config.js');
       await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
@@ -26,22 +24,19 @@
       console.warn('Molnsynk kunde inte starta:', error);
     }
 
-    // Receptdata och köksfunktioner.
+    // Receptdata och PLUS-kök. smart-kitchen.js äger PLUS-vyn.
     for (const src of [
       'taco-recipe.js',
       'tomato-sauce-addon.js',
       'chalaw-rice-addon.js',
       'smart-kitchen.js',
-      'oil-stock-fix.js',
-      'bread-unit-fix.js',
-      'natural-food-units.js',
+      'fridge-check-routine.js',
       'meal-kitchen-sync.js',
       'meal-stock-bridge.js',
-      'smart-week-plan.js',
-      'cook-from-kitchen.js'
+      'smart-week-plan.js'
     ]) await loadScript(src);
 
-    // Matlogg. Dessa moduler kompletterar app.js men äger inte navigationen.
+    // Matlogg. Modulerna får komplettera data/formulär men inte bygga huvudnavigation.
     for (const src of [
       'food-preferences.js',
       'meal-log-polish.js',
@@ -60,10 +55,10 @@
       'diary-history.js'
     ]) await loadScript(src);
 
-    // Navigationen byggs en gång. Inga äldre tab-navigationer eller dashboard-fixar körs efteråt.
+    // En enda ägare av startsida och huvudnavigation.
     await loadScript('calm-navigation.js');
 
-    // Funktioner som får sina egna vyer under den fasta navigationen.
+    // Undervyer under den fasta navigationen.
     for (const src of [
       'cleaning-tips.js',
       'self-care.js',
