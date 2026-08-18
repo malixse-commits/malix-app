@@ -1,12 +1,80 @@
 (() => {
-  const home = document.querySelector('#home'); if (!home) return;
-  const hero=home.querySelector('.hero-card');const compare=document.createElement('section');compare.className='panel plan-preview';compare.innerHTML=`<div class="plan-preview-head"><div><p class="eyebrow">Test av upplägget</p><h3>Välj hur mycket hjälp du vill ha</h3><p>Gratis ska fungera i vardagen. Plus ger mer planering, fler recept och smartare hjälp med rester, ekonomi och näring.</p></div><span class="badge">Inget är låst ännu</span></div><div class="plan-grid"><article class="plan-card"><span class="plan-label">GRATIS</span><h3>En sak i taget – Mat</h3><p class="plan-price">0 kr</p></article><article class="plan-card plus-card"><span class="plan-label">PLUS</span><h3>Mat Plus</h3><p class="plan-price">Pris bestäms senare</p></article></div>`;hero.insertAdjacentElement('afterend',compare);
-  function loadScript(src,onload){if(document.querySelector(`script[data-malix-addon="${src}"]`))return;const s=document.createElement('script');s.src=src;s.dataset.malixAddon=src;if(onload)s.onload=onload;document.body.appendChild(s)}
+  // Transitional bootstrap: this file is still referenced by index.html,
+  // but it no longer changes the UI or adds a PLUS preview panel.
+  // It only loads the active feature modules in one deterministic order.
+  const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
-  loadScript('cloud-config.js',()=>loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',()=>loadScript('cloud-sync.js')));
+  function loadScript(src) {
+    if (loaded.has(src) || document.querySelector(`script[data-malix-module="${src}"]`)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.dataset.malixModule = src;
+      script.onload = () => { loaded.add(src); resolve(); };
+      script.onerror = () => reject(new Error(`Kunde inte ladda ${src}`));
+      document.body.appendChild(script);
+    });
+  }
 
-  loadScript('taco-recipe.js');loadScript('tomato-sauce-addon.js');loadScript('chalaw-rice-addon.js');
-  loadScript('smart-kitchen.js',()=>{loadScript('oil-stock-fix.js');loadScript('bread-unit-fix.js');loadScript('natural-food-units.js');loadScript('meal-kitchen-sync.js',()=>loadScript('meal-stock-bridge.js'));loadScript('smart-week-plan.js');loadScript('tab-navigation.js');loadScript('cook-from-kitchen.js')});
-  loadScript('food-preferences.js');loadScript('meal-log-polish.js',()=>{loadScript('breakfast-buffet.js');loadScript('takeaway-meals.js');loadScript('ready-made-foods.js');loadScript('evening-meal-mirror.js')});loadScript('food-day-lock.js');loadScript('dashboard-cleanup.js');loadScript('movement-recovery.js');loadScript('evening-reflection.js',()=>loadScript('diary-history.js'));loadScript('cleaning-square.js',()=>loadScript('cleaning-flex-log.js'));
-  setTimeout(()=>loadScript('calm-navigation.js',()=>{loadScript('cleaning-tips.js');loadScript('self-care.js',()=>{loadScript('presence-care.js',()=>loadScript('presence-done.js'));loadScript('sleep-care.js')});loadScript('my-time-mobile.js',()=>loadScript('my-day-summary.js'));loadScript('inner-compass.js')}),250);
+  async function start() {
+    // Synk/data först. Fel här ska inte hindra den lokala appen från att fungera.
+    try {
+      await loadScript('cloud-config.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+      await loadScript('cloud-sync.js');
+    } catch (error) {
+      console.warn('Molnsynk kunde inte starta:', error);
+    }
+
+    // Receptdata och köksfunktioner.
+    for (const src of [
+      'taco-recipe.js',
+      'tomato-sauce-addon.js',
+      'chalaw-rice-addon.js',
+      'smart-kitchen.js',
+      'oil-stock-fix.js',
+      'bread-unit-fix.js',
+      'natural-food-units.js',
+      'meal-kitchen-sync.js',
+      'meal-stock-bridge.js',
+      'smart-week-plan.js',
+      'cook-from-kitchen.js'
+    ]) await loadScript(src);
+
+    // Matlogg. Dessa moduler kompletterar app.js men äger inte navigationen.
+    for (const src of [
+      'food-preferences.js',
+      'meal-log-polish.js',
+      'breakfast-buffet.js',
+      'takeaway-meals.js',
+      'ready-made-foods.js',
+      'evening-meal-mirror.js',
+      'food-day-lock.js'
+    ]) await loadScript(src);
+
+    // Vardag och historik.
+    for (const src of [
+      'movement-recovery.js',
+      'cleaning-square.js',
+      'cleaning-flex-log.js',
+      'diary-history.js'
+    ]) await loadScript(src);
+
+    // Navigationen byggs en gång. Inga äldre tab-navigationer eller dashboard-fixar körs efteråt.
+    await loadScript('calm-navigation.js');
+
+    // Funktioner som får sina egna vyer under den fasta navigationen.
+    for (const src of [
+      'cleaning-tips.js',
+      'self-care.js',
+      'presence-care.js',
+      'presence-done.js',
+      'sleep-care.js',
+      'my-time-mobile.js',
+      'my-day-summary.js',
+      'inner-compass.js'
+    ]) await loadScript(src);
+  }
+
+  start().catch(error => console.error('Appens moduler kunde inte starta färdigt:', error));
 })();
