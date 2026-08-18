@@ -24,6 +24,6 @@
  const older=Object.values(s.reflections).sort((a,b)=>String(b.date).localeCompare(String(a.date))).filter(r=>r.date!==todayKey).slice(0,14);historyRoot.innerHTML=older.length?`<h3>Tidigare reflektioner</h3>${older.map(r=>`<article class="recipe-card"><strong>${esc(r.date)}</strong><p>${[esc(r.feeling),esc(r.energy)].filter(Boolean).join(' · ')||'Reflektion sparad'}</p>${r.extra?`<p><strong>Extra:</strong> ${esc(r.extra)}</p>`:''}${r.note?`<p><strong>Till nästa gång:</strong> ${esc(r.note)}</p>`:''}</article>`).join('')}`:''}
  function addRoom(){const input=document.querySelector('#newRoomName'),name=input?.value.trim();if(!name)return;const s=state();if(!s.rooms[name])s.rooms[name]={standard:[],custom:[]};save(s);input.value='';renderAll()}
  function renderAll(){renderSchedule();renderToday();renderHistory();const add=document.querySelector('#addRoom');if(add)add.onclick=addRoom}
- function wire(){document.addEventListener('click',e=>{if(e.target.closest('[data-open="cleaning"]')){e.preventDefault();buildView();renderAll();show('cleaning')}if(e.target.closest('[data-clean-home],[data-cleaning-back]')){e.preventDefault();show('home')}},true)}
+ function wire(){document.addEventListener('click',e=>{if(e.target.closest('[data-open="cleaning"]')){e.preventDefault();buildView();renderAll();show('cleaning')}if(e.target.closest('[data-clean-home],[data-cleaning-back]')){e.preventDefault();show('homeHub')}},true)}
  buildView();addHomeCard();renderAll();wire();
 })();
