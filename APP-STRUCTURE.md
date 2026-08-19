@@ -6,17 +6,18 @@ Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huv
 
 - `calm-navigation.js` äger startsidan, de fyra huvudfyrkanterna, matens mellanmenyer och den fria handlingslistan (`freeShoppingList`).
 - `my-time-mobile.js` äger Min tid, fyrkanter, låsning av dagar och följdtid runt röd tid.
-- `my-day-summary.js` äger Min dag och veckosammanfattningen inne i Min tid.
-- `inner-compass.js` äger Min inre kompass och dagens cirkelavstämningar. Den får inte lägga en extra huvudfyrkant på startsidan.
+- `my-day-summary.js` äger Min dag och veckosammanfattningen inne i Min tid. Egna dagsuppgifter från städningen ska visas med användarens text, aldrig med interna id:n.
+- `inner-compass.js` äger Min inre kompass och Dagens kompass. Den får inte lägga en extra huvudfyrkant på startsidan.
 - `self-care.js` äger Ta hand om mig och dess lugna mellanmeny.
-- `calendar-v2.js` äger kalenderpresentationen och läser poster från Min tid.
-- `recipe-navigation.js` äger receptdetaljen, kopplingen till matdagboken och recept → fri handlingslista.
-- `recipes-malix.js` samlar de nyare Malix-recepten och mindre recepttilläggen i en enda modul.
+- `recipes-malix.js` samlar nyare Malix-recept och vardagsrecept.
+- `desserts-malix.js` samlar efterrätter och klassiska enkla efterrätter.
+- `recipe-category-dessert.js` lägger den synliga efterrättskategorin i receptbanken.
 - `recipes-extra.js` och `recipes-more.js` innehåller äldre större receptsamlingar och laddas direkt från `index.html` tills de senare kan konsolideras säkert.
 - `recipe-serving-suggestions.js` äger serveringsförslag, variationer och smaklyft som visas i receptdetaljen.
 - `smart-kitchen.js` äger PLUS-funktionen för kyl, frys och skafferi samt den interna PLUS-listan. Den ska inte äga den fria handlingslistan och får inte lägga kort på startsidan.
 - `meal-kitchen-sync.js` och `meal-stock-bridge.js` får uppdatera PLUS-data när mat loggas men ska inte bygga PLUS-vyn.
-- `cleaning-square.js` äger de tre huvudvägarna i Mitt hem och Fyrkantstäd-reflektionen.
+- `cleaning-square.js` äger de tre huvudvägarna i Mitt hem, dagens egna uppgifter och Fyrkantstäd-reflektionen.
+- `cleaning-flex-log.js` äger fri städlogg, veckosummering och samlad städhistorik.
 - `app.js` är grundmotorn för mat och receptdata och ska inte bygga om huvudnavigationen.
 - `free-plus-preview.js` är bootstrapen. Trots det gamla filnamnet får den bara ladda aktiva moduler i bestämd ordning och aldrig bygga UI.
 
@@ -34,11 +35,12 @@ Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huv
 10. Funktioner ska kommunicera med events eller tydliga `window.malix...`-API:er i stället för att skriva om en annan moduls HTML.
 11. Undvik globala överskrivningar av webbläsarfunktioner som `window.prompt`.
 12. En huvudmodul ska inte hämtas från en gammal commit via RawGitHack. Den aktiva branchens fil är källan.
-13. Nya Malix-recept läggs i `recipes-malix.js` i stället för att skapa en ny fil per recept.
+13. Nya Malix-recept läggs i `recipes-malix.js`; efterrätter läggs i `desserts-malix.js`. Skapa inte en ny fil per recept.
+14. Veckan samlad är historisk överblick och ska bevaras. En framtida sida för Mina mönster ska läsa samma data i stället för att flytta eller duplicera historiken.
 
 ## Upprensning genomförd
 
-- Den gamla `free-plus-preview.js`-logiken är en deterministisk bootstrap och bygger inget eget UI.
+- `free-plus-preview.js` är en deterministisk bootstrap och bygger inget eget UI.
 - `smart-kitchen.js` innehåller sin aktiva PLUS-kod direkt och hämtar inte längre en gammal version från en äldre commit.
 - Gratis handlingslista och PLUS-lista har separata vyer och id:n: `freeShoppingList` respektive `plusShoppingList`.
 - PLUS-köket lägger inte längre till ett eget kort på startsidan.
@@ -46,9 +48,11 @@ Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huv
 - `meal-stock-bridge.js` skriver inte längre över `window.prompt` globalt.
 - De gamla och oanvända filerna `oil-stock-fix.js`, `bread-unit-fix.js`, `natural-food-units.js`, `cook-from-kitchen.js`, `delete-meals.js`, `evening-same-as-breakfast.js`, `meal-dedupe.js` och `meal-shortcuts.js` är borttagna.
 - De små receptfilerna `taco-recipe.js`, `tomato-sauce-addon.js`, `chalaw-rice-addon.js`, `popup-bread-recipe.js`, `pasta-and-leftovers-recipes.js` och `pancake-oven-omelette-recipes.js` är samlade i `recipes-malix.js` och därefter borttagna.
-- Bootstrapen laddar nu en tydligt grupperad lista av aktiva moduler: synkning, recept/kök, matlogg, hem/historik, huvudnavigation och undervyer.
+- De oanvända äldre modulerna `calendar-v2.js`, `finder-v2.js`, `low-energy-v2.js`, `v2-dashboard.js` och `recipe-navigation.js` är borttagna efter kontroll att de inte längre ingår i den aktiva laddningskedjan.
+- `my-day-summary.js` översätter nu interna id:n för dagens egna städuppgifter till den text användaren faktiskt skrev.
+- Bootstrapen laddar en grupperad lista av aktiva moduler: synkning, recept/kök, matlogg, hem/historik, huvudnavigation och undervyer.
 - Den dubbla bottennavigationen `tab-navigation.js`, `dashboard-cleanup.js`, `evening-reflection.js` och den gamla `my-time.js`-platshållaren är sedan tidigare borttagna.
 
 ## Nästa möjliga städpass
 
-Nästa större städning bör göras först efter användartest. Kandidater är att slå ihop äldre receptsamlingar (`recipes-extra.js` och `recipes-more.js`) och att byta det historiska filnamnet `free-plus-preview.js` till ett tydligare bootstrap-namn. Det ska göras separat eftersom båda ändringarna påverkar många beroenden.
+Nästa större städning bör göras separat efter fortsatt användning. Kandidater är att konsolidera äldre receptsamlingar (`recipes-extra.js` och `recipes-more.js`) och att byta det historiska filnamnet `free-plus-preview.js` till ett tydligare bootstrap-namn. Båda påverkar många beroenden och ska därför inte blandas ihop med vardagliga funktionsändringar.
