@@ -28,6 +28,7 @@
     await loadGroup([
       'recipes-malix.js',
       'desserts-malix.js',
+      'recipe-category-dessert.js',
       'recipe-serving-suggestions.js',
       'smart-kitchen.js',
       'fridge-check-routine.js',
