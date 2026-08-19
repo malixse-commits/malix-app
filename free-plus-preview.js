@@ -29,6 +29,7 @@
       'taco-recipe.js',
       'tomato-sauce-addon.js',
       'chalaw-rice-addon.js',
+      'popup-bread-recipe.js',
       'recipe-serving-suggestions.js',
       'smart-kitchen.js',
       'fridge-check-routine.js',
