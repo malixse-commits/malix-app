@@ -18,16 +18,16 @@
   }
 
   async function start() {
-    // Synkning. Ett fel här får inte hindra den lokala appen.
     try {
       await loadGroup(['cloud-config.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','cloud-sync.js']);
     } catch (error) {
       console.warn('Molnsynk kunde inte starta:', error);
     }
 
-    // Recept och kök. recipes-malix.js samlar de mindre Malix-receptfilerna.
+    // Recept och kök. Malix-recept och efterrätter hålls i tydliga receptmoduler.
     await loadGroup([
       'recipes-malix.js',
+      'desserts-malix.js',
       'recipe-serving-suggestions.js',
       'smart-kitchen.js',
       'fridge-check-routine.js',
@@ -36,40 +36,19 @@
       'smart-week-plan.js'
     ]);
 
-    // Matlogg och matval.
     await loadGroup([
-      'food-preferences.js',
-      'meal-log-polish.js',
-      'breakfast-buffet.js',
-      'takeaway-meals.js',
-      'ready-made-foods.js',
-      'evening-meal-mirror.js',
-      'food-day-lock.js'
+      'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js'
     ]);
 
-    // Hem och historik.
     await loadGroup([
-      'movement-recovery.js',
-      'cleaning-square.js',
-      'cleaning-reflection-history-edit.js',
-      'cleaning-flex-log.js',
-      'diary-history.js'
+      'movement-recovery.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
     ]);
 
-    // Huvudnavigationen byggs en gång, sedan visas appen.
     await loadScript('calm-navigation.js');
     await loadScript('calm-ready.js');
 
-    // Undervyer som hör till den fasta navigationen.
     await loadGroup([
-      'cleaning-tips.js',
-      'self-care.js',
-      'presence-care.js',
-      'presence-done.js',
-      'sleep-care.js',
-      'my-time-mobile.js',
-      'my-day-summary.js',
-      'inner-compass.js'
+      'cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js'
     ]);
   }
 
