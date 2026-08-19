@@ -51,6 +51,7 @@
     for (const src of [
       'movement-recovery.js',
       'cleaning-square.js',
+      'cleaning-reflection-history-edit.js',
       'cleaning-flex-log.js',
       'diary-history.js'
     ]) await loadScript(src);
