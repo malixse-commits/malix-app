@@ -11,7 +11,7 @@
   async function start() {
     try { await loadScript('cloud-config.js'); await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await loadScript('cloud-sync.js'); }
     catch (error) { console.warn('Molnsynk kunde inte starta:', error); }
-    for (const src of ['taco-recipe.js','tomato-sauce-addon.js','chalaw-rice-addon.js','popup-bread-recipe.js','pasta-and-leftovers-recipes.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-kitchen-sync.js','meal-stock-bridge.js','smart-week-plan.js']) await loadScript(src);
+    for (const src of ['taco-recipe.js','tomato-sauce-addon.js','chalaw-rice-addon.js','popup-bread-recipe.js','pasta-and-leftovers-recipes.js','pancake-oven-omelette-recipes.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-kitchen-sync.js','meal-stock-bridge.js','smart-week-plan.js']) await loadScript(src);
     for (const src of ['food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js']) await loadScript(src);
     for (const src of ['movement-recovery.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js']) await loadScript(src);
     await loadScript('calm-navigation.js');
