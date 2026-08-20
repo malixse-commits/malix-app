@@ -24,7 +24,7 @@
   }
   function formatAmount(a){if(a.u==='ml'&&a.n>=1000)return `${Math.round(a.n/10)/100} l`;if(a.u==='g'&&a.n>=1000)return `${Math.round(a.n/10)/100} kg`;if(a.u==='slice')return `${Math.max(0,Math.round(a.n*100)/100)} skivor`;return `${Math.max(0,Math.round(a.n*100)/100)} ${a.u}`.trim()}
   function load(){try{const s=JSON.parse(localStorage.getItem(KITCHEN_KEY)||'{}');return {stock:Array.isArray(s.stock)?s.stock:[],shopping:Array.isArray(s.shopping)?s.shopping:[]}}catch{return {stock:[],shopping:[]}}}
-  function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s))}
+  function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s));document.dispatchEvent(new CustomEvent('malix-smart-kitchen-updated'))}
   function matches(stockName,food){const sn=norm(stockName),fn=norm(food),candidates=aliases[fn]||[fn];return candidates.some(a=>{const an=norm(a);return sn===an||sn.includes(an)||an.includes(sn)})}
   function convert(food,have,used){
     if(have.u===used.u)return used;
@@ -34,6 +34,9 @@
     if(have.u==='st'&&used.u==='slice'&&/brodskiva|rostat brod|knackebrod/.test(f))return {n:used.n,u:'st'};
     return null;
   }
+  function addDepletedToShopping(item){
+    if(window.malixShoppingList?.add)window.malixShoppingList.add([item],'Tog slut i kyl, frys eller skafferi');
+  }
   function deduct(items){
     const st=load();if(!st.stock.length||!items.length)return {changed:false,items:[]};let changed=false;const results=[];
     items.forEach(({food,quantity})=>{
@@ -42,7 +45,11 @@
       if(raw.u==='portion'||raw.u==='portioner'||!raw.u){results.push(`${food}: ange vikt eller tydlig mängd`);return}
       const used=convert(food,have,raw);if(!used){results.push(`${food}: ${stock.amount} kan inte jämföras med ${quantity}`);return}
       const remain=Math.max(0,have.n-used.n);stock.amount=formatAmount({n:remain,u:have.u});changed=true;results.push(`${food}: ${formatAmount(used)} använt, ${stock.amount} kvar`);
-      if(remain<=0){st.shopping.push({id:Date.now()+Math.random(),item:stock.item,done:false,source:'Tog slut när måltiden loggades',category:'🥫 Skafferi & övrigt'});st.stock=st.stock.filter(x=>x.id!==stock.id)}
+      if(remain<=0){
+        if(!st.shopping.some(x=>!x.done&&norm(x.item)===norm(stock.item)))st.shopping.push({id:Date.now()+Math.random(),item:stock.item,done:false,source:'Tog slut när måltiden loggades',category:'🥫 Skafferi & övrigt'});
+        addDepletedToShopping(stock.item);
+        st.stock=st.stock.filter(x=>x.id!==stock.id);
+      }
     });
     if(changed){save(st);window.malixRenderSmartKitchen?.()}return {changed,items:results};
   }
