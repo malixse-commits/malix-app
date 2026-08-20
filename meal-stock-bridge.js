@@ -1,5 +1,6 @@
 (() => {
   const KITCHEN_KEY='malix-smart-kitchen-v1';
+  const MEALS_KEY='malix-meals';
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9åäö ]/gi,' ').replace(/\s+/g,' ').trim();
   const aliases={brodskiva:['brod'],'rostat brod':['brod'],'knackebrod':['knackebrod','brod'],'ostskiva':['ost'],'filmjolk':['filmjolk','fil'],'turkisk yoghurt':['turkisk yoghurt','yoghurt'],'kyckling':['kyckling','kycklingfile'],'fisk':['fisk','lax','torsk','sej'],'kottfars':['kottfars','fars'],'kott':['kott'],'makrill i tomatsas':['makrill']};
   const optional=/^(eventuellt|gärna|valfri|valfria|rikligt|lite)\b/i;
@@ -25,12 +26,24 @@
     return true;
   }
   function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(inStock(st.stock,food))return;if(addShopping(st,food,`Behövs till ${String(mealType||'måltid').toLowerCase()}${quantity?` · ${quantity}`:''}`))added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
+  function mealTypeNow(date=new Date()){const h=date.getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
+  function saveRecipeAsMeal(recipe){
+    let meals=[];try{const parsed=JSON.parse(localStorage.getItem(MEALS_KEY)||'[]');meals=Array.isArray(parsed)?parsed:[]}catch{}
+    const now=new Date(),duplicate=meals.find(m=>String(m.recipeId||'')===String(recipe.id)&&Math.abs(now.getTime()-new Date(m.date).getTime())<5*60*1000);
+    if(duplicate)return {added:false,meal:duplicate.meal||'måltid'};
+    const meal=mealTypeNow(now);
+    meals.unshift({meal,food:recipe.name,portion:'',taste:'',satiety:'',recipeId:recipe.id,source:'recept',date:now.toISOString()});
+    localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,100)));
+    document.dispatchEvent(new CustomEvent('malix-meals-updated'));
+    window.malixRenderToday?.();
+    return {added:true,meal};
+  }
 
   function simplifyRecipeView(){
     const root=document.querySelector('#recipeDetail');if(!root)return;
     const headings=[...root.querySelectorAll('h3')];
     const cookedHeading=headings.find(h=>h.textContent.trim()==='När maten är lagad');
-    if(cookedHeading){const p=cookedHeading.nextElementSibling;const text='När du har lagat maten uppdateras det du har hemma och det som saknas läggs i inköpslistan.';if(p&&p.tagName==='P'&&p.textContent!==text)p.textContent=text}
+    if(cookedHeading){const p=cookedHeading.nextElementSibling;const text='När du har lagat maten sparas maträtten i Min mat idag. Receptets kända mängder dras från det du har hemma, och sådant som tar slut går till handlingslistan.';if(p&&p.tagName==='P'&&p.textContent!==text)p.textContent=text}
     const nutritionHeading=headings.find(h=>h.textContent.trim()==='Vad får jag med mig?');
     if(nutritionHeading){const next=nutritionHeading.nextElementSibling;if(next&&next.classList.contains('note'))next.remove();nutritionHeading.remove()}
   }
@@ -38,6 +51,7 @@
   function recipeList(){return typeof recipes!=='undefined'?recipes:[]}
   window.markRecipeCooked=id=>{
     const recipe=recipeList().find(x=>String(x.id)===String(id));if(!recipe)return;
+    const mealResult=saveRecipeAsMeal(recipe);
     const st=load(),deduct=[];let added=0;
     (recipe.ingredients||[]).map(parseIngredient).filter(x=>!x.optional&&x.food).forEach(ing=>{
       const stock=findStock(st.stock,ing.food);
@@ -50,7 +64,13 @@
     const cooked=JSON.parse(localStorage.getItem('malix-cooked-recipes')||'[]');cooked.unshift({recipeId:recipe.id,name:recipe.name,date:new Date().toISOString()});localStorage.setItem('malix-cooked-recipes',JSON.stringify(cooked.slice(0,100)));
     window.malixRenderSmartKitchen?.();
     const status=document.querySelector('#recipeCookStatus');
-    if(status){let msg='Lagat ✓';if(changed)msg+=' Receptets mängder har dragits från det du har hemma.';if(added)msg+=` ${added} sak${added===1?'':'er'} som saknades lades i inköpslistan.`;if(!changed&&!added)msg+=' Det du har hemma och inköpslistan är kontrollerade.';status.textContent=msg}
+    if(status){
+      let msg=mealResult.added?`Sparat i Min mat idag som ${mealResult.meal} ✓`:`Finns redan i Min mat idag som ${mealResult.meal}.`;
+      if(changed)msg+=' Receptets kända mängder har dragits från det du har hemma.';
+      if(added)msg+=` ${added} sak${added===1?'':'er'} som saknades lades i PLUS-listan.`;
+      if(!changed&&!added)msg+=' Det du har hemma är kontrollerat.';
+      status.textContent=msg;
+    }
   };
 
   document.addEventListener('submit',event=>{
