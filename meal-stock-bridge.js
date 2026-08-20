@@ -42,13 +42,7 @@
     (recipe.ingredients||[]).map(parseIngredient).filter(x=>!x.optional&&x.food).forEach(ing=>{
       const stock=findStock(st.stock,ing.food);
       if(!stock){if(addShopping(st,ing.food,`Saknas till ${recipe.name}`))added++;return}
-      let quantity=ing.quantity;
-      if(!quantity){
-        const answer=prompt(`Hur mycket ${stock.item} använde du? Ange t.ex. 200 g, 2 st eller 1 dl. Du kan lämna tomt om du inte vill ändra mängden.`,'');
-        if(answer===null||!answer.trim())return;
-        quantity=answer.trim();
-      }
-      deduct.push({food:ing.food,quantity});
+      if(ing.quantity)deduct.push({food:ing.food,quantity:ing.quantity});
     });
     save(st);
     let changed=false;
@@ -56,7 +50,7 @@
     const cooked=JSON.parse(localStorage.getItem('malix-cooked-recipes')||'[]');cooked.unshift({recipeId:recipe.id,name:recipe.name,date:new Date().toISOString()});localStorage.setItem('malix-cooked-recipes',JSON.stringify(cooked.slice(0,100)));
     window.malixRenderSmartKitchen?.();
     const status=document.querySelector('#recipeCookStatus');
-    if(status){let msg='Lagat ✓';if(changed)msg+=' Det du använde har dragits från det du har hemma.';if(added)msg+=` ${added} sak${added===1?'':'er'} som saknades lades i inköpslistan.`;if(!changed&&!added)msg+=' Inköpslistan och det du har hemma är kontrollerade.';status.textContent=msg}
+    if(status){let msg='Lagat ✓';if(changed)msg+=' Receptets mängder har dragits från det du har hemma.';if(added)msg+=` ${added} sak${added===1?'':'er'} som saknades lades i inköpslistan.`;if(!changed&&!added)msg+=' Det du har hemma och inköpslistan är kontrollerade.';status.textContent=msg}
   };
 
   document.addEventListener('submit',event=>{
