@@ -30,7 +30,7 @@
     const root=document.querySelector('#recipeDetail');if(!root)return;
     const headings=[...root.querySelectorAll('h3')];
     const cookedHeading=headings.find(h=>h.textContent.trim()==='När maten är lagad');
-    if(cookedHeading){const p=cookedHeading.nextElementSibling;if(p&&p.tagName==='P')p.textContent='När du har lagat maten uppdateras det du har hemma och det som saknas läggs i inköpslistan.'}
+    if(cookedHeading){const p=cookedHeading.nextElementSibling;const text='När du har lagat maten uppdateras det du har hemma och det som saknas läggs i inköpslistan.';if(p&&p.tagName==='P'&&p.textContent!==text)p.textContent=text}
     const nutritionHeading=headings.find(h=>h.textContent.trim()==='Vad får jag med mig?');
     if(nutritionHeading){const next=nutritionHeading.nextElementSibling;if(next&&next.classList.contains('note'))next.remove();nutritionHeading.remove()}
   }
