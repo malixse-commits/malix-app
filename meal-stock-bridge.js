@@ -32,9 +32,10 @@
     const now=new Date(),duplicate=meals.find(m=>String(m.recipeId||'')===String(recipe.id)&&Math.abs(now.getTime()-new Date(m.date).getTime())<5*60*1000);
     if(duplicate)return {added:false,meal:duplicate.meal||'måltid'};
     const meal=mealTypeNow(now);
-    meals.unshift({meal,food:recipe.name,portion:'',taste:'',satiety:'',recipeId:recipe.id,source:'recept',date:now.toISOString()});
+    meals.unshift({meal,food:recipe.name,portion:'1 portion',taste:'',satiety:'',recipeId:recipe.id,source:'recept',date:now.toISOString()});
     localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,100)));
     document.dispatchEvent(new CustomEvent('malix-meals-updated'));
+    document.dispatchEvent(new CustomEvent('malix-day-changed'));
     window.malixRenderToday?.();
     return {added:true,meal};
   }
@@ -42,8 +43,14 @@
   function simplifyRecipeView(){
     const root=document.querySelector('#recipeDetail');if(!root)return;
     const headings=[...root.querySelectorAll('h3')];
-    const cookedHeading=headings.find(h=>h.textContent.trim()==='När maten är lagad');
-    if(cookedHeading){const p=cookedHeading.nextElementSibling;const text='När du har lagat maten sparas maträtten i Min mat idag. Receptets kända mängder dras från det du har hemma, och sådant som tar slut går till handlingslistan.';if(p&&p.tagName==='P'&&p.textContent!==text)p.textContent=text}
+    const cookedHeading=headings.find(h=>['När maten är lagad','När du har ätit'].includes(h.textContent.trim()));
+    if(cookedHeading){
+      cookedHeading.textContent='När du har ätit';
+      const p=cookedHeading.nextElementSibling;
+      const text='Tryck här när du har ätit maträtten. Då sparas den i Min mat idag. Kända mängder dras från det du har hemma, och sådant som tar slut går till handlingslistan.';
+      if(p&&p.tagName==='P'&&p.textContent!==text)p.textContent=text;
+      const button=root.querySelector('button[onclick*="markRecipeCooked"]');if(button)button.textContent='✓ Jag åt detta';
+    }
     const nutritionHeading=headings.find(h=>h.textContent.trim()==='Vad får jag med mig?');
     if(nutritionHeading){const next=nutritionHeading.nextElementSibling;if(next&&next.classList.contains('note'))next.remove();nutritionHeading.remove()}
   }
@@ -89,6 +96,6 @@
   },true);
 
   const root=document.querySelector('#recipeDetail');if(root)new MutationObserver(simplifyRecipeView).observe(root,{childList:true,subtree:true});
-  document.addEventListener('click',e=>{if(e.target.closest('[data-open-recipe], [data-plus-open]'))setTimeout(simplifyRecipeView,0)},true);
+  document.addEventListener('click',e=>{if(e.target.closest('[data-open-recipe], [data-plus-open], .recipe-card'))setTimeout(simplifyRecipeView,0)},true);
   setTimeout(simplifyRecipeView,0);
 })();
