@@ -9,13 +9,26 @@
   function inStock(stock,food){const fn=norm(food),cands=aliases[fn]||[fn];return stock.some(x=>{const sn=norm(x.item);return cands.some(c=>{const cn=norm(c);return sn===cn||sn.includes(cn)||cn.includes(sn)})})}
   function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Behövs till planerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Planerat'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
   function mealTypeNow(){const h=new Date().getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
-  function saveCookedRecipeToMeals(id){
+  function chooseMealType(){
+    const choices=['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
+    const numbers={'1':'Frukost','2':'Lunch','3':'Middag','4':'Mellanmål','5':'Kvällsmål'};
+    const names={frukost:'Frukost',lunch:'Lunch',middag:'Middag',mellanmal:'Mellanmål',kvallsmal:'Kvällsmål'};
+    while(true){
+      const answer=window.prompt('Vilken måltid gäller receptet?\n1 Frukost\n2 Lunch\n3 Middag\n4 Mellanmål\n5 Kvällsmål',mealTypeNow());
+      if(answer===null)return null;
+      const clean=norm(answer);
+      const chosen=numbers[clean]||names[clean]||choices.find(x=>norm(x)===clean);
+      if(chosen)return chosen;
+      window.alert('Välj Frukost, Lunch, Middag, Mellanmål eller Kvällsmål.');
+    }
+  }
+  function saveCookedRecipeToMeals(id,mealType){
     const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;
     if(!recipe)return false;
     let meals=[];try{const parsed=JSON.parse(localStorage.getItem(MEALS_KEY)||'[]');meals=Array.isArray(parsed)?parsed:[]}catch{}
     const today=new Date(),dayKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const duplicate=meals.some(m=>String(m.recipeId||'')===String(recipe.id)&&m.date&&dayKey(new Date(m.date))===dayKey(today));
-    if(!duplicate){meals.unshift({meal:mealTypeNow(),food:recipe.name,portion:'1 portion',taste:'',satiety:'',recipeId:recipe.id,source:'receptbank',date:today.toISOString()});localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,500)))}
+    if(!duplicate){meals.unshift({meal:mealType,food:recipe.name,portion:'1 portion',taste:'',satiety:'',recipeId:recipe.id,source:'receptbank',date:today.toISOString()});localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,500)))}
     document.dispatchEvent(new CustomEvent('malix-meals-updated'));
     document.dispatchEvent(new CustomEvent('malix-day-changed'));
     window.renderMeals?.();
@@ -47,8 +60,10 @@
   const originalMarkRecipeCooked=window.markRecipeCooked;
   if(typeof originalMarkRecipeCooked==='function'){
     window.markRecipeCooked=id=>{
+      const mealType=chooseMealType();
+      if(!mealType)return;
       originalMarkRecipeCooked(id);
-      saveCookedRecipeToMeals(id);
+      saveCookedRecipeToMeals(id,mealType);
       setTimeout(openFoodToday,50);
     };
   }
