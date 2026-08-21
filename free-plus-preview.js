@@ -42,7 +42,7 @@
     ]);
 
     await loadGroup([
-      'movement-recovery.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
+      'movement-recovery.js','cleaning-room-data.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
     ]);
 
     await loadScript('calm-navigation.js');
