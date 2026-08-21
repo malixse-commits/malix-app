@@ -44,16 +44,6 @@
       }
     },0);
   },true);
-  const originalOpenRecipe=window.openRecipe;
-  if(typeof originalOpenRecipe==='function'&&!originalOpenRecipe.__malixPlusMissing){
-    const openRecipeWithPlusMissing=id=>{
-      const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;
-      if(recipe&&typeof window.malixAddRecipeMissingToPlusShopping==='function')window.malixAddRecipeMissingToPlusShopping(recipe);
-      return originalOpenRecipe(id);
-    };
-    openRecipeWithPlusMissing.__malixPlusMissing=true;
-    window.openRecipe=openRecipeWithPlusMissing;
-  }
   const originalMarkRecipeCooked=window.markRecipeCooked;
   if(typeof originalMarkRecipeCooked==='function'){
     window.markRecipeCooked=id=>{
