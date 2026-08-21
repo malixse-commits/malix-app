@@ -36,11 +36,12 @@
   }
 
   function openWithIdeas(id) {
-    originalOpenRecipe(id);
+    const recipe = recipes.find(r => String(r.id) === String(id));
+    if (!recipe) return;
+    originalOpenRecipe(recipe.id);
     showRecipeView();
-    const recipe = recipes.find(r => r.id === id);
     const detail = document.querySelector('#recipeDetail .recipe-detail');
-    if (!recipe || !detail) return;
+    if (!detail) return;
     const stepsHeading = [...detail.querySelectorAll('h3')].find(h => h.textContent.trim() === 'En sak i taget');
     const insert = (title, text, attr) => {
       if (!text || detail.querySelector(`[${attr}]`)) return;
@@ -58,4 +59,30 @@
   }
   openWithIdeas.__malixRecipeIdeas = true;
   window.openRecipe = openWithIdeas;
+
+  function recipeIdFromCard(card) {
+    const explicit = card.querySelector('[data-open-recipe],[data-plus-open]');
+    if (explicit) return explicit.dataset.openRecipe || explicit.dataset.plusOpen || '';
+    const inline = card.querySelector('button[onclick*="openRecipe"]')?.getAttribute('onclick') || '';
+    const match = inline.match(/openRecipe\(['"]([^'"]+)['"]\)/);
+    if (match) return match[1];
+    const name = card.querySelector('h3')?.textContent?.trim() || '';
+    const normalized = name.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    return recipes.find(r => r.name === name || r.name === normalized)?.id || '';
+  }
+
+  document.addEventListener('click', event => {
+    const card = event.target.closest('#recipeBankResults .recipe-card, #ingredientResults .recipe-card, #leftoverResults .recipe-card, #suggestions .recipe-card, #lowEnergyResults .recipe-card');
+    if (!card) return;
+
+    const explicitOtherAction = event.target.closest('[data-plus-missing],[data-free-shop-delete],[data-free-shop-check],[data-recipe-shopping],button[onclick*="markRecipeCooked"]');
+    if (explicitOtherAction) return;
+
+    const id = recipeIdFromCard(card);
+    if (!id) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openWithIdeas(id);
+  }, true);
 })();
