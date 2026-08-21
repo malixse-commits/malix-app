@@ -16,6 +16,9 @@
     const mealSelect=form.querySelector('select[name="meal"]');
     if(!mealSelect)return;
     const mealLabel=mealSelect.closest('label');
+    const style=document.createElement('style');
+    style.textContent='#mealForm:not([data-selected-meal]) > :not(#mealTypeFirstStep):not(#mealRecipeChoice){display:none !important;}';
+    document.head.appendChild(style);
     const chooser=document.createElement('section');
     chooser.id='mealTypeFirstStep';
     chooser.className='panel calm';
@@ -30,19 +33,15 @@
     recipeBox.innerHTML='<h3>📖 Vill du välja en maträtt från receptbanken?</h3><p class="note">Receptbanken är ett av sätten att logga lunch eller middag. Appen kommer ihåg vilken måltid du valde.</p><button type="button" class="primary" id="mealOpenRecipeBank">Välj från receptbanken</button>';
     chooser.insertAdjacentElement('afterend',recipeBox);
 
-    const originalChildren=[...form.children].filter(el=>el!==chooser&&el!==recipeBox&&el!==mealLabel);
-    const setVisible=chosen=>originalChildren.forEach(el=>{el.hidden=!chosen});
-    setVisible(false);
-
     function choose(type){
       mealSelect.value=type;
       mealSelect.dispatchEvent(new Event('change',{bubbles:true}));
       sessionStorage.setItem('malix-selected-meal-type',type);
       form.dataset.selectedMeal=type;
+      if(mealLabel)mealLabel.hidden=true;
       chooser.querySelector('#mealFirstChosen').textContent=`Du loggar: ${type}`;
       chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.classList.toggle('active',b.dataset.mealFirst===type));
       recipeBox.hidden=!['Lunch','Middag'].includes(type);
-      setVisible(true);
     }
 
     chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.mealFirst)));
@@ -54,12 +53,12 @@
     });
 
     form.addEventListener('reset',()=>setTimeout(()=>{
-      form.dataset.selectedMeal='';
+      form.removeAttribute('data-selected-meal');
       sessionStorage.removeItem('malix-selected-meal-type');
       chooser.querySelector('#mealFirstChosen').textContent='';
       chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.classList.remove('active'));
       recipeBox.hidden=true;
-      setVisible(false);
+      if(mealLabel)mealLabel.hidden=true;
     },0));
   }
   function init(){document.querySelector('#breakfastQuickChoices')?.remove();const form=document.querySelector('#mealForm');if(!form)return;setupMealFirst(form);const container=form.parentElement;if(document.querySelector('[data-fruit-group]'))return;const headings=[...container.querySelectorAll('h3,h4,strong,p,legend')];const grainHeading=headings.find(x=>clean(x.textContent)==='Bröd & gryn');if(grainHeading)addButtons(grainHeading.parentElement.querySelector('.chips')||grainHeading.parentElement,extraGrains);
