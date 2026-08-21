@@ -19,14 +19,14 @@
     recipe.parmesanTip = 'Lite parmesan på toppen kan ge extra smak till många pastarätter. Ta så mycket eller lite du tycker passar.';
   });
 
-  const originalOpenRecipe = window.openRecipe;
-  if (typeof originalOpenRecipe !== 'function' || originalOpenRecipe.__malixRecipeIdeas) return;
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
   function showRecipeView() {
     document.querySelectorAll('main > .view').forEach(view => view.classList.remove('active-view'));
     const recipeView = document.querySelector('main > #recipe');
-    if (recipeView) recipeView.classList.add('active-view');
-    const back = recipeView?.querySelector('.back');
+    if (!recipeView) return;
+    recipeView.classList.add('active-view');
+    const back = recipeView.querySelector('.back');
     if (back) {
       back.setAttribute('data-nav-back', 'recipeBank');
       back.removeAttribute('data-open');
@@ -35,54 +35,77 @@
     window.scrollTo({top:0, behavior:'smooth'});
   }
 
-  function openWithIdeas(id) {
-    const recipe = recipes.find(r => String(r.id) === String(id));
-    if (!recipe) return;
-    originalOpenRecipe(recipe.id);
-    showRecipeView();
-    const detail = document.querySelector('#recipeDetail .recipe-detail');
-    if (!detail) return;
-    const stepsHeading = [...detail.querySelectorAll('h3')].find(h => h.textContent.trim() === 'En sak i taget');
-    const insert = (title, text, attr) => {
-      if (!text || detail.querySelector(`[${attr}]`)) return;
-      const box = document.createElement('section');
-      box.className = 'panel calm';
-      box.setAttribute(attr, 'true');
-      box.innerHTML = `<h3>${title}</h3><p>${text}</p>`;
-      if (stepsHeading) detail.insertBefore(box, stepsHeading); else detail.appendChild(box);
-    };
-    insert('🍚 Vad kan jag ha till?', recipe.serving, 'data-serving-suggestion');
-    insert('🔄 Du kan byta eller använda det du har', recipe.swaps, 'data-recipe-swaps');
-    insert('✨ Lite Jamie-känsla', recipe.flavourLift, 'data-flavour-lift');
-    insert('🇮🇹 Malix-tips', recipe.malixItalyTip, 'data-malix-italy');
-    insert('🧀 Parmesan?', recipe.parmesanTip, 'data-parmesan-tip');
+  function ideaBox(title, text, attr) {
+    if (!text) return '';
+    return `<section class="panel calm" ${attr}="true"><h3>${title}</h3><p>${esc(text)}</p></section>`;
   }
-  openWithIdeas.__malixRecipeIdeas = true;
-  window.openRecipe = openWithIdeas;
+
+  function renderRecipe(id) {
+    const recipe = recipes.find(r => String(r.id) === String(id));
+    const root = document.querySelector('#recipeDetail');
+    if (!recipe || !root) return false;
+
+    const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+    const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+    const price = recipe.budget === 'low' ? '💰 Billigt' : recipe.budget === 'mid' || recipe.budget === 'medium' ? '💰💰 Mellan' : '💰💰 Mellan';
+
+    root.innerHTML = `<article class="recipe-detail">
+      <div class="meta"><span class="badge">${esc(recipe.emoji || '🍲')}</span><span class="badge">⏱️ ${esc(recipe.time || '?')} min</span><span class="badge">${price}</span></div>
+      <h2>${esc(recipe.name)}</h2>
+      <p class="lead">Receptet är en utgångspunkt. Anpassa mängd, smak och tillbehör efter det du har hemma och det som passar idag.</p>
+      <h3>Det här behöver du</h3>
+      <ul class="ingredient-list">${ingredients.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+      ${ideaBox('🍚 Vad kan jag ha till?', recipe.serving, 'data-serving-suggestion')}
+      ${ideaBox('🔄 Du kan byta eller använda det du har', recipe.swaps, 'data-recipe-swaps')}
+      ${ideaBox('✨ Lite Jamie-känsla', recipe.flavourLift, 'data-flavour-lift')}
+      ${ideaBox('🇮🇹 Malix-tips', recipe.malixItalyTip, 'data-malix-italy')}
+      ${ideaBox('🧀 Parmesan?', recipe.parmesanTip, 'data-parmesan-tip')}
+      <h3>En sak i taget</h3>
+      <ol class="steps">${steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      ${recipe.tip ? `<div class="panel calm"><strong>Malix tips</strong><p>${esc(recipe.tip)}</p></div>` : ''}
+      <div class="panel calm"><h3>När du har ätit</h3><p>Tryck här först när du faktiskt har ätit maträtten. Då kan den sparas i Min mat idag och köksfunktionerna uppdateras.</p><button class="primary" type="button" data-mark-recipe-cooked="${esc(recipe.id)}">✓ Jag åt detta</button><p id="recipeCookStatus" class="status" aria-live="polite"></p></div>
+    </article>`;
+
+    showRecipeView();
+    window.malixDecorateRecipeForPreferences?.();
+    return true;
+  }
+
+  window.openRecipe = renderRecipe;
 
   function recipeIdFromCard(card) {
-    const explicit = card.querySelector('[data-open-recipe],[data-plus-open]');
-    if (explicit) return explicit.dataset.openRecipe || explicit.dataset.plusOpen || '';
+    const explicit = card.querySelector('[data-open-recipe],[data-plus-open],[data-week-open]');
+    if (explicit) return explicit.dataset.openRecipe || explicit.dataset.plusOpen || explicit.dataset.weekOpen || '';
     const inline = card.querySelector('button[onclick*="openRecipe"]')?.getAttribute('onclick') || '';
     const match = inline.match(/openRecipe\(['"]([^'"]+)['"]\)/);
     if (match) return match[1];
-    const name = card.querySelector('h3')?.textContent?.trim() || '';
-    const normalized = name.replace(/^[^\p{L}\p{N}]+/u, '').trim();
-    return recipes.find(r => r.name === name || r.name === normalized)?.id || '';
+    const heading = card.querySelector('h3')?.textContent?.trim() || '';
+    const normalized = heading.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    return recipes.find(r => r.name === heading || r.name === normalized)?.id || '';
   }
 
   document.addEventListener('click', event => {
-    const card = event.target.closest('#recipeBankResults .recipe-card, #ingredientResults .recipe-card, #leftoverResults .recipe-card, #suggestions .recipe-card, #lowEnergyResults .recipe-card');
-    if (!card) return;
+    const cooked = event.target.closest('[data-mark-recipe-cooked]');
+    if (cooked) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.markRecipeCooked?.(cooked.dataset.markRecipeCooked);
+      return;
+    }
 
-    const explicitOtherAction = event.target.closest('[data-plus-missing],[data-free-shop-delete],[data-free-shop-check],[data-recipe-shopping],button[onclick*="markRecipeCooked"]');
-    if (explicitOtherAction) return;
+    const explicitOpen = event.target.closest('[data-open-recipe],[data-plus-open],[data-week-open],button[onclick*="openRecipe"]');
+    const card = event.target.closest('#recipeBankResults .recipe-card, #ingredientResults .recipe-card, #leftoverResults .recipe-card, #suggestions .recipe-card, #lowEnergyResults .recipe-card, #plusCookFromHome .recipe-card, #smartWeekGrid .recipe-card');
+    if (!explicitOpen && !card) return;
 
-    const id = recipeIdFromCard(card);
+    if (event.target.closest('[data-plus-missing],[data-free-shop-delete],[data-free-shop-check],[data-recipe-shopping],[data-plus-stock-remove],[data-plus-shop-remove]')) return;
+
+    const id = explicitOpen
+      ? explicitOpen.dataset.openRecipe || explicitOpen.dataset.plusOpen || explicitOpen.dataset.weekOpen || (explicitOpen.getAttribute('onclick') || '').match(/openRecipe\(['"]([^'"]+)['"]\)/)?.[1]
+      : recipeIdFromCard(card);
     if (!id) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    openWithIdeas(id);
+    renderRecipe(id);
   }, true);
 })();
