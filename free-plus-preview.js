@@ -33,9 +33,12 @@
     ]);
 
     // Matens tillägg laddas efter att startsidan redan är synlig och klickbar.
+    // Receptöppningen lämnas medvetet till app.js, samma grundlösning som i
+    // den tidigare fungerande food-v1-versionen. Ingen senare modul får
+    // skriva över openRecipe().
     await loadGroup([
       'recipes-malix.js','desserts-malix.js','recipe-category-dessert.js',
-      'recipe-serving-suggestions.js','food-preferences.js','meal-log-polish.js',
+      'food-preferences.js','meal-log-polish.js',
       'breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js',
       'evening-meal-mirror.js','food-day-lock.js'
     ]);
