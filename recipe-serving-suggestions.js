@@ -44,4 +44,17 @@
   }
   openWithIdeas.__malixRecipeIdeas = true;
   window.openRecipe = openWithIdeas;
+
+  // Receptbanken ska alltid öppna receptet. Vi fångar bara knappar som
+  // faktiskt är byggda för openRecipe och lämnar alla andra knappar orörda.
+  document.addEventListener('click', event => {
+    const button = event.target.closest('.recipe-card button');
+    if (!button) return;
+    const handler = button.getAttribute('onclick') || '';
+    const match = handler.match(/openRecipe\(['"]([^'"]+)['"]\)/);
+    if (!match) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.openRecipe(match[1]);
+  }, true);
 })();
