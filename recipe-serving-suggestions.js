@@ -25,6 +25,9 @@
   function openWithIdeas(id) {
     originalOpenRecipe(id);
     const recipe = recipes.find(r => r.id === id);
+    if (recipe && typeof window.malixAddRecipeMissingToPlusShopping === 'function') {
+      window.malixAddRecipeMissingToPlusShopping(recipe);
+    }
     const detail = document.querySelector('#recipeDetail .recipe-detail');
     if (!recipe || !detail) return;
     const stepsHeading = [...detail.querySelectorAll('h3')].find(h => h.textContent.trim() === 'En sak i taget');
