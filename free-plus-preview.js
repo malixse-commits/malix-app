@@ -24,7 +24,7 @@
       console.warn('Molnsynk kunde inte starta:', error);
     }
 
-    // Återställd ordning från den version där receptvyn fungerade.
+    // Recept och kök. Malix-recept och efterrätter hålls i tydliga receptmoduler.
     await loadGroup([
       'recipes-malix.js',
       'desserts-malix.js',
@@ -41,9 +41,8 @@
       'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js'
     ]);
 
-    // Dagens städdata-normalisering behålls, men övrig ordning följer gårdagens fungerande app.
     await loadGroup([
-      'movement-recovery.js','cleaning-room-data.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
+      'movement-recovery.js','cleaning-square.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
     ]);
 
     await loadScript('calm-navigation.js');
