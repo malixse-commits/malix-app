@@ -7,15 +7,7 @@
   const treats=['Glass','Chips','Popcorn','Jordnötter','Nötter/frön','Choklad','Godis','Kaka','Bulle'];
   const mealTypes=[['Frukost','🌅'],['Lunch','🥗'],['Middag','🍽️'],['Mellanmål','🍎'],['Kvällsmål','🌙']];
   const defaultAmount=food=>/glass/i.test(food)?'1 dl':/chips|popcorn|jordnötter|nötter|choklad|godis/i.test(food)?'30 g':/kaka|bulle/i.test(food)?'1 st':/jordgubbar|blåbär|hallon|björnbär|vinbär|vindruvor|melon|mango|ananas|papaya/i.test(food)?'100 g':/banan|äpple|päron|apelsin|clementin|mandarin|kiwi|persika|nektarin|plommon|grapefrukt|granatäpple|passionsfrukt|morot/i.test(food)?'1 st':'100 g';
-  function rememberStructuredFood(food,quantity){
-    const form=document.querySelector('#mealForm');if(!form)return;
-    let items=[];try{items=JSON.parse(form.dataset.extraFoods||'[]');if(!Array.isArray(items))items=[]}catch{items=[]}
-    const key=String(food||'').trim().toLowerCase();
-    const existing=items.find(x=>String(x.food||'').trim().toLowerCase()===key);
-    if(existing)existing.quantity=quantity;else items.push({food,quantity});
-    form.dataset.extraFoods=JSON.stringify(items);
-  }
-  function addToFreeText(food){const form=document.querySelector('#mealForm');if(!form)return;const q=prompt(`Hur mycket ${food.toLowerCase()}?`,defaultAmount(food));if(q===null)return;const quantity=q.trim()||defaultAmount(food);const ta=form.querySelector('textarea[name="food"]');if(!ta)return;const entry=`${food} (${quantity})`;ta.value=ta.value.trim()?`${ta.value.trim()}, ${entry}`:entry;ta.dispatchEvent(new Event('input',{bubbles:true}));rememberStructuredFood(food,quantity);}
+  function addToFreeText(food){const form=document.querySelector('#mealForm');if(!form)return;const q=prompt(`Hur mycket ${food.toLowerCase()}?`,defaultAmount(food));if(q===null)return;const quantity=q.trim()||defaultAmount(food);const ta=form.querySelector('textarea[name="food"]');if(!ta)return;const entry=`${food} (${quantity})`;ta.value=ta.value.trim()?`${ta.value.trim()}, ${entry}`:entry;ta.dispatchEvent(new Event('input',{bubbles:true}));}
   function addButtons(target,labels){const existing=new Set([...target.querySelectorAll('button')].map(b=>clean(b.textContent)));labels.forEach(label=>{if(existing.has(label))return;const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.dataset.foodChoice=label;b.addEventListener('click',()=>addToFreeText(label));target.appendChild(b);});}
   function makeCollapsible(group,label){if(!group||group.dataset.simpleCollapse==='1')return;group.dataset.simpleCollapse='1';const heading=[...group.children].find(x=>['H3','H4','STRONG','P','LEGEND'].includes(x.tagName));if(!heading)return;const body=document.createElement('div');[...group.children].filter(x=>x!==heading).forEach(x=>body.appendChild(x));body.hidden=true;group.appendChild(body);heading.style.cursor='pointer';heading.tabIndex=0;heading.setAttribute('role','button');const set=()=>heading.textContent=label+(body.hidden?' ▸':' ▾');const toggle=()=>{body.hidden=!body.hidden;set()};set();heading.addEventListener('click',toggle);heading.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});}
   function setupMealFirst(form){
@@ -62,7 +54,6 @@
 
     form.addEventListener('reset',()=>setTimeout(()=>{
       form.removeAttribute('data-selected-meal');
-      delete form.dataset.extraFoods;
       sessionStorage.removeItem('malix-selected-meal-type');
       chooser.querySelector('#mealFirstChosen').textContent='';
       chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.classList.remove('active'));
