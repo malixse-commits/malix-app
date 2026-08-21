@@ -5,7 +5,10 @@
   const aliases={brodskiva:['brod'],'rostat brod':['brod'],'knackebrod':['knackebrod','brod'],'ostskiva':['ost'],'filmjolk':['filmjolk','fil'],'turkisk yoghurt':['turkisk yoghurt','yoghurt'],'kyckling':['kyckling','kycklingfile'],'fisk':['fisk','lax','torsk','sej'],'kottfars':['kottfars','fars'],'kott':['kott'],'makrill i tomatsas':['makrill']};
   function selectedItems(){
     const items=[...document.querySelectorAll('#selectedFoods [data-remove]')].map(b=>{const t=(b.textContent||'').replace(/\s*×\s*$/,'').trim(),m=t.match(/^(.*?):\s*(.+)$/);return m?{food:m[1].trim(),quantity:m[2].trim()}:null}).filter(Boolean);
-    const text=document.querySelector('#mealForm textarea[name="food"]')?.value||'';
+    const form=document.querySelector('#mealForm');
+    let extra=[];try{extra=JSON.parse(form?.dataset.extraFoods||'[]');if(!Array.isArray(extra))extra=[]}catch{extra=[]}
+    extra.forEach(x=>{if(x?.food&&!items.some(i=>norm(i.food)===norm(x.food)))items.push({food:x.food,quantity:x.quantity||'1 portion'})});
+    const text=form?.querySelector('textarea[name="food"]')?.value||'';
     text.split(',').map(x=>x.trim()).filter(Boolean).forEach(entry=>{
       let food=entry,quantity='1 portion';
       const m=entry.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
