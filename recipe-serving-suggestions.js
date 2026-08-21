@@ -22,8 +22,22 @@
   const originalOpenRecipe = window.openRecipe;
   if (typeof originalOpenRecipe !== 'function' || originalOpenRecipe.__malixRecipeIdeas) return;
 
+  function showRecipeView() {
+    document.querySelectorAll('main > .view').forEach(view => view.classList.remove('active-view'));
+    const recipeView = document.querySelector('main > #recipe');
+    if (recipeView) recipeView.classList.add('active-view');
+    const back = recipeView?.querySelector('.back');
+    if (back) {
+      back.setAttribute('data-nav-back', 'recipeBank');
+      back.removeAttribute('data-open');
+      back.textContent = '← Till receptbanken';
+    }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
   function openWithIdeas(id) {
     originalOpenRecipe(id);
+    showRecipeView();
     const recipe = recipes.find(r => r.id === id);
     const detail = document.querySelector('#recipeDetail .recipe-detail');
     if (!recipe || !detail) return;
