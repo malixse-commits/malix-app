@@ -3,7 +3,18 @@
   const MEALS_KEY='malix-meals';
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
   const aliases={brodskiva:['brod'],'rostat brod':['brod'],'knackebrod':['knackebrod','brod'],'ostskiva':['ost'],'filmjolk':['filmjolk','fil'],'turkisk yoghurt':['turkisk yoghurt','yoghurt'],'kyckling':['kyckling','kycklingfile'],'fisk':['fisk','lax','torsk','sej'],'kottfars':['kottfars','fars'],'kott':['kott'],'makrill i tomatsas':['makrill']};
-  function selectedItems(){return [...document.querySelectorAll('#selectedFoods [data-remove]')].map(b=>{const t=(b.textContent||'').replace(/\s*×\s*$/,'').trim(),m=t.match(/^(.*?):\s*(.+)$/);return m?{food:m[1].trim(),quantity:m[2].trim()}:null}).filter(Boolean)}
+  function selectedItems(){
+    const items=[...document.querySelectorAll('#selectedFoods [data-remove]')].map(b=>{const t=(b.textContent||'').replace(/\s*×\s*$/,'').trim(),m=t.match(/^(.*?):\s*(.+)$/);return m?{food:m[1].trim(),quantity:m[2].trim()}:null}).filter(Boolean);
+    const text=document.querySelector('#mealForm textarea[name="food"]')?.value||'';
+    text.split(',').map(x=>x.trim()).filter(Boolean).forEach(entry=>{
+      let food=entry,quantity='1 portion';
+      const m=entry.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+      if(m){food=m[1].trim();quantity=m[2].trim()}
+      if(!food)return;
+      if(!items.some(x=>norm(x.food)===norm(food)))items.push({food,quantity});
+    });
+    return items;
+  }
   function load(){try{const s=JSON.parse(localStorage.getItem(KITCHEN_KEY)||'{}');return {stock:Array.isArray(s.stock)?s.stock:[],shopping:Array.isArray(s.shopping)?s.shopping:[]}}catch{return {stock:[],shopping:[]}}}
   function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s));document.dispatchEvent(new CustomEvent('malix-smart-kitchen-updated'))}
   function inStock(stock,food){const fn=norm(food),cands=aliases[fn]||[fn];return stock.some(x=>{const sn=norm(x.item);return cands.some(c=>{const cn=norm(c);return sn===cn||sn.includes(cn)||cn.includes(sn)})})}
