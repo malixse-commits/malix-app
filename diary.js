@@ -56,18 +56,6 @@
     const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=duplicate?`${recipeName} finns redan i ${mealType.toLowerCase()} för den här dagen.`:`${recipeName} lades till i ${mealType.toLowerCase()} ✓`;
     if(typeof show==='function')show('foodLog');
   };
-  document.addEventListener('click',event=>{
-    if(!window.malixRecipeReturnToFoodLog)return;
-    const button=event.target.closest('.recipe-card button');
-    if(!button)return;
-    const handler=button.getAttribute('onclick')||'';
-    const match=handler.match(/openRecipe\(['"]([^'"]+)['"]\)/);
-    if(!match)return;
-    const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(match[1])):null;
-    if(!recipe)return;
-    event.preventDefault();event.stopImmediatePropagation();
-    window.malixAddRecipeToMealLog(recipe.name,recipe.id);
-  },true);
   mealSelect.addEventListener('change',()=>{if(editingStorageIndex!==null)return;selected.length=0;renderGroups();renderSelected()});
   form.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();const key=activeKey();if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}const textarea=form.querySelector('textarea[name="food"]'),ownText=textarea.value.trim(),pickedText=selected.map(item=>`${item.food} (${item.quantity})`).join(', '),foodText=[pickedText,ownText].filter(Boolean).join(', ');if(!foodText){alert('Välj minst ett livsmedel eller skriv vad du åt.');return}const values=Object.fromEntries(new FormData(form).entries());values.food=foodText;const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]');if(editingStorageIndex!==null&&meals[editingStorageIndex]){const original=meals[editingStorageIndex];meals[editingStorageIndex]={...original,...values,date:original.date};localStorage.setItem('malix-meals',JSON.stringify(meals));const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=`${values.meal} är uppdaterad ✓`}else{const date=new Date(`${key}T12:00:00`);meals.unshift({...values,date:date.toISOString()});localStorage.setItem('malix-meals',JSON.stringify(meals.slice(0,500)));const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=`Måltiden är sparad på ${activeDateLabel()} ✓`}form.reset();selected.length=0;stopEditing();renderSelected();renderGroups();renderActiveDate();window.renderMeals();document.dispatchEvent(new CustomEvent('malix-day-changed'))},true);
   window.editMeal=storageIndex=>{const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]'),meal=meals[storageIndex];if(!meal)return;const key=mealDateKey(meal);if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}window.malixSelectedDateKey=key;editingStorageIndex=storageIndex;loadMealIntoPicker(meal);if(submitButton)submitButton.textContent=`Spara ändringar i ${meal.meal.toLowerCase()}`;editNotice.textContent=`✏️ Du redigerar ${meal.meal.toLowerCase()}. Lägg till eller ta bort val ovan och spara sedan ändringarna.`;form.scrollIntoView({behavior:'smooth',block:'start'})};
