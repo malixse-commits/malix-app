@@ -10,6 +10,8 @@
   function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Behövs till planerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Planerat'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
   function mealTypeNow(){const h=new Date().getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
   function chooseMealType(){
+    const remembered=sessionStorage.getItem('malix-selected-meal-type');
+    if(['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'].includes(remembered))return remembered;
     const choices=['Frukost','Lunch','Middag','Mellanmål','Kvällsmål'];
     const numbers={'1':'Frukost','2':'Lunch','3':'Middag','4':'Mellanmål','5':'Kvällsmål'};
     const names={frukost:'Frukost',lunch:'Lunch',middag:'Middag',mellanmal:'Mellanmål',kvallsmal:'Kvällsmål'};
@@ -64,6 +66,7 @@
       if(!mealType)return;
       originalMarkRecipeCooked(id);
       saveCookedRecipeToMeals(id,mealType);
+      sessionStorage.removeItem('malix-selected-meal-type');
       setTimeout(openFoodToday,50);
     };
   }
