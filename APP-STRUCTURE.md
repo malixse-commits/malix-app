@@ -37,6 +37,7 @@ Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huv
 12. En huvudmodul ska inte hämtas från en gammal commit via RawGitHack. Den aktiva branchens fil är källan.
 13. Nya Malix-recept läggs i `recipes-malix.js`; efterrätter läggs i `desserts-malix.js`. Skapa inte en ny fil per recept.
 14. Veckan samlad är historisk överblick och ska bevaras. En framtida sida för Mina mönster ska läsa samma data i stället för att flytta eller duplicera historiken.
+15. Det användaren själv registrerar ska kunna tas bort igen i alla fyra huvudområden. Använd samma tydliga `Ta bort`-mönster där en sparad post visas. Befintlig skyddslogik för låsta dagar ska bevaras tills ett separat beslut tas om låsningen.
 
 ## Upprensning genomförd
 
