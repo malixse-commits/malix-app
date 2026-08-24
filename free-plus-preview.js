@@ -5,7 +5,7 @@
     if (loaded.has(src) || document.querySelector(`script[data-malix-module="${src}"]`)) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = src;
+      script.src = /^https?:\/\//.test(src) ? src : `${src}?v=20260824-1141`;
       script.dataset.malixModule = src;
       script.onload = () => { loaded.add(src); resolve(); };
       script.onerror = () => reject(new Error(`Kunde inte ladda ${src}`));
