@@ -39,6 +39,44 @@ Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huv
 14. Veckan samlad är historisk överblick och ska bevaras. En framtida sida för Mina mönster ska läsa samma data i stället för att flytta eller duplicera historiken.
 15. Det användaren själv registrerar ska kunna tas bort igen i alla fyra huvudområden. Använd samma tydliga `Ta bort`-mönster där en sparad post visas. Befintlig skyddslogik för låsta dagar ska bevaras tills ett separat beslut tas om låsningen.
 
+## Compassion – kärnprincip
+
+Compassiondelen ska inte främst lära användaren färgerna eller försöka flytta användaren från 🔴 till 🟢. Färgerna är en karta som hjälper användaren att stanna upp och undersöka sin egen erfarenhet.
+
+Den grundläggande processen är:
+
+**Jag märker → jag undersöker → jag förstår mer → jag kan välja hur jag vill agera.**
+
+Reflektionen ska hjälpa användaren att:
+
+1. uppmärksamma vad som hände och vad som blev framträdande,
+2. lägga märke till kropp, tankar, känslor och impulser,
+3. undersöka behov,
+4. möta sig själv med mer förståelse,
+5. stanna kvar lite längre och själv undersöka om det finns något mer bakom reaktionen – till exempel en känsla, tanke, rädsla, besvikelse, osäkerhet, skam, ett behov eller något helt annat,
+6. se om den ökade förståelsen gör reaktionen mer begriplig,
+7. välja ett vänligt och hjälpsamt nästa steg.
+
+Appen ska aldrig tala om för användaren vad som "egentligen" finns bakom en reaktion. Den får ställa öppna frågor och erbjuda exempel som möjligheter, men användaren äger tolkningen. Det ska alltid vara okej att inte veta.
+
+Alla tre systemen används med samma nyfikna syfte:
+
+- 🔴 kan hjälpa användaren undersöka vad hen reagerar på eller försöker skydda sig från.
+- 🔵 kan hjälpa användaren undersöka vad som väcker driv och nyfikenhet, och när driv eventuellt börjar bli press.
+- 🟢 kan hjälpa användaren undersöka vad som skapar trygghet, lugn och återhämtning.
+
+Historik och Dagens kompass får försiktigt föreslå möjliga återkommande samband, men ska inte fastslå mönster eller förklara vem användaren är. Ett föreslaget samband ska lämnas tillbaka till användaren med en fråga som **"Känner du igen det?"**
+
+Den viktigaste principen är:
+
+**Appen ska inte kategorisera mig. Den ska hjälpa mig att upptäcka och förstå mig själv.**
+
+Kontrollfrågan för nya funktioner i compassiondelen är:
+
+**Hjälper detta användaren att förstå sig själv bättre?**
+
+Om svaret är nej ska funktionen inte automatiskt läggas i compassiondelen.
+
 ## Upprensning genomförd
 
 - `free-plus-preview.js` är en deterministisk bootstrap och bygger inget eget UI.
