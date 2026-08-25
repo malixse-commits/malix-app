@@ -2,6 +2,67 @@
 
 Syftet med den här filen är att appen ska utvecklas genom att ändra rätt huvudmodul, inte genom att lägga nya fixskript ovanpå gamla.
 
+## Övergripande designprincip för hela appen
+
+**En sak i taget ska inte hjälpa mig att göra mer. Den ska hjälpa mig att förstå vad jag behöver för att leva min vardag på ett mer hållbart och vänligt sätt.**
+
+Hela appen ska ha ett compassionfokuserat förhållningssätt. Det betyder inte att varje del ska bli en CFT-övning. Det betyder att appens sätt att fråga, återkoppla, visa historik och statistik och hjälpa användaren ska vara vänligt, undersökande, icke-dömande och stödja självförståelse.
+
+Appen ska inte främst fråga **"Hur mycket gjorde du?"** utan hjälpa användaren undersöka **"Hur fungerade det här för dig?"**
+
+En generell undersökande riktning för appen är:
+
+**Vad hände? → Vad märkte jag? → Vad hjälpte? → Vad kostade energi? → Vad behövde jag? → Vad kan jag lära mig om mig själv?**
+
+Detta gäller bland annat:
+
+- **Tid/fyrkanterna:** hjälpa användaren se hur aktiviteter påverkar tid, energi och behov av återhämtning. Färgerna är information, inte betyg.
+- **Städning:** lite kan räcka. Appen kan hjälpa användaren upptäcka vad som hjälpte att komma igång, när det räckte och hur det kändes efteråt.
+- **Rörelse/Det jag gjort för mig själv:** inte bara samla minuter eller prestation, utan också synliggöra vad aktiviteten gjorde för personen – till exempel energi, lugn, glädje, återhämtning eller något annat.
+- **Mat:** inte moralisera kring bra eller dålig mat. Hjälpa användaren lägga märke till måltider, mättnad, upplevelse och vad som fungerar i vardagen utan att skapa nya prestationskrav.
+- **Min inre kompass:** färgerna är information, inte värderingar. Målet är att märka, undersöka, förstå mer och välja ett vänligt och hjälpsamt nästa steg.
+- **Historik och statistik:** hjälpa användaren upptäcka möjliga mönster utan att bedöma dagen eller veckan. Hellre **"Det här verkar återkomma. Känner du igen det?"** än ett betyg eller en slutsats om vad användaren borde göra.
+
+### Skydd mot prestationskrav
+
+Appen riktar sig bland annat till människor som kan ha erfarenhet av att göra för mycket, ställa höga krav på sig själva eller bli överbelastade. Därför får En sak i taget inte själv bli ännu ett prestationsprojekt.
+
+Följande principer ska genomsyra designen:
+
+- **Du behöver inte fylla i allt.**
+- **Det är okej att hoppa över.**
+- **Tomt är också information.**
+- **Lite kan vara tillräckligt.**
+- **Historiken är information – inte ett betyg.**
+- **Färger beskriver – de värderar inte.**
+
+Var försiktig med streaks, mål, varningar, poäng, prestationsmarkörer och formuleringar som kan skapa känslan att användaren måste använda appen "rätt" eller prestera för appens skull.
+
+### AI-spegling
+
+Om AI-spegling byggs senare ska AI:n vara en spegel, inte ett facit. Den ska inte tala om för användaren vem hen är eller varför hen reagerar.
+
+Lämpliga formuleringar är exempelvis:
+
+- **"Du beskriver…"**
+- **"Det verkar som…"**
+- **"Du verkar själv ha lagt märke till…"**
+- **"Ett möjligt mönster skulle kunna vara…"**
+- **"Känner du igen det?"**
+
+Användaren äger alltid tolkningen.
+
+### Kontrollfrågor vid fortsatt utveckling
+
+När en ny funktion, text, statistik eller återkoppling övervägs ska två frågor användas:
+
+1. **Hjälper detta användaren att förstå sig själv bättre?**
+2. **Finns det risk att detta får användaren att känna att hen måste prestera mer eller använda appen "rätt"?**
+
+Om något ökar prestationskraven utan att samtidigt hjälpa användaren förstå sig själv behöver lösningen tänkas om.
+
+Den här principen ska styra fortsatt utveckling, men ska inte användas som skäl för att göra om fungerande delar i onödan. Gå igenom appen en del i taget och ändra bara där det finns ett faktiskt behov.
+
 ## Ägarskap
 
 - `calm-navigation.js` äger startsidan, de fyra huvudfyrkanterna, matens mellanmenyer och den fria handlingslistan (`freeShoppingList`).
