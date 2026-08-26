@@ -22,9 +22,9 @@
   btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();show()});
   s.querySelector('[data-presence-back]').onclick=e=>{e.preventDefault();window.malixOpenCare?.()};
   function renderHistory(){
-   const box=s.querySelector('#presenceHistory'),a=load().slice(0,20);
-   box.innerHTML=a.length?`<h3>🌱 Mina senaste stunder</h3>${a.map(x=>`<div style="padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08)"><strong>${safe(x.exercise)}</strong> <small>${new Date(x.date).toLocaleDateString('sv-SE')}</small>${x.feel?`<p>${safe(x.feel)}</p>`:''}${x.notice?`<p class="note">Jag märkte: ${safe(x.notice)}</p>`:''}${x.feeling?`<p class="note">Hur jag mådde/kände: ${safe(x.feeling)}</p>`:''}<button type="button" class="secondary" data-presence-delete="${safe(x.id||x.date)}">Ta bort</button></div>`).join('')}`:'<h3>🌱 Mina stunder</h3><p class="note">När du sparar en reflektion kan du se dina senaste stunder här.</p>';
-   box.querySelectorAll('[data-presence-delete]').forEach(b=>b.onclick=()=>{if(!confirm('Ta bort den här närvaroreflektionen?'))return;const id=b.dataset.presenceDelete;save(load().filter(x=>String(x.id||x.date)!==String(id)));renderHistory()});
+   const box=s.querySelector('#presenceHistory'),all=load(),a=all.slice(0,20);
+   box.innerHTML=a.length?`<h3>🌱 Mina senaste stunder</h3>${a.map((x,index)=>`<div style="padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08)"><strong>${safe(x.exercise)}</strong> <small>${new Date(x.date).toLocaleDateString('sv-SE')}</small>${x.feel?`<p>${safe(x.feel)}</p>`:''}${x.notice?`<p class="note">Jag märkte: ${safe(x.notice)}</p>`:''}${x.feeling?`<p class="note">Hur jag mådde/kände: ${safe(x.feeling)}</p>`:''}<button type="button" class="secondary" data-presence-delete-index="${index}">Ta bort</button></div>`).join('')}`:'<h3>🌱 Mina stunder</h3><p class="note">När du sparar en reflektion kan du se dina senaste stunder här.</p>';
+   box.querySelectorAll('[data-presence-delete-index]').forEach(b=>b.onclick=()=>{if(!confirm('Ta bort den här närvaroreflektionen?'))return;const list=load(),index=Number(b.dataset.presenceDeleteIndex);if(Number.isInteger(index)&&index>=0&&index<list.length){list.splice(index,1);save(list)}renderHistory()});
   }
   renderHistory();
   s.querySelectorAll('[data-presence]').forEach(b=>b.addEventListener('click',e=>{
