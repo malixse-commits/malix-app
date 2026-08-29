@@ -34,6 +34,30 @@
     }
   }
 
+  function openHome() {
+    document.querySelectorAll('main > .view').forEach(v => v.classList.remove('active-view'));
+    const home = document.querySelector('main > #home') || document.querySelector('#home');
+    if (home) {
+      home.classList.add('active-view');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function wireAllHomeButtons() {
+    if (document.documentElement.dataset.homeNavigationWired === '1') return;
+    document.documentElement.dataset.homeNavigationWired = '1';
+    document.addEventListener('click', event => {
+      const button = event.target.closest('button.back, a.back, [data-calm-home], [data-nav-back="home"]');
+      if (!button) return;
+      const label = String(button.textContent || '').replace(/\s+/g, ' ').trim();
+      const isHome = button.hasAttribute('data-calm-home') || button.getAttribute('data-nav-back') === 'home' || label === '← Hem' || label === 'Hem';
+      if (!isHome) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openHome();
+    }, true);
+  }
+
   function wireOverviewCards() {
     const grid = document.querySelector('#homeOverviewGrid');
     if (!grid) return false;
@@ -62,13 +86,16 @@
     document.addEventListener('DOMContentLoaded', () => {
       ensureFoodLogFirst();
       ensureOverviewCards();
+      wireAllHomeButtons();
     }, { once: true });
   } else {
     ensureFoodLogFirst();
     ensureOverviewCards();
+    wireAllHomeButtons();
   }
   setTimeout(ensureFoodLogFirst, 0);
   setTimeout(wireOverviewCards, 100);
   setTimeout(wireOverviewCards, 500);
+  wireAllHomeButtons();
   document.body.classList.add('calm-ready');
 })();
