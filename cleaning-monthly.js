@@ -126,6 +126,12 @@
   }
 
   document.addEventListener('malix-cleaning-changed',()=>{if(document.querySelector('#cleaningMonth.active-view'))render()});
+  document.addEventListener('click',e=>{
+    if(e.target.closest('[data-calm-open="homeHub"]')||e.target.closest('[data-nav-back="homeHub"]'))setTimeout(addCard,0);
+  },true);
+  const hubObserver=new MutationObserver(()=>addCard());
+  const main=document.querySelector('main');if(main)hubObserver.observe(main,{childList:true,subtree:true});
   addCard();
+  setTimeout(addCard,100);
   window.malixOpenCleaningMonth=()=>{render();show('cleaningMonth')};
 })();
