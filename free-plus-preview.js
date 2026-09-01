@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260901-1107';
+  const VERSION='20260901-1130';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -29,58 +29,19 @@
   }
 
   async function start() {
-    // Kärnan först. Användaren ska alltid få den aktuella startsidan även om en senare modul strular.
     await loadRequired(['calm-navigation.js','calm-ready.js']);
-
-    // Molnsynk är fristående och får aldrig blockera resten av appen.
     await loadOptional(['cloud-config.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','cloud-sync.js']);
-
-    // Recept och kök.
     await loadOptional([
-      'recipes-malix.js',
-      'desserts-malix.js',
-      'recipe-category-dessert.js',
-      'recipe-serving-suggestions.js',
-      'smart-kitchen.js',
-      'fridge-check-routine.js',
-      'meal-kitchen-sync.js',
-      'meal-stock-bridge.js',
-      'smart-week-plan.js'
+      'recipes-malix.js','desserts-malix.js','recipe-category-dessert.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-kitchen-sync.js','meal-stock-bridge.js','smart-week-plan.js'
     ]);
-
-    // Matlogg och matens vardagsfunktioner.
     await loadOptional([
-      'food-preferences.js',
-      'meal-log-polish.js',
-      'breakfast-buffet.js',
-      'takeaway-meals.js',
-      'ready-made-foods.js',
-      'evening-meal-mirror.js',
-      'food-day-lock.js',
-      'food-history.js'
+      'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js'
     ]);
-
-    // Hem, rörelse och historik.
     await loadOptional([
-      'movement-recovery.js',
-      'cleaning-square.js',
-      'cleaning-home-offer.js',
-      'cleaning-monthly.js',
-      'cleaning-reflection-history-edit.js',
-      'cleaning-flex-log.js',
-      'diary-history.js'
+      'movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-monthly.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
     ]);
-
-    // Undervyer under de fyra huvudområdena.
     await loadOptional([
-      'cleaning-tips.js',
-      'self-care.js',
-      'presence-care.js',
-      'presence-done.js',
-      'sleep-care.js',
-      'my-time-mobile.js',
-      'my-day-summary.js',
-      'inner-compass.js'
+      'cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js'
     ]);
   }
 
