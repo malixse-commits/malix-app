@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260901-0915';
+  const VERSION='20260901-1005';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -64,6 +64,7 @@
     await loadOptional([
       'movement-recovery.js',
       'cleaning-square.js',
+      'cleaning-home-offer.js',
       'cleaning-reflection-history-edit.js',
       'cleaning-flex-log.js',
       'diary-history.js'
