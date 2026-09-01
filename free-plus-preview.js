@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260901-2030';
+  const VERSION='20260901-2035';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -32,7 +32,7 @@
     await loadRequired(['calm-navigation.js','calm-ready.js']);
     await loadOptional(['cloud-config.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','cloud-sync.js']);
     await loadOptional([
-      'recipes-malix.js','desserts-malix.js','recipe-category-dessert.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-kitchen-sync.js','meal-stock-bridge.js','smart-week-plan.js'
+      'recipes-malix.js','desserts-malix.js','recipe-category-dessert.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-stock-bridge.js','smart-week-plan.js'
     ]);
     await loadOptional([
       'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js'
