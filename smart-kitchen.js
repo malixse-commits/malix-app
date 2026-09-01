@@ -8,12 +8,27 @@
   'brodskiva':['brod'],'rostat brod':['brod'],'knackebrod':['knackebrod','brod'],'ostskiva':['ost'],'filmjolk':['filmjolk','fil'],
   'turkisk yoghurt':['turkisk yoghurt','yoghurt'],'kyckling':['kyckling','kycklingfile'],'fisk':['fisk','lax','torsk','sej'],
   'kottfars':['kottfars','fars'],'kott':['kott'],'makrill i tomatsas':['makrill'],'tomater':['tomat'],'tomat':['tomat'],
-  'aggs':['agg'],'agg':['agg'],'bananer':['banan'],'applen':['apple'],'potatisar':['potatis'],'morotter':['morot']
+  'aggs':['agg'],'agg':['agg'],'bananer':['banan'],'applen':['apple'],'potatisar':['potatis'],'morotter':['morot'],
+  'korv':['korv','grillkorv','kokkorv','kottkorv','flaskkorv','falukorv','wienerkorv','prinskorv','chorizo','salsiccia','kycklingkorv','vegetarisk korv'],
+  'grillkorv':['grillkorv','korv'],'kokkorv':['kokkorv','korv'],'kottkorv':['kottkorv','korv'],'flaskkorv':['flaskkorv','korv'],
+  'falukorv':['falukorv','korv'],'wienerkorv':['wienerkorv','korv'],'prinskorv':['prinskorv','korv'],'chorizo':['chorizo','korv'],
+  'salsiccia':['salsiccia','korv'],'kycklingkorv':['kycklingkorv','korv'],'vegetarisk korv':['vegetarisk korv','korv']
  };
+ const sausageVariants=new Set(['grillkorv','kokkorv','kottkorv','flaskkorv','falukorv','wienerkorv','prinskorv','chorizo','salsiccia','kycklingkorv','vegetarisk korv']);
  const recipesList=()=>typeof recipes!=='undefined'?recipes:[];
  const namesFor=value=>{const n=norm(value),set=new Set([n,...(aliases[n]||[]).map(norm)]);return [...set].filter(Boolean)};
- const matches=(stockItem,ingredient)=>{const a=namesFor(stockItem),b=namesFor(ingredient);if(a.some(x=>b.includes(x)))return true;const aw=words(stockItem),bw=words(ingredient);return aw.some(x=>bw.some(y=>x===y||(x.length>4&&y.length>4&&(x.includes(y)||y.includes(x)))))};
- const categoryFor=item=>{const n=norm(item);if(/tomat|gurka|paprika|morot|potatis|lök|vitlök|kål|broccoli|sallad|spenat|frukt|äpple|banan|citron|lime|avokado|zucchini|aubergine|selleri|rödbet|palsternack/.test(n))return'🥦 Frukt & grönt';if(/kött|köttfärs|kyckling|fisk|lax|torsk|sej|räk|mussl|korv|ägg|tofu/.test(n))return'🥩 Protein';if(/mjölk|grädde|yoghurt|filmjölk|kvarg|ost|smör|crème|feta/.test(n))return'🥛 Mejeri';if(/toalett|disk|tvätt|papper|schampo|tvål/.test(n))return'🧻 Övrigt';return'🥫 Skafferi & övrigt'};
+ const matches=(stockItem,ingredient)=>{
+  const stock=norm(stockItem),food=norm(ingredient);
+  if(stock===food)return true;
+  if(sausageVariants.has(stock)&&sausageVariants.has(food))return false;
+  if(stock==='korv'&&sausageVariants.has(food))return true;
+  if(food==='korv'&&sausageVariants.has(stock))return true;
+  const a=namesFor(stock),b=namesFor(food);
+  if(a.some(x=>b.includes(x)))return true;
+  const aw=words(stock),bw=words(food);
+  return aw.some(x=>bw.some(y=>x===y||(x.length>4&&y.length>4&&(x.includes(y)||y.includes(x)))));
+ };
+ const categoryFor=item=>{const n=norm(item);if(/tomat|gurka|paprika|morot|potatis|lok|vitlok|kal|broccoli|sallad|spenat|frukt|apple|banan|citron|lime|avokado|zucchini|aubergine|selleri|rodbet|palsternack/.test(n))return'🥦 Frukt & grönt';if(/kott|kottfars|kyckling|fisk|lax|torsk|sej|rak|mussl|korv|agg|tofu/.test(n))return'🥩 Protein';if(/mjolk|gradde|yoghurt|filmjolk|kvarg|ost|smor|creme|feta/.test(n))return'🥛 Mejeri';if(/toalett|disk|tvatt|papper|schampo|tval/.test(n))return'🧻 Övrigt';return'🥫 Skafferi & övrigt'};
  function parseAmount(value){
   const raw=String(value||'').trim().toLowerCase().replace(',','.');
   const m=raw.match(/(-?\d+(?:\.\d+)?)\s*(kg|g|l|dl|ml|st|styck|stycken|skiva|skivor)?/i);
