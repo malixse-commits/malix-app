@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260901-2215';
+  const VERSION='20260901-2235';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -35,7 +35,7 @@
       'recipes-malix.js','desserts-malix.js','recipe-category-dessert.js','recipe-serving-suggestions.js','smart-kitchen.js','fridge-check-routine.js','meal-stock-bridge.js','smart-week-plan.js'
     ]);
     await loadOptional([
-      'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js'
+      'food-preferences.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js','food-monthly.js'
     ]);
     await loadOptional([
       'movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-monthly.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
