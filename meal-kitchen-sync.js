@@ -10,7 +10,11 @@
     'banan':['banan'], 'apple':['apple'], 'paron':['paron'], 'apelsin':['apelsin'], 'bar':['bar'],
     'tomat':['tomat'], 'gurka':['gurka'], 'paprika':['paprika'], 'sallad':['sallad'], 'avokado':['avokado'], 'rodlok':['rodlok'],
     'kyckling':['kyckling','kycklingfile','kycklingfilé'], 'fisk':['fisk','fiskfile','fiskfilé','torsk','lax','sej'],
-    'kott':['kott','notkott','flaskkott'], 'kottfars':['kottfars','fars'], 'tofu':['tofu'], 'bonor linser':['bonor','linser']
+    'kott':['kott','notkott','flaskkott'], 'kottfars':['kottfars','fars'], 'tofu':['tofu'], 'bonor linser':['bonor','linser'],
+    'korv':['korv','grillkorv','kokkorv','kottkorv','flaskkorv','falukorv','wienerkorv','prinskorv','chorizo','salsiccia','kycklingkorv','vegetarisk korv'],
+    'grillkorv':['grillkorv','korv'], 'kokkorv':['kokkorv','korv'], 'kottkorv':['kottkorv','korv'], 'flaskkorv':['flaskkorv','korv'],
+    'falukorv':['falukorv','korv'], 'wienerkorv':['wienerkorv','korv'], 'prinskorv':['prinskorv','korv'],
+    'chorizo':['chorizo','korv'], 'salsiccia':['salsiccia','korv'], 'kycklingkorv':['kycklingkorv','korv'], 'vegetarisk korv':['vegetarisk korv','korv']
   };
   const sliceWeights={ostskiva:15,skinka:12,kalkon:12,salami:5};
   function parseAmount(s){
@@ -25,7 +29,7 @@
   function formatAmount(a){if(a.u==='ml'&&a.n>=1000)return `${Math.round(a.n/10)/100} l`;if(a.u==='g'&&a.n>=1000)return `${Math.round(a.n/10)/100} kg`;if(a.u==='slice')return `${Math.max(0,Math.round(a.n*100)/100)} skivor`;return `${Math.max(0,Math.round(a.n*100)/100)} ${a.u}`.trim()}
   function load(){try{const s=JSON.parse(localStorage.getItem(KITCHEN_KEY)||'{}');return {stock:Array.isArray(s.stock)?s.stock:[],shopping:Array.isArray(s.shopping)?s.shopping:[]}}catch{return {stock:[],shopping:[]}}}
   function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s));document.dispatchEvent(new CustomEvent('malix-smart-kitchen-updated'))}
-  function matches(stockName,food){const sn=norm(stockName),fn=norm(food),candidates=aliases[fn]||[fn];return candidates.some(a=>{const an=norm(a);return sn===an||sn.includes(an)||an.includes(sn)})}
+  function matches(stockName,food){const sn=norm(stockName),fn=norm(food),candidates=aliases[fn]||[fn];if(candidates.some(a=>{const an=norm(a);return sn===an||sn.includes(an)||an.includes(sn)}))return true;const stockAliases=aliases[sn]||[sn];return stockAliases.some(a=>norm(a)===fn)}
   function convert(food,have,used){
     if(have.u===used.u)return used;
     const f=norm(food);
@@ -46,7 +50,7 @@
       const used=convert(food,have,raw);if(!used){results.push(`${food}: ${stock.amount} kan inte jämföras med ${quantity}`);return}
       const remain=Math.max(0,have.n-used.n);stock.amount=formatAmount({n:remain,u:have.u});changed=true;results.push(`${food}: ${formatAmount(used)} använt, ${stock.amount} kvar`);
       if(remain<=0){
-        if(!st.shopping.some(x=>!x.done&&norm(x.item)===norm(stock.item)))st.shopping.push({id:Date.now()+Math.random(),item:stock.item,done:false,source:'Tog slut när måltiden loggades',category:'🥫 Skafferi & övrigt'});
+        if(!st.shopping.some(x=>!x.done&&matches(x.item,stock.item)))st.shopping.push({id:Date.now()+Math.random(),item:stock.item,done:false,source:'Tog slut när måltiden loggades',category:'🥫 Skafferi & övrigt'});
         addDepletedToShopping(stock.item);
         st.stock=st.stock.filter(x=>x.id!==stock.id);
       }
