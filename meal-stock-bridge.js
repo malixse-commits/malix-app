@@ -19,12 +19,9 @@
   function load(){try{const s=JSON.parse(localStorage.getItem(KITCHEN_KEY)||'{}');return {stock:Array.isArray(s.stock)?s.stock:[],shopping:Array.isArray(s.shopping)?s.shopping:[]}}catch{return {stock:[],shopping:[]}}}
   function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s));document.dispatchEvent(new CustomEvent('malix-smart-kitchen-updated'))}
   function inStock(stock,food){
+    if(typeof window.malixKitchenHasStock==='function')return window.malixKitchenHasStock(food);
     const fn=norm(food),cands=(aliases[fn]||[fn]).map(norm);
-    return stock.some(x=>{
-      const sn=norm(x.item);
-      if(sn===fn)return true;
-      return cands.includes(sn);
-    });
+    return stock.some(x=>{const sn=norm(x.item);if(sn===fn)return true;return cands.includes(sn)})
   }
   function isTrackableFood(food){return !mealDescriptions.has(norm(food))}
   function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(!isTrackableFood(food))return;if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Behövs till planerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Planerat'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
