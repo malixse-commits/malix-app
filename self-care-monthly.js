@@ -9,82 +9,15 @@
   const inMonth=(date,key)=>String(date||'').slice(0,7)===key;
   const ensureView=()=>{let root=document.querySelector('#careMonth');if(!root){root=document.createElement('section');root.id='careMonth';root.className='view';document.querySelector('main')?.appendChild(root)}return root};
   const show=id=>{document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));document.querySelector('#'+id)?.classList.add('active-view');window.scrollTo({top:0,behavior:'smooth'})};
-
-  function collect(key){
-    const care=read(CARE_KEY).filter(x=>inMonth(x.date,key));
-    const presence=read(PRESENCE_KEY).filter(x=>inMonth(x.date,key));
-    return {care,presence};
-  }
-  function kindOf(x){
-    const t=String(x.type||'').toLocaleLowerCase('sv-SE');
-    if(/träning/.test(t))return'Rörelse';
-    if(/vardagsrörelse/.test(t))return'Vardagsrörelse';
-    if(/frisk luft/.test(t))return'Frisk luft';
-    if(/stilla stund/.test(t))return'Stilla stund';
-    if(/mjuka tankar/.test(t))return'Mjuka tankar';
-    if(/reflektion/.test(t))return'Reflektion';
-    return String(x.type||'Annat').replace(/^[^A-Za-zÅÄÖåäö]+\s*/,'');
-  }
-  function overview(data){
-    const groups={};data.care.forEach(x=>{const k=kindOf(x);groups[k]=(groups[k]||0)+1});
-    if(data.presence.length)groups['Närvaro']=(groups['Närvaro']||0)+data.presence.length;
-    const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
-    if(!entries.length)return '<p class="note">Det finns ännu inga sparade stunder den här månaden. En tom månad behöver inte fyllas i i efterhand.</p>';
-    const total=data.care.length+data.presence.length;
-    return `<p>Du sparade <strong>${total}</strong> ${total===1?'stund eller reflektion':'stunder och reflektioner'} den här månaden.</p><ul>${entries.map(([k,n])=>`<li><strong>${esc(k)}</strong>: ${n}</li>`).join('')}</ul>`;
-  }
-  function energy(data){
-    const active=data.care.filter(x=>['Rörelse','Vardagsrörelse','Frisk luft','Stilla stund'].includes(kindOf(x)));
-    const groups={};active.forEach(x=>{const k=kindOf(x);groups[k]=(groups[k]||0)+1});
-    const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
-    if(!entries.length)return '<p class="note">Det finns ännu inte tillräckligt med sparat för att se var du oftast lade din omsorg.</p>';
-    const max=entries[0][1],top=entries.filter(([,n])=>n===max).map(([k])=>k);
-    return `<p>Det syns flest sparade stunder kring <strong>${top.map(esc).join(' och ')}</strong>. Det betyder inte att du borde ha gjort mer av något annat – bara att det är där flest registrerade stunder hamnade.</p>`;
-  }
-  function discovery(data){
-    const texts=[...data.care.map(x=>`${x.text||''} ${x.extra||''}`),...data.presence.map(x=>`${x.feel||''} ${x.notice||''} ${x.feeling||''}`)].map(x=>x.toLocaleLowerCase('sv-SE'));
-    if(!texts.length)return '<p class="note">När du har sparat några stunder kan möjliga återkommande mönster visas här.</p>';
-    const count=re=>texts.filter(t=>re.test(t)).length,patterns=[];
-    if(count(/lugn|lugnare|ro|avslapp/ )>=2)patterns.push('Lugn eller ro återkommer i flera av dina sparade stunder.');
-    if(count(/ute|luft|skog|natur|promenad|trädgård/)>=2)patterns.push('Att komma ut, vara i naturen eller röra dig utomhus återkommer i det du har sparat.');
-    if(count(/vila|stilla|tyst|läsa|musik|bok/)>=2)patterns.push('Stillhet, vila eller lugna aktiviteter återkommer som något du verkar söka eller uppskatta.');
-    if(count(/bättre|hjälp|skönt|lättare/)>=2)patterns.push('Flera sparade stunder innehåller ord som tyder på att något blev lite lättare eller mer hjälpsamt efteråt.');
-    if(count(/samma|vet inte/)>=2)patterns.push('Du har också flera gånger märkt att det känns ungefär samma eller varit svårt att veta. Det är också information om vad du behöver.');
-    if(patterns.length)return `<ul>${patterns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="note">Det här är möjliga mönster i det du själv har sparat – inte ett facit.</p>`;
-    return '<p>Du har sparat stunder under månaden, men det finns ännu inget tydligt återkommande mönster som appen behöver slå fast.</p>';
-  }
-  function whole(data){
-    const kinds=new Set(data.care.map(kindOf));if(data.presence.length)kinds.add('Närvaro');
-    if(kinds.size>=4)return `<p>Du tog hand om dig på flera olika sätt den här månaden: <strong>${[...kinds].map(esc).join(', ')}</strong>. Små stunder behöver inte vara lika för att tillsammans bli omsorg om dig själv.</p>`;
-    if(data.care.length+data.presence.length>=4)return '<p>Det blev flera små stunder under månaden. Var och en kan ha varit liten, men tillsammans visar de att omsorg om dig själv kan få plats på olika dagar och i olika former.</p>';
-    return '<p class="note">Här kommer appen att uppmärksamma när flera små stunder tillsammans börjar bilda en större helhet.</p>';
-  }
-  function takeaway(data){
-    const texts=[...data.care.map(x=>`${x.text||''} ${x.extra||''}`),...data.presence.map(x=>`${x.feel||''} ${x.notice||''} ${x.feeling||''}`)].join(' ').toLocaleLowerCase('sv-SE');
-    if(/lugn|lugnare|ro|avslapp/.test(texts))return 'Det finns tecken i det du sparat på att lugn eller ro ibland får plats när du stannar upp. Det kan vara värt att fortsätta lägga märke till – utan att göra det till ett krav.';
-    if(/ute|luft|skog|natur|promenad|trädgård/.test(texts))return 'Det du sparat pekar på att det kan vara värdefullt att fortsätta lägga märke till vad stunder ute eller i rörelse gör för dig.';
-    if(data.care.length+data.presence.length)return 'Det du gjorde för dig själv den här månaden får räknas. Nästa månad behöver inte innehålla mer – bara nya möjligheter att märka vad som faktiskt hjälper dig.';
-    return 'Det finns inget krav på att en månad ska innehålla många registreringar. När du använder Ta hand om mig igen börjar du där du är.';
-  }
-  function availableMonths(){
-    const keys=new Set();[...read(CARE_KEY),...read(PRESENCE_KEY)].forEach(x=>{if(/^\d{4}-\d{2}/.test(String(x.date||'')))keys.add(String(x.date).slice(0,7))});keys.add(monthKey(new Date()));return [...keys].sort().reverse();
-  }
+  function collect(key){const care=read(CARE_KEY).filter(x=>inMonth(x.date,key));const presence=read(PRESENCE_KEY).filter(x=>inMonth(x.date,key));return {care,presence}}
+  function kindOf(x){const t=String(x.type||'').toLocaleLowerCase('sv-SE');if(/vardagsrörelse/.test(t))return'Vardagsrörelse';if(/träning/.test(t))return'Rörelse';if(/frisk luft/.test(t))return'Frisk luft';if(/stilla stund/.test(t))return'Stilla stund';if(/mjuka tankar/.test(t))return'Mjuka tankar';if(/reflektion/.test(t))return'Reflektion';return String(x.type||'Annat').replace(/^[^A-Za-zÅÄÖåäö]+\s*/,'')}
+  function overview(data){const groups={};data.care.forEach(x=>{const k=kindOf(x);groups[k]=(groups[k]||0)+1});if(data.presence.length)groups.Närvaro=(groups.Närvaro||0)+data.presence.length;const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);if(!entries.length)return '<p class="note">Det finns ännu inga sparade stunder den här månaden. En tom månad behöver inte fyllas i i efterhand.</p>';const total=data.care.length+data.presence.length;return `<p>Du sparade <strong>${total}</strong> ${total===1?'stund eller reflektion':'stunder och reflektioner'} den här månaden.</p><ul>${entries.map(([k,n])=>`<li><strong>${esc(k)}</strong>: ${n}</li>`).join('')}</ul>`}
+  function energy(data){const active=data.care.filter(x=>['Rörelse','Vardagsrörelse','Frisk luft','Stilla stund'].includes(kindOf(x))),groups={};active.forEach(x=>{const k=kindOf(x);groups[k]=(groups[k]||0)+1});const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);if(!entries.length)return '<p class="note">Det finns ännu inte tillräckligt med sparat för att se var du oftast lade din omsorg.</p>';const max=entries[0][1],top=entries.filter(([,n])=>n===max).map(([k])=>k);return `<p>Det syns flest sparade stunder kring <strong>${top.map(esc).join(' och ')}</strong>. Det betyder inte att du borde ha gjort mer av något annat – bara att det är där flest registrerade stunder hamnade.</p>`}
+  function discovery(data){const texts=[...data.care.map(x=>`${x.text||''} ${x.extra||''}`),...data.presence.map(x=>`${x.feel||''} ${x.notice||''} ${x.feeling||''}`)].map(x=>x.toLocaleLowerCase('sv-SE'));if(!texts.length)return '<p class="note">När du har sparat några stunder kan möjliga återkommande mönster visas här.</p>';const count=re=>texts.filter(t=>re.test(t)).length,patterns=[];if(count(/lugn|lugnare|ro|avslapp/)>=2)patterns.push('Lugn eller ro återkommer i flera av dina sparade stunder.');if(count(/ute|luft|skog|natur|promenad|trädgård/)>=2)patterns.push('Att komma ut, vara i naturen eller röra dig utomhus återkommer i det du har sparat.');if(count(/vila|stilla|tyst|läsa|musik|bok/)>=2)patterns.push('Stillhet, vila eller lugna aktiviteter återkommer som något du verkar söka eller uppskatta.');if(count(/bättre|hjälp|skönt|lättare/)>=2)patterns.push('Flera sparade stunder innehåller ord som tyder på att något blev lite lättare eller mer hjälpsamt efteråt.');if(count(/samma|vet inte/)>=2)patterns.push('Du har också flera gånger märkt att det känns ungefär samma eller varit svårt att veta. Det är också information om vad du behöver.');if(patterns.length)return `<ul>${patterns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="note">Det här är möjliga mönster i det du själv har sparat – inte ett facit.</p>`;return '<p>Du har sparat stunder under månaden, men det finns ännu inget tydligt återkommande mönster som appen behöver slå fast.</p>'}
+  function whole(data){const kinds=new Set(data.care.map(kindOf));if(data.presence.length)kinds.add('Närvaro');if(kinds.size>=4)return `<p>Du tog hand om dig på flera olika sätt den här månaden: <strong>${[...kinds].map(esc).join(', ')}</strong>. Små stunder behöver inte vara lika för att tillsammans bli omsorg om dig själv.</p>`;if(data.care.length+data.presence.length>=4)return '<p>Det blev flera små stunder under månaden. Var och en kan ha varit liten, men tillsammans visar de att omsorg om dig själv kan få plats på olika dagar och i olika former.</p>';return '<p class="note">Här kommer appen att uppmärksamma när flera små stunder tillsammans börjar bilda en större helhet.</p>'}
+  function takeaway(data){const texts=[...data.care.map(x=>`${x.text||''} ${x.extra||''}`),...data.presence.map(x=>`${x.feel||''} ${x.notice||''} ${x.feeling||''}`)].join(' ').toLocaleLowerCase('sv-SE');if(/lugn|lugnare|ro|avslapp/.test(texts))return 'Det finns tecken i det du sparat på att lugn eller ro ibland får plats när du stannar upp. Det kan vara värt att fortsätta lägga märke till – utan att göra det till ett krav.';if(/ute|luft|skog|natur|promenad|trädgård/.test(texts))return 'Det du sparat pekar på att det kan vara värdefullt att fortsätta lägga märke till vad stunder ute eller i rörelse gör för dig.';if(data.care.length+data.presence.length)return 'Det du gjorde för dig själv den här månaden får räknas. Nästa månad behöver inte innehålla mer – bara nya möjligheter att märka vad som faktiskt hjälper dig.';return 'Det finns inget krav på att en månad ska innehålla många registreringar. När du använder Ta hand om mig igen börjar du där du är.'}
+  function availableMonths(){const keys=new Set();[...read(CARE_KEY),...read(PRESENCE_KEY)].forEach(x=>{if(/^\d{4}-\d{2}/.test(String(x.date||'')))keys.add(String(x.date).slice(0,7))});keys.add(monthKey(new Date()));return [...keys].sort().reverse()}
   let selectedMonth=monthKey(new Date());
-  function render(){
-    const root=ensureView(),data=collect(selectedMonth),months=availableMonths();
-    root.innerHTML=`<button type="button" class="back" data-care-month-back>← Ta hand om mig</button><p class="eyebrow">PLUS · Månadsläsning</p><h2>🌿 Min omsorg om mig – ${esc(monthName(selectedMonth))}</h2><p class="subtitle">En återblick på det du faktiskt har gjort och märkt. Ingen bedömning och inget krav på att du borde ha tagit hand om dig på något annat sätt.</p><section class="panel"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="secondary" data-care-month-prev>← Föregående</button><select id="careMonthSelect" aria-label="Välj månad">${months.map(m=>`<option value="${m}" ${m===selectedMonth?'selected':''}>${esc(monthName(m))}</option>`).join('')}</select><button type="button" class="secondary" data-care-month-next>Nästa →</button></div></section><section class="panel"><h3>Det här gjorde jag för mig själv</h3>${overview(data)}</section><section class="panel"><h3>🌿 Här lade jag min omsorg</h3>${energy(data)}</section><section class="panel calm"><h3>✨ Små stunder blev till en helhet</h3>${whole(data)}</section><section class="panel"><h3>🧭 Det här verkar jag ha upptäckt</h3>${discovery(data)}</section><section class="panel calm"><h3>💚 Det här kan jag ta med mig till nästa månad</h3><p>${esc(takeaway(data))}</p></section>`;
-    root.querySelector('[data-care-month-back]')?.addEventListener('click',()=>window.malixOpenCare?.());
-    root.querySelector('[data-care-month-prev]')?.addEventListener('click',()=>{selectedMonth=changeMonth(selectedMonth,-1);render()});
-    root.querySelector('[data-care-month-next]')?.addEventListener('click',()=>{const next=changeMonth(selectedMonth,1),now=monthKey(new Date());if(next<=now){selectedMonth=next;render()}});
-    root.querySelector('#careMonthSelect')?.addEventListener('change',e=>{selectedMonth=e.target.value;render()});
-  }
-  function addCard(){
-    const hub=document.querySelector('#careHub'),grid=hub?.querySelector('.choice-grid');if(!grid||grid.querySelector('[data-care-month-card]'))return;
-    const b=document.createElement('button');b.type='button';b.className='choice-card';b.dataset.careMonthCard='1';b.innerHTML='<span>🌿</span><strong>Månadens återblick · PLUS</strong><small>Se vad de små stunderna blev tillsammans och vad du verkar ha upptäckt.</small>';
-    b.addEventListener('click',()=>{selectedMonth=monthKey(new Date());render();show('careMonth')});grid.appendChild(b);
-  }
-  const observer=new MutationObserver(()=>addCard());const main=document.querySelector('main');if(main)observer.observe(main,{childList:true,subtree:true});
-  document.addEventListener('click',e=>{if(e.target.closest('[data-calm-open="careHub"]'))setTimeout(addCard,0)},true);
-  addCard();setTimeout(addCard,150);
-  window.malixOpenCareMonth=()=>{render();show('careMonth')};
+  function render(){const root=ensureView(),data=collect(selectedMonth),months=availableMonths();root.innerHTML=`<button type="button" class="back" data-care-month-back>← Ta hand om mig</button><p class="eyebrow">PLUS · Månadsläsning</p><h2>🌿 Min omsorg om mig – ${esc(monthName(selectedMonth))}</h2><p class="subtitle">En återblick på det du faktiskt har gjort och märkt. Ingen bedömning och inget krav på att du borde ha tagit hand om dig på något annat sätt.</p><section class="panel"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="secondary" data-care-month-prev>← Föregående</button><select id="careMonthSelect" aria-label="Välj månad">${months.map(m=>`<option value="${m}" ${m===selectedMonth?'selected':''}>${esc(monthName(m))}</option>`).join('')}</select><button type="button" class="secondary" data-care-month-next>Nästa →</button></div></section><section class="panel"><h3>Det här gjorde jag för mig själv</h3>${overview(data)}</section><section class="panel"><h3>🌿 Här lade jag min omsorg</h3>${energy(data)}</section><section class="panel calm"><h3>✨ Små stunder blev till en helhet</h3>${whole(data)}</section><section class="panel"><h3>🧭 Det här verkar jag ha upptäckt</h3>${discovery(data)}</section><section class="panel calm"><h3>💚 Det här kan jag ta med mig till nästa månad</h3><p>${esc(takeaway(data))}</p></section>`;root.querySelector('[data-care-month-back]')?.addEventListener('click',()=>window.malixOpenCare?.());root.querySelector('[data-care-month-prev]')?.addEventListener('click',()=>{selectedMonth=changeMonth(selectedMonth,-1);render()});root.querySelector('[data-care-month-next]')?.addEventListener('click',()=>{const next=changeMonth(selectedMonth,1),now=monthKey(new Date());if(next<=now){selectedMonth=next;render()}});root.querySelector('#careMonthSelect')?.addEventListener('change',e=>{selectedMonth=e.target.value;render()})}
+  window.malixOpenCareMonth=()=>{selectedMonth=monthKey(new Date());render();show('careMonth')};
 })();
