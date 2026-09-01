@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260901-2035';
+  const VERSION='20260901-2050';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -41,7 +41,7 @@
       'movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-monthly.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js'
     ]);
     await loadOptional([
-      'cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js'
+      'cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','self-care-monthly.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js'
     ]);
   }
 
