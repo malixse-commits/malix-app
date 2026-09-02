@@ -106,7 +106,9 @@
  }
  window.malixRenderSmartKitchen=()=>{if(!document.querySelector('main > #smartKitchen'))renderView();else renderData()};
  window.malixKitchenHasStock=food=>load().stock.some(x=>matches(x.item,food));
- window.malixDeductKitchenItems=items=>{const st=load();let changed=0,unmatched=0;for(const entry of items||[]){const food=entry?.food,quantity=entry?.quantity;if(!food)continue;const candidates=st.stock.filter(x=>matches(x.item,food));if(candidates.length!==1){unmatched++;continue}const item=candidates[0],result=subtractAmounts(item.amount,quantity);if(!result){unmatched++;continue}if(result.empty)st.stock=st.stock.filter(x=>x.id!==item.id);else item.amount=result.amount;changed++}if(changed)save(st);return {changed,unmatched}};
+ window.malixGetKitchenStock=()=>load().stock.map(x=>({...x}));
+ window.malixAddKitchenItem=(item,place='Kyl',amount='1 portion')=>{const st=load();addStock(st,item,place,amount);save(st);renderData();return true};
+ window.malixDeductKitchenItems=items=>{const st=load();let changed=0,unmatched=0,emptied=0;for(const entry of items||[]){const food=entry?.food,quantity=entry?.quantity;if(!food)continue;const candidates=st.stock.filter(x=>matches(x.item,food));if(candidates.length!==1){unmatched++;continue}const item=candidates[0],result=subtractAmounts(item.amount,quantity);if(!result){unmatched++;continue}if(result.empty){st.stock=st.stock.filter(x=>x.id!==item.id);addPlusShopping(st,item.item,'Tog slut efter registrerad måltid');emptied++}else item.amount=result.amount;changed++}if(changed)save(st);return {changed,unmatched,emptied}};
  window.malixAddRecipeMissingToPlusShopping=recipe=>{const st=load(),missing=(recipe?.ingredients||[]).filter(i=>!st.stock.some(x=>matches(x.item,i)));missing.forEach(i=>addPlusShopping(st,i,recipe?.name||'recept'));save(st);renderData();return missing.length};
  renderView();
 })();
