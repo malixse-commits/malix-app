@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260902-1818';
+  const VERSION='20260902-1825';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -24,7 +24,7 @@
     // recipe-bank.js laddas direkt av index.html och är den enda filen som äger receptdata.
     await loadOptional(['recipe-catalog.js','recipe-category-dessert.js']);
 
-    await loadOptional(['smart-kitchen.js','fridge-check-routine.js','smart-week-plan.js']);
+    await loadOptional(['smart-kitchen.js','kitchen-item-cleanup.js','fridge-check-routine.js','smart-week-plan.js']);
     await loadOptional(['recipe-serving-suggestions.js','meal-stock-bridge.js','rescue-plus.js']);
     await loadOptional(['food-preferences.js','food-bank.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js','food-monthly.js','food-monthly-entry.js']);
     await loadOptional(['movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-monthly.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js']);
