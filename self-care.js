@@ -1,9 +1,12 @@
 (() => {
  const KEY='malix-self-care-v1';
+ const MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
  const main=document.querySelector('main');if(!main)return;
  const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
  function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
  function save(x){localStorage.setItem(KEY,JSON.stringify(x))}
+ const monthKey=d=>{const x=new Date(d);return Number.isNaN(x.getTime())?'':`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`};
+ const monthLabel=k=>{const [y,m]=k.split('-').map(Number);return `${MONTHS[m-1]} ${y}`};
  function show(id){document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));document.querySelector('#'+id)?.classList.add('active-view');if(id==='careReflection')renderHistory();if(id==='careKind')renderKindHistory();window.scrollTo({top:0,behavior:'smooth'})}
  function ensure(id){let s=document.querySelector('#'+id);if(!s){s=document.createElement('section');s.id=id;s.className='view';main.appendChild(s)}return s}
  function group(id,title,lead,items){const s=ensure(id);s.innerHTML=`<button type="button" class="back" data-care-group-back>← Ta hand om mig</button><p class="eyebrow">En sak i taget</p><h2>${title}</h2><p class="subtitle">${lead}</p><div class="choice-grid">${items.map(x=>`<button type="button" class="choice-card" data-care="${x[0]}"><span>${x[1]}</span><strong>${x[2]}</strong><small>${x[3]}</small></button>`).join('')}</div>`;return s}
@@ -39,6 +42,18 @@
    document.querySelector('#saveCareReflection').onclick=()=>{const d=document.querySelector('#careDid').value.trim(),f=document.querySelector('#careFeel').value,t=document.querySelector('#careTake').value.trim();add('🌙 Reflektion',d,`${f}${t?' · '+t:''}`);document.querySelector('#careReflection [data-care-status]').textContent='Reflektionen är sparad.';renderHistory()};
  }
  function renderKindHistory(){const box=document.querySelector('#kindHistory');if(!box)return;const a=load().filter(x=>x.type==='💚 Mjuka tankar').slice(0,20);box.innerHTML=a.length?`<h3>💚 Mina mjuka tankar</h3>`+a.map(x=>`<article class="recipe-card"><p class="eyebrow">${new Date(x.date).toLocaleDateString('sv-SE')}</p>${x.extra?`<p class="note"><strong>Till någon jag tycker om:</strong><br>${esc(x.extra)}</p>`:''}<p><strong>Det som får gälla även mig:</strong><br>${esc(x.text)}</p><button type="button" class="secondary" data-kind-delete="${x.id}">Ta bort</button></article>`).join(''):'<p class="note">När du sparar en mjuk tanke kan du se den här.</p>'}
- function renderHistory(){const box=document.querySelector('#careHistory');if(!box)return;const a=load().slice(0,20);box.innerHTML=a.length?`<h3>Det jag gjort för mig själv</h3>`+a.map(x=>`<article class="recipe-card"><p class="eyebrow">${new Date(x.date).toLocaleDateString('sv-SE')}</p><h3>${esc(x.type)}</h3><p>${esc(x.text)}</p>${x.extra?`<p class="note">${esc(x.extra)}</p>`:''}</article>`).join(''):'<p class="note">Här kommer du kunna se dina sparade stunder och reflektioner.</p>'}
+ function renderHistory(){
+  const box=document.querySelector('#careHistory');if(!box)return;
+  const seen=new Set(),all=load().filter(x=>{const k=[monthKey(x.date),String(x.type||'').trim(),String(x.text||'').trim(),String(x.extra||'').trim()].join('|').toLocaleLowerCase('sv-SE');if(seen.has(k))return false;seen.add(k);return true});
+  if(!all.length){box.innerHTML='<p class="note">Här kommer du kunna se dina sparade stunder och reflektioner.</p>';return}
+  const groups={};all.forEach(x=>{const k=monthKey(x.date);if(k)(groups[k]||(groups[k]=[])).push(x)});
+  const keys=Object.keys(groups).sort().reverse();
+  const now=new Date(),current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const selected=box.dataset.careMonth&&groups[box.dataset.careMonth]?box.dataset.careMonth:(groups[current]?current:keys[0]);
+  box.dataset.careMonth=selected;
+  const a=(groups[selected]||[]).sort((x,y)=>new Date(y.date)-new Date(x.date));
+  box.innerHTML=`<h3>Det jag gjort för mig själv</h3><label style="display:block;margin:12px 0">Visa månad <select id="careHistoryMonth">${keys.map(k=>`<option value="${k}"${k===selected?' selected':''}>${monthLabel(k)}</option>`).join('')}</select></label>${a.map(x=>`<article class="recipe-card"><p class="eyebrow">${new Date(x.date).toLocaleDateString('sv-SE')}</p><h3>${esc(x.type)}</h3><p>${esc(x.text)}</p>${x.extra?`<p class="note">${esc(x.extra)}</p>`:''}</article>`).join('')}<p class="note" style="margin-top:14px">För helhetsbilden finns Månadens återblick på Ta hand om mig-sidan.</p>`;
+  box.querySelector('#careHistoryMonth')?.addEventListener('change',e=>{box.dataset.careMonth=e.target.value;renderHistory()});
+ }
  build();window.malixOpenCare=()=>show('careHub');
 })();
