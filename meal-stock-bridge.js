@@ -1,9 +1,7 @@
 (() => {
-  const KITCHEN_KEY='malix-smart-kitchen-v1';
   const MEALS_KEY='malix-meals';
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-  const aliases={brodskiva:['brod'],'rostat brod':['brod'],'knackebrod':['knackebrod','brod'],'ostskiva':['ost'],'filmjolk':['filmjolk','fil'],'turkisk yoghurt':['turkisk yoghurt','yoghurt'],'kyckling':['kyckling','kycklingfile'],'fisk':['fisk','lax','torsk','sej'],'kottfars':['kottfars','fars'],'kott':['kott'],'makrill i tomatsas':['makrill']};
-  const mealDescriptions=new Set(['gryta','soppa','ugnsratt','pasta','wok','matratt fran receptbanken']);
+
   function selectedItems(){
     const items=[...document.querySelectorAll('#selectedFoods [data-remove]')].map(b=>{const t=(b.textContent||'').replace(/\s*×\s*$/,'').trim(),m=t.match(/^(.*?):\s*(.+)$/);return m?{food:m[1].trim(),quantity:m[2].trim()}:null}).filter(Boolean);
     const text=document.querySelector('#mealForm textarea[name="food"]')?.value||'';
@@ -16,15 +14,7 @@
     });
     return items;
   }
-  function load(){try{const s=JSON.parse(localStorage.getItem(KITCHEN_KEY)||'{}');return {stock:Array.isArray(s.stock)?s.stock:[],shopping:Array.isArray(s.shopping)?s.shopping:[]}}catch{return {stock:[],shopping:[]}}}
-  function save(s){localStorage.setItem(KITCHEN_KEY,JSON.stringify(s));document.dispatchEvent(new CustomEvent('malix-smart-kitchen-updated'))}
-  function inStock(stock,food){
-    if(typeof window.malixKitchenHasStock==='function')return window.malixKitchenHasStock(food);
-    const fn=norm(food),cands=(aliases[fn]||[fn]).map(norm);
-    return stock.some(x=>{const sn=norm(x.item);if(sn===fn)return true;return cands.includes(sn)})
-  }
-  function isTrackableFood(food){return !mealDescriptions.has(norm(food))}
-  function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(!isTrackableFood(food))return;if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Saknas efter registrerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Behöver fyllas på'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
+
   function recipeKitchenItems(recipe){
     return (recipe?.ingredients||[]).map(text=>{
       const raw=String(text||'').trim();
@@ -36,6 +26,7 @@
       return food?{food,quantity}:null;
     }).filter(Boolean);
   }
+
   function mealTypeNow(){const h=new Date().getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
   function chooseMealType(){
     const remembered=sessionStorage.getItem('malix-selected-meal-type');
@@ -52,6 +43,7 @@
       window.alert('Välj Frukost, Lunch, Middag, Mellanmål eller Kvällsmål.');
     }
   }
+
   function saveCookedRecipeToMeals(id,mealType){
     const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;
     if(!recipe)return false;
@@ -66,6 +58,7 @@
     window.renderMeals?.();
     return true;
   }
+
   function openFoodToday(){
     const trigger=document.querySelector('[data-calm-open="foodToday"]');
     if(trigger){trigger.click();return}
@@ -75,6 +68,7 @@
     target.classList.add('active-view');
     window.scrollTo({top:0,behavior:'smooth'});
   }
+
   document.addEventListener('submit',event=>{
     const form=event.target;if(form?.id!=='mealForm')return;
     const submit=form.querySelector('button[type="submit"]');if(submit&&/^Spara ändringar/i.test(submit.textContent||''))return;
@@ -82,17 +76,14 @@
     if(foodField?.dataset.takeaway==='1'||/^Hämtmat:/i.test(foodField?.value||'')){sessionStorage.removeItem('malix-skip-kitchen-once');return}
     if(sessionStorage.getItem('malix-skip-kitchen-once')==='1'){sessionStorage.removeItem('malix-skip-kitchen-once');return}
     const items=selectedItems();if(!items.length)return;
-    const mealType=form.querySelector('[name="meal"]')?.value||'måltid';
     setTimeout(()=>{
-      const added=addMissingToPlus(items,mealType);
-      if(typeof window.malixDeductKitchenItems==='function'){
-        const result=window.malixDeductKitchenItems(items),saved=document.querySelector('#mealSaved');
-        if(saved&&result?.changed)saved.textContent+=' · PLUS-köket uppdaterat ✓';
-        if(saved&&result?.emptied)saved.textContent+=` · ${result.emptied} vara${result.emptied===1?'':'or'} tog slut och lades på PLUS-listan`;
-        if(saved&&added)saved.textContent+=` · ${added} sak${added===1?'':'er'} till PLUS-listan`;
-      }
+      if(typeof window.malixDeductKitchenItems!=='function')return;
+      const result=window.malixDeductKitchenItems(items),saved=document.querySelector('#mealSaved');
+      if(saved&&result?.changed)saved.textContent+=' · PLUS-köket uppdaterat ✓';
+      if(saved&&result?.emptied)saved.textContent+=` · ${result.emptied} vara${result.emptied===1?'':'or'} tog slut och lades på PLUS-listan`;
     },0);
   },true);
+
   const originalMarkRecipeCooked=window.markRecipeCooked;
   if(typeof originalMarkRecipeCooked==='function'){
     window.markRecipeCooked=id=>{
