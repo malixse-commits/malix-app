@@ -19,12 +19,21 @@
     if(!mealSelect)return;
     const mealLabel=mealSelect.closest('label');
     const style=document.createElement('style');
-    style.textContent='#mealForm:not([data-selected-meal]) > :not(#mealTypeFirstStep):not(#mealRecipeChoice){display:none !important;}';
+    style.textContent=`
+      #mealForm:not([data-selected-meal]) > :not(#mealTypeFirstStep):not(#mealRecipeChoice){display:none !important;}
+      #mealForm[data-log-mode] > :not(#mealTypeFirstStep):not(#mealRecipeChoice):not(#mealLogModeChooser){display:none !important;}
+      #mealForm[data-log-mode="build"] .meal-picker,#mealForm[data-log-mode="build"] [data-food-groups],#mealForm[data-log-mode="build"] .food-groups{display:block !important;}
+      #mealForm[data-log-mode="ready"] [data-ready-foods]{display:block !important;}
+      #mealForm[data-log-mode="takeaway"] [data-takeaway-box]{display:block !important;}
+      #mealForm[data-log-mode="write"] > label,#mealForm[data-log-mode="write"] > button[type="submit"],#mealForm[data-log-mode="write"] > .status{display:block !important;}
+      #mealForm[data-log-mode="build"] > button[type="submit"],#mealForm[data-log-mode="ready"] > button[type="submit"],#mealForm[data-log-mode="takeaway"] > button[type="submit"]{display:block !important;}
+      #mealLogModeChooser .stack-buttons button{width:100%;text-align:left;}
+    `;
     document.head.appendChild(style);
     const chooser=document.createElement('section');
     chooser.id='mealTypeFirstStep';
     chooser.className='panel calm';
-    chooser.innerHTML=`<h3>Vad vill du logga?</h3><p class="note">Välj måltid först. Sedan visas det som hör till den måltiden.</p><div class="chips">${mealTypes.map(([name,emoji])=>`<button type="button" class="secondary" data-meal-first="${name}">${emoji} ${name}</button>`).join('')}</div><p id="mealFirstChosen" class="status"></p>`;
+    chooser.innerHTML=`<h3>1. Vilken måltid?</h3><p class="note">Välj måltid först.</p><div class="chips">${mealTypes.map(([name,emoji])=>`<button type="button" class="secondary" data-meal-first="${name}">${emoji} ${name}</button>`).join('')}</div><p id="mealFirstChosen" class="status"></p>`;
     form.insertBefore(chooser,form.firstChild);
     if(mealLabel)mealLabel.hidden=true;
 
@@ -32,7 +41,7 @@
     recipeBox.id='mealRecipeChoice';
     recipeBox.className='panel calm';
     recipeBox.hidden=true;
-    recipeBox.innerHTML='<h3>📖 Vill du välja en maträtt från receptbanken?</h3><p class="note">Receptbanken är ett av sätten att logga lunch eller middag. Appen kommer ihåg vilken måltid du valde.</p><button type="button" class="primary" id="mealOpenRecipeBank">Välj från receptbanken</button>';
+    recipeBox.innerHTML='<h3>2. Hur vill du logga?</h3><p class="note">Välj ett sätt. Resten hålls undan tills du behöver det.</p><div id="mealLogModeChooser" class="stack-buttons"><button type="button" data-log-mode-choice="recipe">📖 Välj recept</button><button type="button" data-log-mode-choice="build">🍽️ Bygg min måltid</button><button type="button" data-log-mode-choice="takeaway">🥡 Hämtmat / restaurang</button><button type="button" data-log-mode-choice="ready">⚡ Färdigt & enkelt</button><button type="button" data-log-mode-choice="write">✏️ Skriv själv</button></div>';
     chooser.insertAdjacentElement('afterend',recipeBox);
 
     function choose(type){
@@ -40,34 +49,53 @@
       mealSelect.dispatchEvent(new Event('change',{bubbles:true}));
       sessionStorage.setItem('malix-selected-meal-type',type);
       form.dataset.selectedMeal=type;
+      form.removeAttribute('data-log-mode');
       if(mealLabel)mealLabel.hidden=true;
       chooser.querySelector('#mealFirstChosen').textContent=`Du loggar: ${type}`;
       chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.classList.toggle('active',b.dataset.mealFirst===type));
-      recipeBox.hidden=!['Lunch','Middag'].includes(type);
+      recipeBox.hidden=false;
+      const recipeButton=recipeBox.querySelector('[data-log-mode-choice="recipe"]');
+      if(recipeButton)recipeButton.hidden=!['Lunch','Middag'].includes(type);
     }
 
     chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.mealFirst)));
-    recipeBox.querySelector('#mealOpenRecipeBank')?.addEventListener('click',()=>{
-      sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);
-      const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');
-      if(trigger)trigger.click();
-      else document.querySelector('#recipeBank')?.classList.add('active-view');
+    recipeBox.addEventListener('click',e=>{
+      const b=e.target.closest('[data-log-mode-choice]');if(!b)return;
+      const mode=b.dataset.logModeChoice;
+      if(mode==='recipe'){
+        sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);
+        const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');
+        if(trigger)trigger.click();else document.querySelector('#recipeBank')?.classList.add('active-view');
+        return;
+      }
+      form.dataset.logMode=mode;
+      recipeBox.querySelectorAll('[data-log-mode-choice]').forEach(x=>x.classList.toggle('active',x===b));
+      setTimeout(()=>document.querySelector(mode==='ready'?'[data-ready-foods]':mode==='takeaway'?'[data-takeaway-box]':mode==='build'?'.meal-picker, [data-food-groups], .food-groups':'textarea[name="food"]')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
     });
 
     form.addEventListener('reset',()=>setTimeout(()=>{
-      form.removeAttribute('data-selected-meal');
+      form.removeAttribute('data-selected-meal');form.removeAttribute('data-log-mode');
       sessionStorage.removeItem('malix-selected-meal-type');
       chooser.querySelector('#mealFirstChosen').textContent='';
       chooser.querySelectorAll('[data-meal-first]').forEach(b=>b.classList.remove('active'));
       recipeBox.hidden=true;
+      recipeBox.querySelectorAll('[data-log-mode-choice]').forEach(b=>b.classList.remove('active'));
       if(mealLabel)mealLabel.hidden=true;
     },0));
   }
-  function init(){document.querySelector('#breakfastQuickChoices')?.remove();const form=document.querySelector('#mealForm');if(!form)return;setupMealFirst(form);const container=form.parentElement;if(document.querySelector('[data-fruit-group]'))return;const headings=[...container.querySelectorAll('h3,h4,strong,p,legend')];const grainHeading=headings.find(x=>clean(x.textContent)==='Bröd & gryn');if(grainHeading)addButtons(grainHeading.parentElement.querySelector('.chips')||grainHeading.parentElement,extraGrains);const toppingHeading=headings.find(x=>clean(x.textContent)==='Pålägg');if(toppingHeading)addButtons(toppingHeading.parentElement.querySelector('.chips')||toppingHeading.parentElement,extraToppings);
+  function collapseHistory(){
+    const view=document.querySelector('#foodLog');if(!view||view.dataset.calmHistory==='1')return;view.dataset.calmHistory='1';
+    const history=document.querySelector('#mealHistory');const historyHeading=history?.previousElementSibling;
+    if(history&&historyHeading){const wrap=document.createElement('details');wrap.className='panel';wrap.style.marginTop='18px';const sum=document.createElement('summary');sum.innerHTML='<strong>✓ Dagens måltider</strong>';historyHeading.replaceWith(wrap);wrap.append(sum,history);}
+    const calendar=document.querySelector('#calendarGrid')?.closest('.panel');if(calendar){const wrap=document.createElement('details');wrap.className='panel';wrap.style.marginTop='14px';const sum=document.createElement('summary');sum.innerHTML='<strong>📅 Matkalender</strong>';calendar.replaceWith(wrap);wrap.append(sum,calendar);}
+  }
+  function init(){document.querySelector('#breakfastQuickChoices')?.remove();const form=document.querySelector('#mealForm');if(!form)return;setupMealFirst(form);const container=form.parentElement;if(!document.querySelector('[data-fruit-group]')){const headings=[...container.querySelectorAll('h3,h4,strong,p,legend')];const grainHeading=headings.find(x=>clean(x.textContent)==='Bröd & gryn');if(grainHeading)addButtons(grainHeading.parentElement.querySelector('.chips')||grainHeading.parentElement,extraGrains);const toppingHeading=headings.find(x=>clean(x.textContent)==='Pålägg');if(toppingHeading)addButtons(toppingHeading.parentElement.querySelector('.chips')||toppingHeading.parentElement,extraToppings);
     const fgHeading=headings.find(x=>clean(x.textContent)==='Frukt & grönt'||clean(x.textContent)==='Grönsaker');if(fgHeading){fgHeading.textContent='Grönsaker';const group=fgHeading.parentElement,buttons=[...group.querySelectorAll('button')];buttons.forEach(b=>{if(fruitNames.has(clean(b.textContent).toLowerCase()))b.remove()});addButtons(group.querySelector('.chips')||group,vegetables);}
     const picker=container.querySelector('.meal-picker')||container;
     if(!picker.querySelector('[data-sausage-group]')){const group=document.createElement('section');group.dataset.sausageGroup='1';group.className='panel calm';group.style.margin='14px 0';group.innerHTML='<h3>🌭 Korv</h3><p class="note">Välj den sorts korv du åt.</p><div class="chips"></div>';addButtons(group.querySelector('.chips'),sausages);const selectedPanel=picker.querySelector('#selectedFoods')?.closest('.panel');if(selectedPanel)selectedPanel.insertAdjacentElement('beforebegin',group);else picker.appendChild(group);makeCollapsible(group,'🌭 Korv');}
     const fruit=document.createElement('section');fruit.dataset.fruitGroup='1';fruit.className='panel calm';fruit.style.margin='14px 0';fruit.innerHTML='<h3>🍎 Frukt</h3><p class="note">Välj den frukt du åt.</p><div class="chips"></div>';addButtons(fruit.querySelector('.chips'),fruits);const selected=picker.querySelector('#selectedFoods')?.closest('.panel');if(selected)selected.insertAdjacentElement('beforebegin',fruit);else picker.appendChild(fruit);
     if(!picker.querySelector('[data-treats-group]')){const group=document.createElement('section');group.dataset.treatsGroup='1';group.className='panel calm';group.style.margin='14px 0';group.innerHTML='<h3>🍦 Något gott</h3><div class="chips"></div>';addButtons(group.querySelector('.chips'),treats);fruit.insertAdjacentElement('afterend',group)}['Bröd & gryn','Mejeri','Pålägg','Grönsaker','Dryck'].forEach(label=>{const h=[...container.querySelectorAll('h3,h4,strong,p,legend')].find(x=>clean(x.textContent)===label);if(h)makeCollapsible(h.parentElement,label)});makeCollapsible(fruit,'🍎 Frukt');}
+    collapseHistory();
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
