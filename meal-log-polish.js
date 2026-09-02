@@ -37,7 +37,9 @@
       #mealForm #simpleMealFlow .simple-step:not([hidden]){display:block !important}
       #mealForm #simpleMealFlow .meal-choice-grid{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
       #mealForm #simpleMealFlow .meal-choice-grid button{display:block !important;min-height:52px;text-align:left}
-      #mealForm #simpleMealFlow .simple-food-select{display:block !important;width:100%;padding:12px;margin:8px 0 12px}
+      #mealForm #simpleMealFlow .simple-food-search{display:block !important;width:100%;padding:12px;margin:8px 0}
+      #mealForm #simpleMealFlow .simple-search-results{display:grid !important;grid-template-columns:1fr;gap:8px;margin-top:8px}
+      #mealForm #simpleMealFlow .simple-search-results button{display:block !important;width:100%;text-align:left;min-height:46px}
       #mealForm #simpleMealFlow #simpleMealSelected{display:block !important;margin:14px 0}
       #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong,#mealForm #simpleMealFlow label{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],#mealForm[data-simple-step="food"] > label:has(select[name="taste"]),#mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
@@ -49,8 +51,16 @@
     const step2=flow.querySelector('#simpleMealStep2'),choiceRoot=flow.querySelector('#simpleFoodChoices'),extraRoot=flow.querySelector('#simpleExtraChoices'),mealFor=flow.querySelector('#simpleMealFor');
     function renderFoodChoice(type){
       if(['Frukost','Kvällsmål'].includes(type)){
-        choiceRoot.innerHTML=`<label>Välj mat eller dryck<select id="simpleFoodSelect" class="simple-food-select"><option value="">Välj ett alternativ…</option>${breakfastEveningFoods.map(food=>`<option value="${food}">${food}</option>`).join('')}</select></label><p class="note">Du kan välja flera saker, en i taget.</p>`;
-        choiceRoot.querySelector('#simpleFoodSelect').addEventListener('change',e=>{const food=e.target.value;if(!food)return;addFood(form,food);e.target.value=''});
+        choiceRoot.innerHTML=`<label>Sök mat eller dryck<input id="simpleFoodSearch" class="simple-food-search" type="search" autocomplete="off" placeholder="Skriv t.ex. kva, ägg eller bröd"></label><p class="note">Skriv några bokstäver så visas passande alternativ.</p><div id="simpleFoodResults" class="simple-search-results"></div>`;
+        const input=choiceRoot.querySelector('#simpleFoodSearch'),results=choiceRoot.querySelector('#simpleFoodResults');
+        const showMatches=()=>{
+          const q=input.value.trim().toLocaleLowerCase('sv-SE');
+          if(!q){results.innerHTML='';return;}
+          const matches=breakfastEveningFoods.filter(food=>food.toLocaleLowerCase('sv-SE').includes(q)).slice(0,12);
+          results.innerHTML=matches.length?matches.map(food=>`<button type="button" class="secondary" data-search-food="${food}">${food}</button>`).join(''):'<p class="note">Inget färdigt alternativ hittades. Du kan välja Annat / skriv själv nedan.</p>';
+          results.querySelectorAll('[data-search-food]').forEach(b=>b.addEventListener('click',()=>{addFood(form,b.dataset.searchFood);input.value='';results.innerHTML='';input.focus()}));
+        };
+        input.addEventListener('input',showMatches);
       }else{
         choiceRoot.innerHTML=`<div class="meal-choice-grid">${(choices[type]||[]).map(food=>`<button type="button" class="secondary" data-simple-food="${food}">${food}</button>`).join('')}</div>`;
         choiceRoot.querySelectorAll('[data-simple-food]').forEach(b=>b.addEventListener('click',()=>addFood(form,b.dataset.simpleFood)));
