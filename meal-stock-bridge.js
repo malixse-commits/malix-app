@@ -45,13 +45,15 @@
     const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;
     if(!recipe)return false;
     let meals=[];try{const parsed=JSON.parse(localStorage.getItem(MEALS_KEY)||'[]');meals=Array.isArray(parsed)?parsed:[]}catch{}
-    const today=new Date(),dayKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const duplicate=meals.some(m=>String(m.recipeId||'')===String(recipe.id)&&m.date&&dayKey(new Date(m.date))===dayKey(today));
-    if(!duplicate){meals.unshift({meal:mealType,food:recipe.name,portion:'1 portion',taste:'',satiety:'',recipeId:recipe.id,source:'receptbank',date:today.toISOString()});localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,500)))}
+    const now=new Date();
+    const immediateDuplicate=meals.some(m=>String(m.recipeId||'')===String(recipe.id)&&String(m.meal||'')===String(mealType)&&m.date&&Math.abs(now.getTime()-new Date(m.date).getTime())<2000);
+    if(immediateDuplicate)return false;
+    meals.unshift({meal:mealType,food:recipe.name,portion:'1 portion',taste:'',satiety:'',recipeId:recipe.id,source:'receptbank',date:now.toISOString()});
+    localStorage.setItem(MEALS_KEY,JSON.stringify(meals.slice(0,500)));
     document.dispatchEvent(new CustomEvent('malix-meals-updated'));
     document.dispatchEvent(new CustomEvent('malix-day-changed'));
     window.renderMeals?.();
-    return !duplicate;
+    return true;
   }
   function openFoodToday(){
     const trigger=document.querySelector('[data-calm-open="foodToday"]');
@@ -82,9 +84,9 @@
       const mealType=chooseMealType();
       if(!mealType)return;
       originalMarkRecipeCooked(id);
-      saveCookedRecipeToMeals(id,mealType);
+      const saved=saveCookedRecipeToMeals(id,mealType);
       sessionStorage.removeItem('malix-selected-meal-type');
-      setTimeout(openFoodToday,50);
+      if(saved)setTimeout(openFoodToday,50);
     };
   }
 })();
