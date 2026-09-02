@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260902-1140';
+  const VERSION='20260902-1220';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -21,10 +21,7 @@
     await loadRequired(['calm-navigation.js','calm-ready.js']);
     await loadOptional(['cloud-config.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','cloud-sync.js']);
 
-    // Alla nuvarande receptkällor laddas först. recipe-catalog.js är därefter
-    // den gemensamma samlingspunkten som registrerar hela receptbanken och
-    // upptäcker dubbletter innan övriga matfunktioner använder recepten.
-    await loadOptional(['recipes-malix.js','desserts-malix.js']);
+    // recipe-bank.js laddas direkt av index.html och är den enda filen som äger receptdata.
     await loadOptional(['recipe-catalog.js','recipe-category-dessert.js']);
 
     await loadOptional(['smart-kitchen.js','fridge-check-routine.js','smart-week-plan.js']);
