@@ -50,7 +50,12 @@
     const style=document.createElement('style');
     style.textContent=`
       #mealForm > *{display:none !important}
-      #mealForm #simpleMealFlow,#mealForm #simpleMealFlow *{display:revert}
+      #mealForm > #simpleMealFlow{display:block !important}
+      #mealForm #simpleMealFlow .simple-step:not([hidden]){display:block !important}
+      #mealForm #simpleMealFlow .meal-choice-grid{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
+      #mealForm #simpleMealFlow .meal-choice-grid button{display:block !important;min-height:52px;text-align:left}
+      #mealForm #simpleMealFlow #simpleMealSelected{display:block !important;margin:14px 0}
+      #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],
       #mealForm[data-simple-step="food"] > label:has(select[name="taste"]),
       #mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
@@ -59,10 +64,7 @@
       #mealForm[data-simple-step="other"] > label:has(select[name="taste"]),
       #mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="ready"] [data-ready-foods],#mealForm[data-simple-step="takeaway"] [data-takeaway-box]{display:block !important}
-      #simpleMealFlow .meal-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
-      #simpleMealFlow .meal-choice-grid button{min-height:52px;text-align:left}
       #simpleMealFlow .simple-step{margin-top:14px}
-      #simpleMealSelected{margin:14px 0}
     `;
     document.head.appendChild(style);
 
