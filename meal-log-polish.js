@@ -33,6 +33,7 @@
 
     const style=document.createElement('style');style.textContent=`
       #mealForm > *{display:none !important}#mealForm > #simpleMealFlow{display:block !important}
+      #mealForm [data-ready-foods],#mealForm [data-takeaway-box]{display:none !important}
       #mealForm #simpleMealFlow .simple-step:not([hidden]){display:block !important}
       #mealForm #simpleMealFlow .meal-choice-grid{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
       #mealForm #simpleMealFlow .meal-choice-grid button{display:block !important;min-height:52px;text-align:left}
