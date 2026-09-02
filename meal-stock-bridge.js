@@ -24,7 +24,18 @@
     return stock.some(x=>{const sn=norm(x.item);if(sn===fn)return true;return cands.includes(sn)})
   }
   function isTrackableFood(food){return !mealDescriptions.has(norm(food))}
-  function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(!isTrackableFood(food))return;if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Behövs till planerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Planerat'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
+  function addMissingToPlus(items,mealType){const st=load();let added=0;items.forEach(({food,quantity})=>{if(!isTrackableFood(food))return;if(inStock(st.stock,food))return;if(st.shopping.some(x=>!x.done&&norm(x.item)===norm(food)))return;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:food,done:false,source:`Saknas efter registrerad ${String(mealType||'måltid').toLowerCase()} · ${quantity}`,category:'🛒 Behöver fyllas på'});added++});if(added){save(st);window.malixRenderSmartKitchen?.()}return added}
+  function recipeKitchenItems(recipe){
+    return (recipe?.ingredients||[]).map(text=>{
+      const raw=String(text||'').trim();
+      if(!raw||/^(eventuellt|gärna|valfri|valfria|lite)\b/i.test(raw))return null;
+      const m=raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|l|dl|ml|st|styck|stycken|skiva|skivor)?\s+(.+)$/i);
+      if(!m)return null;
+      const quantity=`${m[1]} ${m[2]||'st'}`;
+      const food=m[3].replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+      return food?{food,quantity}:null;
+    }).filter(Boolean);
+  }
   function mealTypeNow(){const h=new Date().getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
   function chooseMealType(){
     const remembered=sessionStorage.getItem('malix-selected-meal-type');
@@ -67,6 +78,9 @@
   document.addEventListener('submit',event=>{
     const form=event.target;if(form?.id!=='mealForm')return;
     const submit=form.querySelector('button[type="submit"]');if(submit&&/^Spara ändringar/i.test(submit.textContent||''))return;
+    const foodField=form.querySelector('textarea[name="food"]');
+    if(foodField?.dataset.takeaway==='1'||/^Hämtmat:/i.test(foodField?.value||'')){sessionStorage.removeItem('malix-skip-kitchen-once');return}
+    if(sessionStorage.getItem('malix-skip-kitchen-once')==='1'){sessionStorage.removeItem('malix-skip-kitchen-once');return}
     const items=selectedItems();if(!items.length)return;
     const mealType=form.querySelector('[name="meal"]')?.value||'måltid';
     setTimeout(()=>{
@@ -74,6 +88,7 @@
       if(typeof window.malixDeductKitchenItems==='function'){
         const result=window.malixDeductKitchenItems(items),saved=document.querySelector('#mealSaved');
         if(saved&&result?.changed)saved.textContent+=' · PLUS-köket uppdaterat ✓';
+        if(saved&&result?.emptied)saved.textContent+=` · ${result.emptied} vara${result.emptied===1?'':'or'} tog slut och lades på PLUS-listan`;
         if(saved&&added)saved.textContent+=` · ${added} sak${added===1?'':'er'} till PLUS-listan`;
       }
     },0);
@@ -84,9 +99,15 @@
       const mealType=chooseMealType();
       if(!mealType)return;
       originalMarkRecipeCooked(id);
+      const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;
       const saved=saveCookedRecipeToMeals(id,mealType);
       sessionStorage.removeItem('malix-selected-meal-type');
-      if(saved)setTimeout(openFoodToday,50);
+      if(saved&&recipe){
+        const items=recipeKitchenItems(recipe);
+        const result=typeof window.malixDeductKitchenItems==='function'?window.malixDeductKitchenItems(items):null;
+        document.dispatchEvent(new CustomEvent('malix-recipe-cooked',{detail:{recipe,mealType,kitchenResult:result}}));
+        setTimeout(openFoodToday,50);
+      }
     };
   }
 })();
