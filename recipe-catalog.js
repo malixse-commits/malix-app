@@ -30,13 +30,13 @@
   };
 
   // Receptbanken arbetar vidare med samma array så befintliga funktioner
-  // fortsätter fungera. Om dubbletter finns tas bara senare kopior bort.
+  // fortsätter fungera. Om dubbletter finns behålls den första förekomsten.
   if (duplicates.length) {
     const seen = new Set();
-    for (let i = recipes.length - 1; i >= 0; i--) {
+    for (let i = 0; i < recipes.length; i++) {
       const id = String(recipes[i]?.id || '').trim();
       if (!id) continue;
-      if (seen.has(id)) recipes.splice(i, 1);
+      if (seen.has(id)) { recipes.splice(i, 1); i--; }
       else seen.add(id);
     }
   }
