@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260902-1954';
+  const VERSION='20260902-2025';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -26,9 +26,10 @@
 
     await loadOptional(['smart-kitchen.js','kitchen-item-cleanup.js','fridge-check-routine.js','smart-week-plan.js']);
     await loadOptional(['recipe-serving-suggestions.js','meal-stock-bridge.js','rescue-plus.js']);
-    await loadOptional(['food-preferences.js','food-bank.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js','food-monthly.js','food-monthly-entry.js']);
-    await loadOptional(['movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-monthly.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js']);
-    await loadOptional(['cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','self-care-monthly.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js']);
+    await loadOptional(['food-preferences.js','food-bank.js','meal-log-polish.js','breakfast-buffet.js','takeaway-meals.js','ready-made-foods.js','evening-meal-mirror.js','food-day-lock.js','food-history.js']);
+    await loadOptional(['movement-recovery.js','cleaning-square.js','cleaning-home-offer.js','cleaning-reflection-history-edit.js','cleaning-flex-log.js','diary-history.js']);
+    await loadOptional(['cleaning-tips.js','self-care.js','presence-care.js','presence-done.js','sleep-care.js','my-time-mobile.js','my-day-summary.js','inner-compass.js']);
+    await loadOptional(['my-month.js']);
   }
 
   start().catch(error => { console.error('Appens kärna kunde inte starta:', error); document.body.classList.add('calm-ready'); });
