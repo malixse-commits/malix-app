@@ -44,6 +44,7 @@
       #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong,#mealForm #simpleMealFlow label{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],#mealForm[data-simple-step="food"] > label:has(select[name="taste"]),#mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="other"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="other"] > button[type="submit"],#mealForm[data-simple-step="other"] > label:has(select[name="taste"]),#mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
+      #mealForm[data-simple-step="takeaway"] > button[type="submit"],#mealForm[data-simple-step="takeaway"] > label:has(select[name="taste"]),#mealForm[data-simple-step="takeaway"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="ready"] [data-ready-foods],#mealForm[data-simple-step="takeaway"] [data-takeaway-box]{display:block !important}
       #simpleMealFlow .simple-step{margin-top:14px}`;document.head.appendChild(style);
 
