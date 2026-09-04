@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260904-1000';
+  const VERSION='20260904-1010';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
