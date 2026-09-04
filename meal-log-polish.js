@@ -17,7 +17,7 @@
     const box=form.querySelector('#simpleMealSelected'),ta=form.querySelector('textarea[name="food"]');if(!box||!ta)return;
     const value=ta.value.trim();
     box.innerHTML=value?`<strong>Det här har du valt:</strong><p>${value}</p><button type="button" class="secondary" id="clearSimpleMeal">Börja om</button>`:'<p class="note">Inget valt ännu.</p>';
-    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form)});
+    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';delete ta.dataset.takeaway;ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form)});
   }
 
   function collapseHistory(){
@@ -44,8 +44,7 @@
       #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong,#mealForm #simpleMealFlow label{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],#mealForm[data-simple-step="food"] > label:has(select[name="taste"]),#mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="other"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="other"] > button[type="submit"],#mealForm[data-simple-step="other"] > label:has(select[name="taste"]),#mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
-      #mealForm[data-simple-step="takeaway"] > button[type="submit"],#mealForm[data-simple-step="takeaway"] > label:has(select[name="taste"]),#mealForm[data-simple-step="takeaway"] > label:has(select[name="satiety"]){display:block !important}
-      #mealForm[data-simple-step="ready"] [data-ready-foods],#mealForm[data-simple-step="takeaway"] [data-takeaway-box]{display:block !important}
+      #mealForm[data-simple-step="ready"] [data-ready-foods]{display:block !important}
       #simpleMealFlow .simple-step{margin-top:14px}`;document.head.appendChild(style);
 
     const flow=document.createElement('section');flow.id='simpleMealFlow';flow.className='panel calm';flow.innerHTML=`<div id="simpleMealStep1" class="simple-step"><h3>1. Vilken måltid?</h3><div class="meal-choice-grid">${mealTypes.map(([name,emoji])=>`<button type="button" class="secondary" data-simple-meal="${name}">${emoji} ${name}</button>`).join('')}</div></div><div id="simpleMealStep2" class="simple-step" hidden><h3>2. Vad åt du?</h3><p id="simpleMealFor" class="note"></p><div id="simpleFoodChoices"></div><div id="simpleMealSelected"></div><div id="simpleExtraChoices" class="meal-choice-grid"></div></div>`;form.insertBefore(flow,form.firstChild);
@@ -77,8 +76,40 @@
     }
 
     flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.addEventListener('click',()=>chooseMeal(b.dataset.simpleMeal)));
-    flow.addEventListener('click',e=>{const b=e.target.closest('[data-simple-action]');if(!b)return;const action=b.dataset.simpleAction;if(action==='recipe'){sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');if(trigger)trigger.click();return}if(action==='other'){form.dataset.simpleStep='other';foodLabel.hidden=false;foodArea.focus();foodLabel.scrollIntoView({behavior:'smooth',block:'center'});return}form.dataset.simpleStep=action;setTimeout(()=>document.querySelector(action==='ready'?'[data-ready-foods]':'[data-takeaway-box]')?.scrollIntoView({behavior:'smooth',block:'start'}),0)});
-    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
+    flow.addEventListener('click',e=>{
+      const b=e.target.closest('[data-simple-action]');if(!b)return;
+      const action=b.dataset.simpleAction;
+      if(action==='recipe'){
+        sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);
+        const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');
+        if(trigger)trigger.click();
+        return;
+      }
+      if(action==='takeaway'){
+        form.dataset.simpleStep='other';
+        foodLabel.hidden=false;
+        if(!foodArea.value.trim())foodArea.value='Hämtmat/restaurang: ';
+        foodArea.dataset.takeaway='1';
+        foodArea.dispatchEvent(new Event('input',{bubbles:true}));
+        renderSelected(form);
+        foodArea.focus();
+        foodArea.setSelectionRange(foodArea.value.length,foodArea.value.length);
+        foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+      if(action==='other'){
+        form.dataset.simpleStep='other';
+        foodLabel.hidden=false;
+        delete foodArea.dataset.takeaway;
+        foodArea.focus();
+        foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+      form.dataset.simpleStep=action;
+      setTimeout(()=>document.querySelector('[data-ready-foods]')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
+    });
+    form.addEventListener('submit',()=>{if(foodArea.dataset.takeaway==='1')sessionStorage.setItem('malix-skip-kitchen-once','1')},true);
+    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;delete foodArea.dataset.takeaway;renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
