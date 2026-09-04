@@ -10,14 +10,14 @@
     const ta=form.querySelector('textarea[name="food"]');if(!ta)return;
     const entry=`${food} (${amount})`;
     ta.value=ta.value.trim()?`${ta.value.trim()}, ${entry}`:entry;
-    ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form);
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
   }
 
   function renderSelected(form){
     const box=form.querySelector('#simpleMealSelected'),ta=form.querySelector('textarea[name="food"]');if(!box||!ta)return;
     const value=ta.value.trim();
     box.innerHTML=value?`<strong>Det här har du valt:</strong><p>${value}</p><button type="button" class="secondary" id="clearSimpleMeal">Börja om</button>`:'<p class="note">Inget valt ännu.</p>';
-    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form)});
+    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';ta.dispatchEvent(new Event('input',{bubbles:true}))});
   }
 
   function collapseHistory(){
@@ -75,6 +75,7 @@
       const isMain=['Lunch','Middag'].includes(type);extraRoot.innerHTML=`${isMain?'<button type="button" class="secondary" data-simple-action="recipe">📖 Välj recept</button><button type="button" class="secondary" data-simple-action="ready">⚡ Färdigt & enkelt</button>':''}<button type="button" class="secondary" data-simple-action="other">➕ Annat / skriv själv</button>`;step2.hidden=false;renderSelected(form);
     }
 
+    foodArea.addEventListener('input',()=>renderSelected(form));
     flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.addEventListener('click',()=>chooseMeal(b.dataset.simpleMeal)));
     flow.addEventListener('click',e=>{const b=e.target.closest('[data-simple-action]');if(!b)return;const action=b.dataset.simpleAction;if(action==='recipe'){sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');if(trigger)trigger.click();return}if(action==='other'){form.dataset.simpleStep='other';foodLabel.hidden=false;if(portionLabel)portionLabel.hidden=false;foodArea.focus();foodLabel.scrollIntoView({behavior:'smooth',block:'center'});return}form.dataset.simpleStep=action;setTimeout(()=>document.querySelector('[data-ready-foods]')?.scrollIntoView({behavior:'smooth',block:'start'}),0)});
     form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;if(portionLabel)portionLabel.hidden=true;renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
