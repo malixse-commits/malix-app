@@ -17,7 +17,7 @@
     const box=form.querySelector('#simpleMealSelected'),ta=form.querySelector('textarea[name="food"]');if(!box||!ta)return;
     const value=ta.value.trim();
     box.innerHTML=value?`<strong>Det här har du valt:</strong><p>${value}</p><button type="button" class="secondary" id="clearSimpleMeal">Börja om</button>`:'<p class="note">Inget valt ännu.</p>';
-    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';delete ta.dataset.takeaway;ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form)});
+    box.querySelector('#clearSimpleMeal')?.addEventListener('click',()=>{ta.value='';ta.dispatchEvent(new Event('input',{bubbles:true}));renderSelected(form)});
   }
 
   function collapseHistory(){
@@ -29,7 +29,7 @@
 
   function init(){
     const form=document.querySelector('#mealForm');if(!form||form.dataset.simpleMealLog==='1')return;form.dataset.simpleMealLog='1';
-    const mealSelect=form.querySelector('select[name="meal"]'),mealLabel=mealSelect?.closest('label'),foodArea=form.querySelector('textarea[name="food"]'),foodLabel=foodArea?.closest('label'),portionInput=form.querySelector('input[name="portion"]'),portionLabel=portionInput?.closest('label');if(!mealSelect||!foodArea)return;
+    const mealSelect=form.querySelector('select[name="meal"]'),mealLabel=mealSelect?.closest('label'),foodArea=form.querySelector('textarea[name="food"]'),foodLabel=foodArea?.closest('label'),portionLabel=form.querySelector('input[name="portion"]')?.closest('label');if(!mealSelect||!foodArea)return;
 
     const style=document.createElement('style');style.textContent=`
       #mealForm > *{display:none !important}#mealForm > #simpleMealFlow{display:block !important}
@@ -43,8 +43,7 @@
       #mealForm #simpleMealFlow #simpleMealSelected{display:block !important;margin:14px 0}
       #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong,#mealForm #simpleMealFlow label{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],#mealForm[data-simple-step="food"] > label:has(select[name="taste"]),#mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
-      #mealForm[data-simple-step="other"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="other"] > button[type="submit"],#mealForm[data-simple-step="other"] > label:has(select[name="taste"]),#mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
-      #mealForm[data-simple-step="takeaway"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="takeaway"] > label:has(input[name="portion"]),#mealForm[data-simple-step="takeaway"] > button[type="submit"],#mealForm[data-simple-step="takeaway"] > label:has(select[name="taste"]),#mealForm[data-simple-step="takeaway"] > label:has(select[name="satiety"]){display:block !important}
+      #mealForm[data-simple-step="other"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="other"] > label:has(input[name="portion"]),#mealForm[data-simple-step="other"] > button[type="submit"],#mealForm[data-simple-step="other"] > label:has(select[name="taste"]),#mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="ready"] [data-ready-foods]{display:block !important}
       #simpleMealFlow .simple-step{margin-top:14px}`;document.head.appendChild(style);
 
@@ -73,48 +72,12 @@
 
     function chooseMeal(type){
       mealSelect.value=type;mealSelect.dispatchEvent(new Event('change',{bubbles:true}));sessionStorage.setItem('malix-selected-meal-type',type);form.dataset.simpleStep='food';mealFor.textContent=`Du loggar: ${type}`;flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.toggle('active',b.dataset.simpleMeal===type));renderFoodChoice(type);
-      const isMain=['Lunch','Middag'].includes(type);extraRoot.innerHTML=`${isMain?'<button type="button" class="secondary" data-simple-action="recipe">📖 Välj recept</button><button type="button" class="secondary" data-simple-action="ready">⚡ Färdigt & enkelt</button><button type="button" class="secondary" data-simple-action="takeaway">🥡 Hämtmat / restaurang</button>':''}<button type="button" class="secondary" data-simple-action="other">➕ Annat / skriv själv</button>`;step2.hidden=false;renderSelected(form);
+      const isMain=['Lunch','Middag'].includes(type);extraRoot.innerHTML=`${isMain?'<button type="button" class="secondary" data-simple-action="recipe">📖 Välj recept</button><button type="button" class="secondary" data-simple-action="ready">⚡ Färdigt & enkelt</button>':''}<button type="button" class="secondary" data-simple-action="other">➕ Annat / skriv själv</button>`;step2.hidden=false;renderSelected(form);
     }
 
     flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.addEventListener('click',()=>chooseMeal(b.dataset.simpleMeal)));
-    flow.addEventListener('click',e=>{
-      const b=e.target.closest('[data-simple-action]');if(!b)return;
-      const action=b.dataset.simpleAction;
-      if(action==='recipe'){
-        sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);
-        const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');
-        if(trigger)trigger.click();
-        return;
-      }
-      if(action==='takeaway'){
-        form.dataset.simpleStep='takeaway';
-        foodLabel.hidden=false;
-        if(portionLabel)portionLabel.hidden=false;
-        foodArea.value='';
-        if(portionInput)portionInput.value='';
-        foodArea.placeholder='t.ex. sushi, kebabpizza eller pad thai';
-        if(portionInput)portionInput.placeholder='t.ex. 10 bitar, 1 pizza, ½ pizza eller 1 kebabrulle';
-        foodArea.dataset.takeaway='1';
-        foodArea.dispatchEvent(new Event('input',{bubbles:true}));
-        renderSelected(form);
-        foodArea.focus();
-        foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
-        return;
-      }
-      if(action==='other'){
-        form.dataset.simpleStep='other';
-        foodLabel.hidden=false;
-        delete foodArea.dataset.takeaway;
-        foodArea.placeholder='Skriv det du åt eller drack';
-        foodArea.focus();
-        foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
-        return;
-      }
-      form.dataset.simpleStep=action;
-      setTimeout(()=>document.querySelector('[data-ready-foods]')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
-    });
-    form.addEventListener('submit',()=>{if(foodArea.dataset.takeaway==='1')sessionStorage.setItem('malix-skip-kitchen-once','1')},true);
-    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;if(portionLabel)portionLabel.hidden=true;delete foodArea.dataset.takeaway;foodArea.placeholder='Skriv det du åt eller drack';if(portionInput)portionInput.placeholder='t.ex. 1 portion, 2 smörgåsar';renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
+    flow.addEventListener('click',e=>{const b=e.target.closest('[data-simple-action]');if(!b)return;const action=b.dataset.simpleAction;if(action==='recipe'){sessionStorage.setItem('malix-selected-meal-type',mealSelect.value);const trigger=document.querySelector('[data-calm-open="recipeBank"]')||document.querySelector('[data-open="recipeBank"]');if(trigger)trigger.click();return}if(action==='other'){form.dataset.simpleStep='other';foodLabel.hidden=false;if(portionLabel)portionLabel.hidden=false;foodArea.focus();foodLabel.scrollIntoView({behavior:'smooth',block:'center'});return}form.dataset.simpleStep=action;setTimeout(()=>document.querySelector('[data-ready-foods]')?.scrollIntoView({behavior:'smooth',block:'start'}),0)});
+    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;if(portionLabel)portionLabel.hidden=true;renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
