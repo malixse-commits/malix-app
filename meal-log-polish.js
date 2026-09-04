@@ -29,7 +29,7 @@
 
   function init(){
     const form=document.querySelector('#mealForm');if(!form||form.dataset.simpleMealLog==='1')return;form.dataset.simpleMealLog='1';
-    const mealSelect=form.querySelector('select[name="meal"]'),mealLabel=mealSelect?.closest('label'),foodArea=form.querySelector('textarea[name="food"]'),foodLabel=foodArea?.closest('label'),portionLabel=form.querySelector('input[name="portion"]')?.closest('label');if(!mealSelect||!foodArea)return;
+    const mealSelect=form.querySelector('select[name="meal"]'),mealLabel=mealSelect?.closest('label'),foodArea=form.querySelector('textarea[name="food"]'),foodLabel=foodArea?.closest('label'),portionInput=form.querySelector('input[name="portion"]'),portionLabel=portionInput?.closest('label');if(!mealSelect||!foodArea)return;
 
     const style=document.createElement('style');style.textContent=`
       #mealForm > *{display:none !important}#mealForm > #simpleMealFlow{display:block !important}
@@ -44,6 +44,7 @@
       #mealForm #simpleMealFlow h3,#mealForm #simpleMealFlow p,#mealForm #simpleMealFlow strong,#mealForm #simpleMealFlow label{display:block !important}
       #mealForm[data-simple-step="food"] > button[type="submit"],#mealForm[data-simple-step="food"] > label:has(select[name="taste"]),#mealForm[data-simple-step="food"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="other"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="other"] > button[type="submit"],#mealForm[data-simple-step="other"] > label:has(select[name="taste"]),#mealForm[data-simple-step="other"] > label:has(select[name="satiety"]){display:block !important}
+      #mealForm[data-simple-step="takeaway"] > label:has(textarea[name="food"]),#mealForm[data-simple-step="takeaway"] > label:has(input[name="portion"]),#mealForm[data-simple-step="takeaway"] > button[type="submit"],#mealForm[data-simple-step="takeaway"] > label:has(select[name="taste"]),#mealForm[data-simple-step="takeaway"] > label:has(select[name="satiety"]){display:block !important}
       #mealForm[data-simple-step="ready"] [data-ready-foods]{display:block !important}
       #simpleMealFlow .simple-step{margin-top:14px}`;document.head.appendChild(style);
 
@@ -86,14 +87,17 @@
         return;
       }
       if(action==='takeaway'){
-        form.dataset.simpleStep='other';
+        form.dataset.simpleStep='takeaway';
         foodLabel.hidden=false;
-        if(!foodArea.value.trim())foodArea.value='Hämtmat/restaurang: ';
+        if(portionLabel)portionLabel.hidden=false;
+        foodArea.value='';
+        if(portionInput)portionInput.value='';
+        foodArea.placeholder='t.ex. sushi, kebabpizza eller pad thai';
+        if(portionInput)portionInput.placeholder='t.ex. 10 bitar, 1 pizza, ½ pizza eller 1 kebabrulle';
         foodArea.dataset.takeaway='1';
         foodArea.dispatchEvent(new Event('input',{bubbles:true}));
         renderSelected(form);
         foodArea.focus();
-        foodArea.setSelectionRange(foodArea.value.length,foodArea.value.length);
         foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
         return;
       }
@@ -101,6 +105,7 @@
         form.dataset.simpleStep='other';
         foodLabel.hidden=false;
         delete foodArea.dataset.takeaway;
+        foodArea.placeholder='Skriv det du åt eller drack';
         foodArea.focus();
         foodLabel.scrollIntoView({behavior:'smooth',block:'center'});
         return;
@@ -109,7 +114,7 @@
       setTimeout(()=>document.querySelector('[data-ready-foods]')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
     });
     form.addEventListener('submit',()=>{if(foodArea.dataset.takeaway==='1')sessionStorage.setItem('malix-skip-kitchen-once','1')},true);
-    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;delete foodArea.dataset.takeaway;renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
+    form.addEventListener('reset',()=>setTimeout(()=>{form.removeAttribute('data-simple-step');sessionStorage.removeItem('malix-selected-meal-type');step2.hidden=true;foodLabel.hidden=true;if(portionLabel)portionLabel.hidden=true;delete foodArea.dataset.takeaway;foodArea.placeholder='Skriv det du åt eller drack';if(portionInput)portionInput.placeholder='t.ex. 1 portion, 2 smörgåsar';renderSelected(form);flow.querySelectorAll('[data-simple-meal]').forEach(b=>b.classList.remove('active'))},0));collapseHistory();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
