@@ -2,19 +2,19 @@
   const PREFIX='malix-', META='malix-cloud-meta-v2', LOGOUT_FLAG='malix-explicit-logout-v1', CONFIG=window.MALIX_CLOUD||{};
   const isAppKey=k=>String(k).startsWith(PREFIX)&&!String(k).startsWith('malix-cloud-meta')&&String(k)!==LOGOUT_FLAG;
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  let client=null,user=null,syncTimer=null,applying=false,syncing=false;
+  let client=null,user=null,syncTimer=null,applying=false,syncing=false,pendingLocal=false;
   function snapshot(){const d={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isAppKey(k))d[k]=localStorage.getItem(k)}return d}
-  function clearAppData(){applying=true;try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isAppKey(k)||k===META)ks.push(k)}ks.forEach(k=>localStorage.removeItem(k))}finally{applying=false}document.dispatchEvent(new CustomEvent('malix-cloud-updated'))}
-  function applySnapshot(data){applying=true;try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isAppKey(k))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));Object.entries(data||{}).forEach(([k,v])=>{if(isAppKey(k)&&v!=null)localStorage.setItem(k,String(v))})}finally{applying=false}document.dispatchEvent(new CustomEvent('malix-cloud-updated'))}
+  function clearAppData(){applying=true;try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isAppKey(k)||k===META)ks.push(k)}ks.forEach(k=>localStorage.removeItem(k))}finally{applying=false}pendingLocal=false;document.dispatchEvent(new CustomEvent('malix-cloud-updated'))}
+  function applySnapshot(data){applying=true;try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isAppKey(k))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));Object.entries(data||{}).forEach(([k,v])=>{if(isAppKey(k)&&v!=null)localStorage.setItem(k,String(v))})}finally{applying=false}pendingLocal=false;document.dispatchEvent(new CustomEvent('malix-cloud-updated'))}
   function meta(){try{return JSON.parse(localStorage.getItem(META)||'{}')}catch{return{}}}function saveMeta(x){localStorage.setItem(META,JSON.stringify(x))}
   function configured(){return !!(CONFIG.url&&CONFIG.anonKey&&window.supabase?.createClient)}
   function setStatus(t){document.querySelectorAll('[data-cloud-status],[data-gate-status]').forEach(x=>x.textContent=t)}
   function explicitlyLoggedOut(){return localStorage.getItem(LOGOUT_FLAG)==='1'}
   function setExplicitLogout(v){if(v)localStorage.setItem(LOGOUT_FLAG,'1');else localStorage.removeItem(LOGOUT_FLAG)}
   async function remoteRow(){if(!client||!user)return null;const {data,error}=await client.from('user_app_state').select('state,updated_at').eq('user_id',user.id).maybeSingle();if(error)throw error;return data}
-  async function push(){if(!client||!user||applying||syncing)return;syncing=true;try{const now=new Date().toISOString();const {data,error}=await client.from('user_app_state').upsert({user_id:user.id,state:snapshot(),updated_at:now},{onConflict:'user_id'}).select('updated_at').single();if(error)throw error;const at=data?.updated_at||now;saveMeta({userId:user.id,lastSeenRemoteAt:at});setStatus('Synkad '+new Date(at).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}))}finally{syncing=false}}
-  async function pull(force=false){if(!client||!user||syncing)return'busy';syncing=true;try{const r=await remoteRow();if(!r)return'empty';const m=meta();if(force||r.updated_at!==m.lastSeenRemoteAt){applySnapshot(r.state||{});saveMeta({userId:user.id,lastSeenRemoteAt:r.updated_at||''});return'remote'}return'same'}finally{syncing=false}}
-  function queuePush(){if(!user||applying||explicitlyLoggedOut())return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>push().catch(e=>setStatus(e.message||'Kunde inte synka')),700)}
+  async function push(){if(!client||!user||applying||syncing)return;syncing=true;try{const now=new Date().toISOString();const {data,error}=await client.from('user_app_state').upsert({user_id:user.id,state:snapshot(),updated_at:now},{onConflict:'user_id'}).select('updated_at').single();if(error)throw error;const at=data?.updated_at||now;pendingLocal=false;saveMeta({userId:user.id,lastSeenRemoteAt:at});setStatus('Synkad '+new Date(at).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}))}finally{syncing=false}}
+  async function pull(force=false){if(!client||!user||syncing)return'busy';if(pendingLocal&&!force)return'local-pending';syncing=true;try{const r=await remoteRow();if(!r)return'empty';const m=meta();if(force||r.updated_at!==m.lastSeenRemoteAt){applySnapshot(r.state||{});saveMeta({userId:user.id,lastSeenRemoteAt:r.updated_at||''});return'remote'}return'same'}finally{syncing=false}}
+  function queuePush(){if(!user||applying||explicitlyLoggedOut())return;pendingLocal=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>push().catch(e=>setStatus(e.message||'Kunde inte synka')),700)}
   async function firstSync(){const r=await remoteRow();if(r){applySnapshot(r.state||{});saveMeta({userId:user.id,lastSeenRemoteAt:r.updated_at||''});return'remote'}await push();return'local'}
   function gate(){let g=document.querySelector('#malixAuthGate');if(!g){g=document.createElement('div');g.id='malixAuthGate';g.style.cssText='position:fixed;inset:0;z-index:99999;background:#f7f4ed;padding:20px;overflow:auto';document.body.appendChild(g)}return g}
   function showGate(){const g=gate();g.style.display='block';g.innerHTML=`<div style="max-width:520px;margin:6vh auto;background:#fff;padding:24px;border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)"><p style="font-size:2rem;margin:0">🌿</p><h1>En sak i taget</h1><h2>Logga in</h2><p>Dina registreringar visas först när du är inloggad.</p><label>E-post<input type="email" data-gate-email autocomplete="email"></label><label>Lösenord<input type="password" data-gate-password autocomplete="current-password" minlength="8"></label><div class="chips"><button type="button" class="primary" data-gate-signin>Logga in</button><button type="button" class="secondary" data-gate-signup>Skapa konto</button></div><p class="status" data-gate-status></p></div>`}
@@ -27,6 +27,7 @@
     const ok=window.confirm('Detta raderar alla synkade appuppgifter från molnet och från den här webbläsaren. Ditt inloggningskonto finns kvar. Vill du fortsätta?');
     if(!ok)return;
     clearTimeout(syncTimer);
+    pendingLocal=false;
     const currentUser=user;
     syncing=true;
     try{
