@@ -26,19 +26,4 @@
   function render(box,kind){const data=load()[today()]?.[kind]||[];const out=box.querySelector('[data-summary]');if(!data.length){out.textContent='Inget sparat idag – och det är helt okej.';return}const total=data.reduce((s,x)=>s+x.minutes,0);out.innerHTML=`<strong>Idag:</strong><div style="margin-top:8px">${data.map((x,i)=>`<div style="margin:6px 0">${x.type} ${x.minutes}${x.minutes>=60?'+':''} min <button type="button" class="secondary" data-remove-entry="${i}">Ta bort</button></div>`).join('')}</div><strong>Totalt:</strong> ${total} min`;}
   add('movement','Rörelse','🚶');
   add('recovery','Återhämtning','🌿');
-
-  const CARE_KEY='malix-self-care-v1';
-  const loadCare=()=>{try{return JSON.parse(localStorage.getItem(CARE_KEY)||'[]')}catch{return[]}};
-  const saveCare=a=>localStorage.setItem(CARE_KEY,JSON.stringify(a));
-  document.addEventListener('click',e=>{
-    const choice=e.target.closest('#careTraining [data-activity],#careEveryday [data-activity]');
-    if(choice){const sec=choice.closest('.view');sec.dataset.chosen=choice.dataset.activity||choice.textContent.trim();sec.querySelectorAll('[data-activity]').forEach(x=>x.classList.toggle('selected',x===choice));return}
-    const btn=e.target.closest('#careTraining [data-save-activity],#careEveryday [data-save-activity]');
-    if(!btn)return;
-    e.preventDefault();e.stopImmediatePropagation();
-    const sec=btn.closest('.view'),other=sec.querySelector('input')?.value.trim()||'',text=other||sec.dataset.chosen||'',status=sec.querySelector('[data-care-status]');
-    if(!text){if(status)status.textContent='Välj en aktivitet eller skriv vad du gjorde.';return}
-    const a=loadCare();a.unshift({id:Date.now(),date:new Date().toISOString(),type:sec.querySelector('h2')?.textContent||'',text,extra:''});saveCare(a);
-    sec.dataset.chosen='';if(sec.querySelector('input'))sec.querySelector('input').value='';sec.querySelectorAll('[data-activity]').forEach(x=>x.classList.remove('selected'));if(status)status.textContent='Sparat. Det du gjorde räknas.';
-  },true);
 })();
