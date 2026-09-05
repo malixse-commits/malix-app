@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Träning – reparera registrering</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="calm-ready">
+<header class="app-header">
+  <div><p class="eyebrow">Malix</p><h1>En sak i taget</h1><p class="subtitle">Reparera en felaktig träningsregistrering.</p></div>
+</header>
+<main>
+<section class="view active-view">
+  <div class="hero-card">
+    <p class="eyebrow">Träning</p>
+    <h2>Ta bort felaktig registrering</h2>
+    <p>Den här sidan läser samma träningsdata som appen. Inget annat ändras.</p>
+  </div>
+  <section class="panel calm">
+    <h3>Mina sparade träningspass</h3>
+    <p class="note">Kontrollera tid och sträcka noga innan du tar bort något.</p>
+    <div id="trainingList"></div>
+    <p id="repairStatus" class="status" aria-live="polite"></p>
+  </section>
+</section>
+</main>
+<script src="cloud-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const KEY='malix-self-care-v1';
+  const META='malix-cloud-meta-v2';
+  const LOGOUT='malix-explicit-logout-v1';
+  const list=document.querySelector('#trainingList');
+  const status=document.querySelector('#repairStatus');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const load=()=>{try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x:[]}catch{return[]}};
+  const save=a=>localStorage.setItem(KEY,JSON.stringify(a));
+  const isTraining=x=>String(x?.type||'').includes('Träning');
+  const durationText=x=>{const n=Number(x.minutes);if(Number.isFinite(n)&&n>0){const t=Math.round(n),h=Math.floor(t/60),m=t%60;return h&&m?`${h} h ${m} min`:h?`${h} h`:`${m} min`}return x.duration?String(x.duration):'Tid saknas'};
+
+  function render(){
+    const a=load().filter(isTraining).sort((x,y)=>new Date(y.date)-new Date(x.date));
+    list.innerHTML=a.length?a.map(x=>{
+      const d=new Date(x.date),date=Number.isNaN(d.getTime())?'Datum saknas':d.toLocaleDateString('sv-SE');
+      const distance=x.distance!==undefined&&x.distance!==null&&x.distance!==''?` · ${esc(x.distance)} ${esc(x.unit||'km')}`:'';
+      const feeling=x.feeling?` · ${esc(x.feeling)}`:'';
+      return `<article class="recipe-card" style="margin-bottom:12px"><p class="eyebrow">${date}</p><p><strong>${esc(x.text||'Träning')}</strong> · ${esc(durationText(x))}${distance}${feeling}</p><button type="button" class="secondary" data-delete-training="${esc(x.id)}">Ta bort</button></article>`;
+    }).join(''):'<p class="note">Ingen träningsregistrering hittades.</p>';
+  }
+
+  function snapshot(){
+    const out={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(String(k).startsWith('malix-')&&!String(k).startsWith('malix-cloud-meta')&&k!==LOGOUT) out[k]=localStorage.getItem(k);
+    }
+    return out;
+  }
+
+  async function pushSafe(){
+    const cfg=window.MALIX_CLOUD||{};
+    if(!cfg.url||!cfg.anonKey||!window.supabase?.createClient){status.textContent='Borttaget på den här enheten.';return}
+    try{
+      const client=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+      const {data}=await client.auth.getSession();
+      const user=data?.session?.user;
+      if(!user){status.textContent='Borttaget på den här enheten. Ingen aktiv molninloggning hittades.';return}
+      const now=new Date().toISOString();
+      const {data:row,error}=await client.from('user_app_state').upsert({user_id:user.id,state:snapshot(),updated_at:now},{onConflict:'user_id'}).select('updated_at').single();
+      if(error)throw error;
+      localStorage.setItem(META,JSON.stringify({userId:user.id,lastSeenRemoteAt:row?.updated_at||now}));
+      status.textContent='Träningspasset är borttaget och sparat till molnet.';
+    }catch(e){
+      console.error(e);
+      status.textContent='Träningspasset är borttaget lokalt, men molnsparningen kunde inte bekräftas.';
+    }
+  }
+
+  list.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-delete-training]');
+    if(!b)return;
+    const id=String(b.dataset.deleteTraining);
+    const before=load();
+    const target=before.find(x=>String(x.id)===id);
+    if(!target)return;
+    const ok=confirm(`Ta bort ${target.text||'träningspasset'} (${durationText(target)})?`);
+    if(!ok)return;
+    save(before.filter(x=>String(x.id)!==id));
+    render();
+    status.textContent='Borttaget. Sparar…';
+    await pushSafe();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
