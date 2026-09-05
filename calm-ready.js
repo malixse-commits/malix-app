@@ -1,6 +1,6 @@
 (() => {
   // Den gamla HTML-hemsidan finns kvar som reserv/struktur medan moduler laddas.
-  // Visa inte appens huvudyta förrän calm-navigation har byggt den riktiga startsidan.
+  // free-plus-preview.js laddar nu kärnmodulerna innan denna fil körs.
   function moveFoodLogFirst() {
     const foodToday = document.querySelector('#foodToday');
     const button = foodToday?.querySelector('[data-calm-open="foodLog"]');
@@ -21,19 +21,6 @@
     }, 50);
   }
 
-  function openOverviewTarget(id) {
-    if (id === 'careHub' && typeof window.malixOpenCare === 'function') {
-      window.malixOpenCare();
-      return;
-    }
-    document.querySelectorAll('main > .view').forEach(v => v.classList.remove('active-view'));
-    const target = document.querySelector(`main > #${id}`);
-    if (target) {
-      target.classList.add('active-view');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
   function openHome() {
     document.querySelectorAll('main > .view').forEach(v => v.classList.remove('active-view'));
     const home = document.querySelector('main > #home') || document.querySelector('#home');
@@ -43,59 +30,25 @@
     }
   }
 
-  function wireAllHomeButtons() {
-    if (document.documentElement.dataset.homeNavigationWired === '1') return;
-    document.documentElement.dataset.homeNavigationWired = '1';
+  // Endast den särskilda Hem-markören hanteras här.
+  // data-calm-open och data-nav-back ägs av calm-navigation.js.
+  if (document.documentElement.dataset.calmHomeWired !== '1') {
+    document.documentElement.dataset.calmHomeWired = '1';
     document.addEventListener('click', event => {
-      const button = event.target.closest('button.back, a.back, [data-calm-home], [data-nav-back="home"]');
+      const button = event.target.closest('[data-calm-home]');
       if (!button) return;
-      const label = String(button.textContent || '').replace(/\s+/g, ' ').trim();
-      const isHome = button.hasAttribute('data-calm-home') || button.getAttribute('data-nav-back') === 'home' || label === '← Hem' || label === 'Hem';
-      if (!isHome) return;
       event.preventDefault();
-      event.stopImmediatePropagation();
+      event.stopPropagation();
       openHome();
     }, true);
   }
 
-  function wireOverviewCards() {
-    const grid = document.querySelector('#homeOverviewGrid');
-    if (!grid) return false;
-    const cards = [...grid.querySelectorAll('[data-calm-open]')];
-    if (!cards.length) return false;
-    cards.forEach(card => {
-      if (card.dataset.overviewDirect === '1') return;
-      card.dataset.overviewDirect = '1';
-      card.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        openOverviewTarget(card.dataset.calmOpen);
-      });
-    });
-    return true;
-  }
-
-  function ensureOverviewCards() {
-    wireOverviewCards();
-    const observer = new MutationObserver(() => wireOverviewCards());
-    const overview = document.querySelector('#dailyOverview') || document.querySelector('main');
-    if (overview) observer.observe(overview, { childList: true, subtree: true });
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      ensureFoodLogFirst();
-      ensureOverviewCards();
-      wireAllHomeButtons();
-    }, { once: true });
+    document.addEventListener('DOMContentLoaded', ensureFoodLogFirst, { once: true });
   } else {
     ensureFoodLogFirst();
-    ensureOverviewCards();
-    wireAllHomeButtons();
   }
   setTimeout(ensureFoodLogFirst, 0);
-  setTimeout(wireOverviewCards, 100);
-  setTimeout(wireOverviewCards, 500);
-  wireAllHomeButtons();
+
   document.body.classList.add('calm-ready');
 })();
