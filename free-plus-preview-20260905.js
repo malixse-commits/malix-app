@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='20260905-1830';
+  const VERSION='20260906-1710';
   const loaded = new Set(Array.from(document.scripts).map(s => s.getAttribute('src')).filter(Boolean));
 
   function loadScript(src) {
@@ -20,7 +20,7 @@
   async function start() {
     await loadRequired(['calm-navigation.js']);
     await loadRequired([
-      'self-care-20260905.js',
+      'self-care.js',
       'presence-care.js',
       'presence-done.js',
       'sleep-care.js',
