@@ -20,51 +20,51 @@
     extras:['Sylt','Lingonsylt','Äppelmos','Inlagd gurka','Rödbetor','Pickles','Kapris','Soltorkade tomater','Fetaost','Krutonger','Rostad lök','Tacosås','Tortillachips']
   };
 
-  const aliases={
-    'Smörgås':['macka'],
-    'Hushållsost':['ost'],
-    'Brieost':['brie'],
-    'Clementin':['mandarin'],
-    'Köttfärssås med spaghetti':['köttfärssås','spagetti och köttfärssås'],
-    'Kokt potatis':['potatis'],
-    'Pasta bolognese':['bolognese'],
-    'Köttbullar med potatis och sås':['köttbullar'],
-    'Kyckling curry':['currykyckling'],
-    'Hamburgare med pommes':['burgare'],
-    'Kebabtallrik':['kebab'],
-    'Falukorv':['falukorv'],
-    'Filmjölk':['fil'],
-    'Yoghurt naturell':['yoghurt'],
-    'Grekisk yoghurt':['grekisk yoghurt'],
-    'Havredryck':['havremjölk']
-  };
+  const aliases={'Smörgås':['macka'],'Hushållsost':['ost'],'Brieost':['brie'],'Clementin':['mandarin'],'Köttfärssås med spaghetti':['köttfärssås','spagetti och köttfärssås'],'Kokt potatis':['potatis'],'Pasta bolognese':['bolognese'],'Köttbullar med potatis och sås':['köttbullar'],'Kyckling curry':['currykyckling'],'Hamburgare med pommes':['burgare'],'Kebabtallrik':['kebab'],'Falukorv':['falukorv'],'Filmjölk':['fil'],'Yoghurt naturell':['yoghurt'],'Grekisk yoghurt':['grekisk yoghurt'],'Havredryck':['havremjölk']};
+  const preferred={Frukost:['bread','dairy','cheese','toppings','cereals','fruit','drinks'],Mellanmål:['fruit','dairy','bread','toppings','snacks','drinks'],Lunch:['dishes','meat','poultry','fish','vegetarian','starch','vegetables','sauces','drinks'],Middag:['dishes','meat','poultry','fish','vegetarian','starch','vegetables','sauces','drinks'],Kvällsmål:['bread','dairy','cheese','toppings','cereals','fruit','snacks','drinks','dishes']};
 
-  const preferred={
-    Frukost:['bread','dairy','cheese','toppings','cereals','fruit','drinks'],
-    Mellanmål:['fruit','dairy','bread','toppings','snacks','drinks'],
-    Lunch:['dishes','meat','poultry','fish','vegetarian','starch','vegetables','sauces','drinks'],
-    Middag:['dishes','meat','poultry','fish','vegetarian','starch','vegetables','sauces','drinks'],
-    Kvällsmål:['bread','dairy','cheese','toppings','cereals','fruit','snacks','drinks','dishes']
+  // Registreringsmått: hushållsmått/styck där det är naturligt, gram där vikt är tydligare.
+  // De är inmatningsförslag, inte rekommenderade portionsstorlekar.
+  const quantityByGroup={
+    bread:{unit:'skiva/st',defaultAmount:'1'},
+    dairy:{unit:'dl',defaultAmount:'2'},
+    cheese:{unit:'g',defaultAmount:'30'},
+    toppings:{unit:'g',defaultAmount:'30'},
+    cereals:{unit:'dl',defaultAmount:'1'},
+    fruit:{unit:'st/g',defaultAmount:'1'},
+    vegetables:{unit:'g',defaultAmount:'100'},
+    meat:{unit:'g',defaultAmount:'100'},
+    poultry:{unit:'g',defaultAmount:'100'},
+    fish:{unit:'g',defaultAmount:'100'},
+    vegetarian:{unit:'g',defaultAmount:'100'},
+    starch:{unit:'dl',defaultAmount:'2'},
+    dishes:{unit:'portion',defaultAmount:'1'},
+    sauces:{unit:'msk',defaultAmount:'1'},
+    snacks:{unit:'g',defaultAmount:'30'},
+    sweets:{unit:'g',defaultAmount:'30'},
+    drinks:{unit:'dl',defaultAmount:'2'},
+    extras:{unit:'g',defaultAmount:'20'}
+  };
+  const quantityOverrides={
+    'Smörgås':{unit:'skiva',defaultAmount:'1'},'Rågbröd':{unit:'skiva',defaultAmount:'1'},'Surdegsbröd':{unit:'skiva',defaultAmount:'1'},'Formfranska':{unit:'skiva',defaultAmount:'1'},'Rostat bröd':{unit:'skiva',defaultAmount:'1'},'Knäckebröd':{unit:'skiva',defaultAmount:'1'},
+    'Fralla':{unit:'st',defaultAmount:'1'},'Tekaka':{unit:'st',defaultAmount:'1'},'Hönökaka':{unit:'st',defaultAmount:'1'},'Polarkaka':{unit:'st',defaultAmount:'1'},'Pitabröd':{unit:'st',defaultAmount:'1'},'Tortillabröd':{unit:'st',defaultAmount:'1'},'Croissant':{unit:'st',defaultAmount:'1'},'Bagel':{unit:'st',defaultAmount:'1'},'Hamburgerbröd':{unit:'st',defaultAmount:'1'},'Korvbröd':{unit:'st',defaultAmount:'1'},
+    'Brieost':{unit:'g',defaultAmount:'30'},'Camembert':{unit:'g',defaultAmount:'30'},'Fetaost':{unit:'g',defaultAmount:'30'},'Mozzarella':{unit:'g',defaultAmount:'50'},'Halloumi':{unit:'g',defaultAmount:'50'},'Parmesan':{unit:'g',defaultAmount:'15'},
+    'Hushållsost':{unit:'skiva',defaultAmount:'1'},'Prästost':{unit:'skiva',defaultAmount:'1'},'Herrgårdsost':{unit:'skiva',defaultAmount:'1'},'Grevé':{unit:'skiva',defaultAmount:'1'},'Cheddar':{unit:'skiva/g',defaultAmount:'1'},'Gouda':{unit:'skiva',defaultAmount:'1'},'Edamer':{unit:'skiva',defaultAmount:'1'},
+    'Kokt ägg':{unit:'st',defaultAmount:'1'},'Stekt ägg':{unit:'st',defaultAmount:'1'},
+    'Äpple':{unit:'st',defaultAmount:'1'},'Päron':{unit:'st',defaultAmount:'1'},'Banan':{unit:'st',defaultAmount:'1'},'Apelsin':{unit:'st',defaultAmount:'1'},'Clementin':{unit:'st',defaultAmount:'1'},'Mandarin':{unit:'st',defaultAmount:'1'},'Satsuma':{unit:'st',defaultAmount:'1'},'Kiwi':{unit:'st',defaultAmount:'1'},'Persika':{unit:'st',defaultAmount:'1'},'Nektarin':{unit:'st',defaultAmount:'1'},'Plommon':{unit:'st',defaultAmount:'1'},'Aprikos':{unit:'st',defaultAmount:'1'},
+    'Potatis':{unit:'st/g',defaultAmount:'1'},'Kokt potatis':{unit:'st/g',defaultAmount:'1'},
+    'Müsli':{unit:'dl',defaultAmount:'1'},'Granola':{unit:'dl',defaultAmount:'1'},'Cornflakes':{unit:'dl',defaultAmount:'1'},
+    'Nötter':{unit:'g',defaultAmount:'25'},'Mandlar':{unit:'g',defaultAmount:'25'},'Cashewnötter':{unit:'g',defaultAmount:'25'},'Jordnötter':{unit:'g',defaultAmount:'25'},'Valnötter':{unit:'g',defaultAmount:'25'},'Pistagenötter':{unit:'g',defaultAmount:'25'},'Frön':{unit:'g',defaultAmount:'25'},
+    'Ris':{unit:'dl',defaultAmount:'2'},'Basmatiris':{unit:'dl',defaultAmount:'2'},'Jasminris':{unit:'dl',defaultAmount:'2'},'Fullkornsris':{unit:'dl',defaultAmount:'2'},'Pasta':{unit:'dl',defaultAmount:'2'},'Spaghetti':{unit:'dl/g',defaultAmount:'2'},'Makaroner':{unit:'dl',defaultAmount:'2'},
+    'Smör':{unit:'tsk/g',defaultAmount:'1'},'Bregott':{unit:'tsk/g',defaultAmount:'1'},'Margarin':{unit:'tsk/g',defaultAmount:'1'},'Crème fraiche':{unit:'msk/dl',defaultAmount:'1'},'Gräddfil':{unit:'msk/dl',defaultAmount:'1'},'Vispgrädde':{unit:'dl',defaultAmount:'1'},'Matlagningsgrädde':{unit:'dl',defaultAmount:'1'}
   };
 
   const normalize=value=>String(value||'').toLocaleLowerCase('sv-SE').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const items=[];
-  Object.entries(groups).forEach(([group,names])=>names.forEach(name=>items.push({name,group,aliases:aliases[name]||[]})));
+  Object.entries(groups).forEach(([group,names])=>names.forEach(name=>items.push({name,group,aliases:aliases[name]||[],quantity:quantityOverrides[name]||quantityByGroup[group]||{unit:'g',defaultAmount:'100'}})));
   const unique=[...new Map(items.map(item=>[normalize(item.name),item])).values()];
-
-  function search(query,meal,limit=16){
-    const q=normalize(query).trim();
-    if(q.length<2)return [];
-    const pref=preferred[meal]||[];
-    return unique.map(item=>{
-      const n=normalize(item.name),a=item.aliases.map(normalize);
-      let score=999;
-      if(n.startsWith(q))score=0;else if(n.includes(q))score=1;else if(a.some(x=>x.startsWith(q)))score=2;else if(a.some(x=>x.includes(q)))score=3;
-      if(score===999)return null;
-      const p=pref.indexOf(item.group);if(p>=0)score+=p/100;
-      return {item,score};
-    }).filter(Boolean).sort((a,b)=>a.score-b.score||a.item.name.localeCompare(b.item.name,'sv')).slice(0,limit).map(x=>x.item.name);
-  }
-
-  window.MalixFoodBank={items:unique,search,groups};
+  function searchItems(query,meal,limit=16){const q=normalize(query).trim();if(q.length<2)return[];const pref=preferred[meal]||[];return unique.map(item=>{const n=normalize(item.name),a=item.aliases.map(normalize);let score=999;if(n.startsWith(q))score=0;else if(n.includes(q))score=1;else if(a.some(x=>x.startsWith(q)))score=2;else if(a.some(x=>x.includes(q)))score=3;if(score===999)return null;const p=pref.indexOf(item.group);if(p>=0)score+=p/100;return{item,score}}).filter(Boolean).sort((a,b)=>a.score-b.score||a.item.name.localeCompare(b.item.name,'sv')).slice(0,limit).map(x=>x.item)}
+  function search(query,meal,limit=16){return searchItems(query,meal,limit).map(x=>x.name)}
+  function getItem(name){return unique.find(x=>normalize(x.name)===normalize(name))||null}
+  window.MalixFoodBank={items:unique,search,searchItems,getItem,groups,quantityByGroup};
 })();
