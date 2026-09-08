@@ -38,7 +38,9 @@
       e.preventDefault();const data=new FormData(form),item=String(data.get('item')||'').trim(),amount=String(data.get('amount')||'').trim(),place=String(data.get('place')||'Kyl');
       if(!item||!amount)return;
       if(typeof window.malixAddKitchenItem!=='function'){status.textContent='PLUS-köket kunde inte uppdateras just nu.';return}
-      window.malixAddKitchenItem(item,place,amount);status.textContent='Resten är sparad i PLUS-köket ✓';form.hidden=true;enhanceKitchenSearches();
+      window.malixAddKitchenItem(item,place,amount);
+      status.textContent=`Sparat i ${place === 'Kyl' ? 'Kylen' : 'Frysen'}: ${item} · ${amount}. Du hittar resten under Kyl, frys & skafferi och kan använda den i Rädda maten.`;
+      form.hidden=true;enhanceKitchenSearches();
     });
   }
 
