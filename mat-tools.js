@@ -49,17 +49,4 @@
       render(ingredientTarget,rank(value,false),'Jag hittar inget färdigt recept med de råvarorna ännu. Prova en råvara i taget eller ett närliggande ord.');
     }, true);
   }
-
-  const leftoverInput = document.querySelector('#leftoverInput');
-  const leftoverButton = document.querySelector('#leftoverSearch');
-  const leftoverTarget = document.querySelector('#leftoverResults');
-  if (leftoverInput && leftoverButton && leftoverTarget) {
-    leftoverButton.addEventListener('click', event => {
-      event.preventDefault(); event.stopImmediatePropagation();
-      const value = leftoverInput.value.trim();
-      if (!value) { leftoverTarget.innerHTML='<div class="empty">Skriv vad du vill rädda först.</div>'; return; }
-      const list = rank(value,true);
-      render(leftoverTarget,list,'Jag hittar inget direkt recept ännu. Prova att söka på huvudråvaran, till exempel potatismos, ris, bröd, fetaost, kyckling eller grönsaker.');
-    }, true);
-  }
 })();
