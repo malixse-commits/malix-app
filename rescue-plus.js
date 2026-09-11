@@ -10,18 +10,30 @@
     input.focus();
   }
 
-  function renderStockChooser({viewSelector,inputSelector,marker,title,note}){
+  function renderStockChooser({viewSelector,inputSelector,marker,title,note,groupByPlace=false}){
     const view=document.querySelector(viewSelector),input=document.querySelector(inputSelector);if(!view||!input)return;
     let box=view.querySelector(`[${marker}]`);
     if(!box){box=document.createElement('section');box.className='panel calm';box.setAttribute(marker,'1');view.querySelector('.panel')?.insertAdjacentElement('beforebegin',box)}
     const items=stock();
+    if(groupByPlace&&items.length){
+      const places=['Kyl','Frys','Skafferi'];
+      box.innerHTML=`<h3>${title}</h3><p class="note">${note}</p><div class="chips">${places.map(place=>`<button type="button" class="secondary" data-stock-place="${place}">${place}</button>`).join('')}</div><div data-stock-place-items></div>`;
+      const result=box.querySelector('[data-stock-place-items]');
+      box.querySelectorAll('[data-stock-place]').forEach(button=>button.addEventListener('click',()=>{
+        const place=button.dataset.stockPlace;
+        const matches=items.filter(x=>String(x.place||'').toLocaleLowerCase('sv-SE')===place.toLocaleLowerCase('sv-SE'));
+        result.innerHTML=matches.length?`<div class="chips" style="margin-top:12px">${matches.map(x=>`<button type="button" class="secondary" data-stock-choice="${esc(x.item)}">${esc(x.item)} <small>${esc(x.amount||'')}</small></button>`).join('')}</div>`:`<p class="empty" style="margin-top:12px">Inget registrerat i ${place.toLocaleLowerCase('sv-SE')}.</p>`;
+        result.querySelectorAll('[data-stock-choice]').forEach(b=>b.addEventListener('click',()=>appendChoice(input,b.dataset.stockChoice)));
+      }));
+      return;
+    }
     box.innerHTML=`<p class="eyebrow">PLUS</p><h3>${title}</h3><p class="note">${note}</p>${items.length?`<div class="chips">${items.slice(0,40).map(x=>`<button type="button" class="secondary" data-stock-choice="${esc(x.item)}">${esc(x.item)} <small>${esc(x.place||'')} · ${esc(x.amount||'')}</small></button>`).join('')}</div>`:'<p class="empty">Det finns inget registrerat i Kyl, frys & skafferi ännu.</p>'}`;
     box.querySelectorAll('[data-stock-choice]').forEach(b=>b.addEventListener('click',()=>appendChoice(input,b.dataset.stockChoice)));
   }
 
   function enhanceKitchenSearches(){
     renderStockChooser({viewSelector:'#ingredient',inputSelector:'#ingredientInput',marker:'data-plus-home-stock',title:'🧊 Välj bland det jag har hemma',note:'Tryck på en eller flera varor så används de i sökningen Vad finns hemma?'});
-    renderStockChooser({viewSelector:'#leftovers',inputSelector:'#leftoverInput',marker:'data-plus-rescue-stock',title:'♻️ Rädda det jag redan har hemma',note:'Välj något från Kyl, frys & skafferi så kan Rädda maten ge förslag utifrån det.'});
+    renderStockChooser({viewSelector:'#leftovers',inputSelector:'#leftoverInput',marker:'data-plus-rescue-stock',title:'♻️ Vad behöver användas först?',note:'Välj Kyl, Frys eller Skafferi och därefter det du vill använda.',groupByPlace:true});
   }
 
   function showLeftoverQuestion(recipe){
