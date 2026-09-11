@@ -7,6 +7,8 @@
     const parts=input.value.split(',').map(x=>x.trim()).filter(Boolean);
     if(!parts.some(x=>x.toLocaleLowerCase('sv-SE')===item.toLocaleLowerCase('sv-SE')))parts.push(item);
     input.value=parts.join(', ');
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    if(input.id==='leftoverInput')document.querySelector('#leftoverSearch')?.click();
     input.focus();
   }
 
