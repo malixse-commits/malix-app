@@ -5,11 +5,27 @@
 
   const state={time:null,budget:'any',tag:null,energy:'any'};
   const allRecipes=()=>typeof recipes!=='undefined'&&Array.isArray(recipes)?recipes:[];
+  const stepOrder=['energy','time','budget','tag'];
+  const panel=finder.querySelector('.panel.filters');
+  const stepFields=Object.fromEntries(stepOrder.map(key=>[key,panel?.querySelector(`[data-finder="${key}"]`)?.closest('fieldset')]).filter(([,field])=>field));
+  const showButton=finder.querySelector('#showSuggestionsV2');
+  const resetButton=finder.querySelector('#resetSuggestionsV2');
+
+  function showStep(key){
+    stepOrder.forEach(name=>{if(stepFields[name])stepFields[name].hidden=name!==key});
+    if(showButton)showButton.hidden=!!key;
+  }
+
+  function nextStep(key){
+    const index=stepOrder.indexOf(key);
+    showStep(index>=0&&index<stepOrder.length-1?stepOrder[index+1]:null);
+  }
 
   function activate(button){
     const key=button.dataset.finder;
     state[key]=button.dataset.value;
     finder.querySelectorAll(`[data-finder="${key}"]`).forEach(b=>b.classList.toggle('active',b===button));
+    nextStep(key);
   }
 
   function exactMatch(recipe){
@@ -70,9 +86,11 @@
     const root=finder.querySelector('#suggestions'),message=finder.querySelector('#suggestionMessage');
     if(root)root.innerHTML='';
     if(message)message.textContent='';
+    showStep('energy');
   }
 
   finder.querySelectorAll('[data-finder]').forEach(b=>b.addEventListener('click',()=>activate(b)));
-  finder.querySelector('#showSuggestionsV2')?.addEventListener('click',showSuggestions);
-  finder.querySelector('#resetSuggestionsV2')?.addEventListener('click',reset);
+  showButton?.addEventListener('click',showSuggestions);
+  resetButton?.addEventListener('click',reset);
+  showStep('energy');
 })();
