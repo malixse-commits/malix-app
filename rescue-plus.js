@@ -12,15 +12,21 @@
     input.focus();
   }
 
-  function renderStockChooser({viewSelector,inputSelector,marker,title,note,groupByPlace=false}){
+  function renderStockChooser({viewSelector,inputSelector,marker,title,note,groupByPlace=false,placeIcons=false,mirrorSelection=false}){
     const view=document.querySelector(viewSelector),input=document.querySelector(inputSelector);if(!view||!input)return;
     let box=view.querySelector(`[${marker}]`);
     if(!box){box=document.createElement('section');box.className='panel calm';box.setAttribute(marker,'1');view.querySelector('.panel')?.insertAdjacentElement('beforebegin',box)}
     const items=stock();
     if(groupByPlace&&items.length){
-      const places=['Kyl','Frys','Skafferi'];
-      box.innerHTML=`<h3>${title}</h3><p class="note">${note}</p><div class="chips">${places.map(place=>`<button type="button" class="secondary" data-stock-place="${place}">${place}</button>`).join('')}</div><div data-stock-place-items></div>`;
+      const places=['Kyl','Frys','Skafferi'],icons={Kyl:'🧊',Frys:'❄️',Skafferi:'🥫'};
+      box.innerHTML=`<h3>${title}</h3><p class="note">${note}</p><div class="chips">${places.map(place=>`<button type="button" class="secondary" data-stock-place="${place}">${placeIcons?(icons[place]+' '):''}${place}</button>`).join('')}</div><div data-stock-place-items></div>${mirrorSelection?'<p class="note" data-selected-stock style="margin-top:12px"><strong>Valt:</strong> inget ännu</p>':''}`;
       const result=box.querySelector('[data-stock-place-items]');
+      const updateSelected=()=>{const selected=box.querySelector('[data-selected-stock]');if(selected)selected.innerHTML=`<strong>Valt:</strong> ${esc(input.value.trim()||'inget ännu')}`};
+      if(mirrorSelection&&input.dataset.stockSelectionMirror!=='1'){
+        input.dataset.stockSelectionMirror='1';
+        input.addEventListener('input',()=>{const current=view.querySelector(`[${marker}] [data-selected-stock]`);if(current)current.innerHTML=`<strong>Valt:</strong> ${esc(input.value.trim()||'inget ännu')}`});
+      }
+      updateSelected();
       box.querySelectorAll('[data-stock-place]').forEach(button=>button.addEventListener('click',()=>{
         const place=button.dataset.stockPlace;
         const matches=items.filter(x=>String(x.place||'').toLocaleLowerCase('sv-SE')===place.toLocaleLowerCase('sv-SE'));
@@ -34,7 +40,7 @@
   }
 
   function enhanceKitchenSearches(){
-    renderStockChooser({viewSelector:'#ingredient',inputSelector:'#ingredientInput',marker:'data-plus-home-stock',title:'🧊 Välj bland det jag har hemma',note:'Tryck på en eller flera varor så används de i sökningen Vad finns hemma?'});
+    renderStockChooser({viewSelector:'#ingredient',inputSelector:'#ingredientInput',marker:'data-plus-home-stock',title:'🧊 Välj bland det jag har hemma',note:'Välj Kyl, Frys eller Skafferi och därefter en eller flera varor. Du kan också skriva själv nedanför.',groupByPlace:true,placeIcons:true,mirrorSelection:true});
     renderStockChooser({viewSelector:'#leftovers',inputSelector:'#leftoverInput',marker:'data-plus-rescue-stock',title:'♻️ Vad behöver användas först?',note:'Välj Kyl, Frys eller Skafferi och därefter det du vill använda.',groupByPlace:true});
   }
 
