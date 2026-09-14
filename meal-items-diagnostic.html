@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Malix – diagnostik för senast sparade måltid</title>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:860px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
+    .panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;margin:16px 0}
+    h1,h2{line-height:1.2}
+    code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:14px;border-radius:10px}
+    .row{padding:8px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}
+    .ok{font-weight:700}.muted{color:#666}
+  </style>
+</head>
+<body>
+  <h1>Teknisk kontroll – senast sparade måltid</h1>
+  <p class="muted">Den här sidan läser endast <code>malix-meals</code> från localStorage. Den skriver inte tillbaka någon data.</p>
+  <div id="status" class="panel">Läser data…</div>
+  <div id="summary" class="panel" hidden></div>
+  <div id="items" class="panel" hidden></div>
+  <div id="raw" class="panel" hidden></div>
+
+  <script>
+  (()=>{
+    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const status=document.querySelector('#status'),summary=document.querySelector('#summary'),itemsBox=document.querySelector('#items'),raw=document.querySelector('#raw');
+    let meals;
+    try{meals=JSON.parse(localStorage.getItem('malix-meals')||'[]')}catch(err){status.textContent='Kunde inte läsa malix-meals: '+err.message;return}
+    if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.';return}
+    const meal=meals[0],hasItems=Object.prototype.hasOwnProperty.call(meal,'items'),items=Array.isArray(meal.items)?meal.items:[];
+    status.innerHTML='<span class="ok">Senaste sparade posten hittades.</span>';
+    summary.hidden=false;
+    summary.innerHTML=`<h2>Sammanfattning</h2>
+      <div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div>
+      <div class="row"><strong>food:</strong> ${esc(meal.food)}</div>
+      <div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div>
+      <div class="row"><strong>antal items:</strong> ${items.length}</div>
+      <div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
+    itemsBox.hidden=false;
+    itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(items.length?items.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
+    raw.hidden=false;
+    raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
+  })();
+  </script>
+</body>
+</html>
