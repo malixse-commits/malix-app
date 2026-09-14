@@ -3,20 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Malix – diagnostik för måltid och scriptversioner</title>
+  <title>Malix – diagnostik för måltid, script och sparning</title>
   <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:920px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:980px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
     .panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;margin:16px 0}
-    h1,h2{line-height:1.2}
-    code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    h1,h2{line-height:1.2} code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
     pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:14px;border-radius:10px}
     .row{padding:8px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}
-    .ok{font-weight:700}.muted{color:#666}.yes{font-weight:700}.no{font-weight:700}
+    .ok,.yes{font-weight:700}.muted{color:#666}.no{font-weight:700}
+    iframe{width:100%;height:760px;border:1px solid #ccc;border-radius:12px;background:#fff}
+    button{padding:9px 12px}
   </style>
 </head>
 <body>
-  <h1>Teknisk kontroll – måltid och scriptversioner</h1>
-  <p class="muted">Den här sidan läser endast <code>malix-meals</code> och hämtar fyra JavaScript-filer för kontroll. Den skriver inte tillbaka någon data.</p>
+  <h1>Teknisk kontroll – måltid, script och sparning</h1>
+  <p class="muted">Diagnostiken ändrar inte appens sparlogik. Den läser data och observerar den vanliga sparningen när du använder testappen nedan.</p>
 
   <h2>1. Senast sparade måltid</h2>
   <div id="status" class="panel">Läser data…</div>
@@ -25,58 +26,77 @@
   <div id="raw" class="panel" hidden></div>
 
   <h2>2. Vilka scriptversioner levereras?</h2>
-  <p class="muted">Varje rad hämtar exakt samma relativa script-URL som används i <code>index.html</code> och söker efter ett kännetecken som finns i den nya implementationen.</p>
   <div id="scripts" class="panel">Kontrollerar scriptfiler…</div>
+
+  <h2>3. Live-spårning av vanlig måltidssparning</h2>
+  <p class="muted">Använd appen i rutan nedan och spara en ny måltid. Diagnostiken visar utkastets <code>items</code> före submit och varje skrivning till <code>malix-meals</code>, inklusive anropsstack och posten som faktiskt skrevs.</p>
+  <div class="panel"><button type="button" id="clearTrace">Rensa spårning</button><span id="traceStatus" class="muted"> Laddar testappen…</span></div>
+  <div id="trace" class="panel"><p>Ingen sparning observerad ännu.</p></div>
+  <iframe id="testApp" src="https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/index.html"></iframe>
 
   <script>
   (()=>{
     const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const parse=s=>{try{return JSON.parse(s||'[]')}catch{return null}};
+    const first=s=>{const x=parse(s);return Array.isArray(x)?x[0]:null};
+
     const status=document.querySelector('#status'),summary=document.querySelector('#summary'),itemsBox=document.querySelector('#items'),raw=document.querySelector('#raw');
-    let meals;
-    try{meals=JSON.parse(localStorage.getItem('malix-meals')||'[]')}catch(err){status.textContent='Kunde inte läsa malix-meals: '+err.message;meals=[]}
-    if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.'}
-    else{
+    const renderStored=()=>{
+      let meals;try{meals=parse(localStorage.getItem('malix-meals'))||[]}catch{meals=[]}
+      if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.';return}
       const meal=meals[0],hasItems=Object.prototype.hasOwnProperty.call(meal,'items'),items=Array.isArray(meal.items)?meal.items:[];
       status.innerHTML='<span class="ok">Senaste sparade posten hittades.</span>';
-      summary.hidden=false;
-      summary.innerHTML=`<h2>Sammanfattning</h2>
-        <div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div>
-        <div class="row"><strong>food:</strong> ${esc(meal.food)}</div>
-        <div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div>
-        <div class="row"><strong>antal items:</strong> ${items.length}</div>
-        <div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
-      itemsBox.hidden=false;
-      itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(items.length?items.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
-      raw.hidden=false;
-      raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
-    }
+      summary.hidden=false;summary.innerHTML=`<h2>Sammanfattning</h2><div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div><div class="row"><strong>food:</strong> ${esc(meal.food)}</div><div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div><div class="row"><strong>antal items:</strong> ${items.length}</div><div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
+      itemsBox.hidden=false;itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(items.length?items.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
+      raw.hidden=false;raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
+    };
+    renderStored();
 
     const checks=[
-      {file:'app.js',url:'app.js?v=20260906-1715',marker:'window.malixMealDraftGet'},
-      {file:'meal-log-polish.js',url:'meal-log-polish.js?v=20260906-1715',marker:'window.malixMealDraftUpsertManual'},
-      {file:'breakfast-buffet.js',url:'breakfast-buffet.js?v=20260906-1715',marker:"source:'breakfast-buffet'"},
-      {file:'ready-made-foods.js',url:'ready-made-foods.js?v=20260906-1715',marker:"source:'ready-made'"}
+      {file:'app.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/app.js?v=20260906-1715',marker:'window.malixMealDraftGet'},
+      {file:'meal-log-polish.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/meal-log-polish.js?v=20260906-1715',marker:'window.malixMealDraftUpsertManual'},
+      {file:'breakfast-buffet.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/breakfast-buffet.js?v=20260906-1715',marker:"source:'breakfast-buffet'"},
+      {file:'ready-made-foods.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/ready-made-foods.js?v=20260906-1715',marker:"source:'ready-made'"}
     ];
     const scriptsBox=document.querySelector('#scripts');
-    Promise.all(checks.map(async check=>{
-      const requestUrl=new URL(check.url,location.href).href;
+    Promise.all(checks.map(async c=>{try{const r=await fetch(c.url,{cache:'default'}),t=await r.text();return {...c,responseUrl:r.url,status:r.status,found:t.includes(c.marker)}}catch(e){return {...c,responseUrl:'',status:'fel',found:false,error:e.message}}})).then(results=>{scriptsBox.innerHTML=results.map(r=>`<div class="row"><strong>${esc(r.file)}</strong><br>Begärd URL: <code>${esc(r.url)}</code><br>Faktiskt svar från: <code>${esc(r.responseUrl||'–')}</code><br>HTTP-status: ${esc(r.status)}<br>Kännetecken: <code>${esc(r.marker)}</code><br>Ny kod hittad: <span class="${r.found?'yes':'no'}">${r.found?'JA':'NEJ'}</span>${r.error?`<br>Fel: ${esc(r.error)}`:''}</div>`).join('')});
+
+    const trace=document.querySelector('#trace'),traceStatus=document.querySelector('#traceStatus'),frame=document.querySelector('#testApp');let events=[];
+    const show=()=>{trace.innerHTML=events.length?events.map((e,i)=>`<div class="row"><strong>${i+1}. ${esc(e.label)}</strong><pre>${esc(JSON.stringify(e.data,null,2))}</pre></div>`).join(''):'<p>Ingen sparning observerad ännu.</p>'};
+    const add=(label,data)=>{events.push({label,data});show()};
+    document.querySelector('#clearTrace').addEventListener('click',()=>{events=[];show()});
+
+    frame.addEventListener('load',()=>{
       try{
-        const response=await fetch(check.url,{cache:'default'});
-        const text=await response.text();
-        return {...check,requestUrl,responseUrl:response.url,status:response.status,ok:response.ok,found:text.includes(check.marker)};
-      }catch(err){
-        return {...check,requestUrl,responseUrl:'',status:'fel',ok:false,found:false,error:err.message};
-      }
-    })).then(results=>{
-      scriptsBox.innerHTML=results.map(r=>`<div class="row">
-        <strong>${esc(r.file)}</strong><br>
-        <span>Begärd URL: <code>${esc(r.requestUrl)}</code></span><br>
-        <span>Faktiskt svar från: <code>${esc(r.responseUrl||'–')}</code></span><br>
-        <span>HTTP-status: ${esc(r.status)}</span><br>
-        <span>Kännetecken: <code>${esc(r.marker)}</code></span><br>
-        <span>Ny kod hittad: <span class="${r.found?'yes':'no'}">${r.found?'JA':'NEJ'}</span></span>
-        ${r.error?`<br><span>Fel: ${esc(r.error)}</span>`:''}
-      </div>`).join('');
+        const w=frame.contentWindow,doc=w.document,form=doc.querySelector('#mealForm');
+        if(!form){traceStatus.textContent=' #mealForm hittades inte i testappen.';return}
+        traceStatus.textContent=' Spårningen är aktiv. Spara nu en ny måltid i appen nedan.';
+
+        form.addEventListener('submit',()=>{
+          const draft=typeof w.malixMealDraftGet==='function'?w.malixMealDraftGet(form):null;
+          const fd={};for(const [k,v] of new w.FormData(form).entries())fd[k]=v;
+          add('SUBMIT före vanlig sparning',{formData:fd,items:draft,hasDraftFunction:typeof w.malixMealDraftGet==='function'});
+        },true);
+
+        const proto=w.Storage.prototype,previous=proto.setItem;
+        if(!proto.__malixMealTraceWrapped){
+          proto.__malixMealTraceWrapped=true;
+          proto.setItem=function(k,v){
+            if(this===w.localStorage&&k==='malix-meals'){
+              const before=this.getItem(k),written=String(v),stack=(new w.Error('malix-meals write')).stack||'';
+              add('setItem malix-meals – före skrivning',{beforeFirst:first(before),writtenFirst:first(written),stack});
+              const result=previous.call(this,k,v);
+              add('setItem malix-meals – direkt efter',{storedFirst:first(this.getItem(k))});
+              w.setTimeout(()=>add('malix-meals 100 ms efter skrivning',{storedFirst:first(w.localStorage.getItem(k))}),100);
+              w.setTimeout(()=>{add('malix-meals 1500 ms efter skrivning',{storedFirst:first(w.localStorage.getItem(k))});renderStored()},1500);
+              return result;
+            }
+            return previous.call(this,k,v);
+          };
+        }
+
+        form.addEventListener('submit',()=>w.setTimeout(()=>add('SUBMIT efter tidigare submit-listeners',{storedFirst:first(w.localStorage.getItem('malix-meals'))}),0));
+      }catch(err){traceStatus.textContent=' Kunde inte starta spårningen: '+err.message;}
     });
   })();
   </script>
