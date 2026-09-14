@@ -17,7 +17,7 @@
 </head>
 <body>
   <h1>Teknisk kontroll – måltid, script och sparning</h1>
-  <p class="muted">Diagnostiken ändrar inte appens sparlogik. Startup-synk och användarens egen måltidssparning visas nu separat.</p>
+  <p class="muted">Diagnostiken ändrar inte appens sparlogik. Startup-synk och användarens egen måltidssparning visas separat.</p>
 
   <h2>1. Senast sparade måltid</h2>
   <div id="status" class="panel">Läser data…</div>
@@ -37,6 +37,11 @@
 
   <h3>Din måltidssparning</h3>
   <div id="submitTrace" class="panel"><p>Ingen SUBMIT START observerad ännu.</p></div>
+
+  <h2>4. Jämför diary.js selected[] med måltidsutkastet</h2>
+  <p class="muted">Test: välj exempelvis <strong>Kvarg</strong> i appen nedan och ange <strong>2 dl</strong>. Tryck sedan på knappen här innan du sparar måltiden.</p>
+  <div class="panel"><button type="button" id="compareDraft">Jämför nu – före submit</button><span id="compareStatus" class="muted"> Väntar på ett val från diary.js…</span></div>
+  <div id="compareResult" class="panel"><p>Ingen jämförelse gjord ännu.</p></div>
 
   <iframe id="testApp" src="https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/index.html"></iframe>
 
@@ -68,16 +73,41 @@
     Promise.all(checks.map(async c=>{try{const r=await fetch(c.url,{cache:'default'}),t=await r.text();return {...c,responseUrl:r.url,status:r.status,found:t.includes(c.marker)}}catch(e){return {...c,responseUrl:'',status:'fel',found:false,error:e.message}}})).then(results=>{scriptsBox.innerHTML=results.map(r=>`<div class="row"><strong>${esc(r.file)}</strong><br>Begärd URL: <code>${esc(r.url)}</code><br>Faktiskt svar från: <code>${esc(r.responseUrl||'–')}</code><br>HTTP-status: ${esc(r.status)}<br>Kännetecken: <code>${esc(r.marker)}</code><br>Ny kod hittad: <span class="${r.found?'yes':'no'}">${r.found?'JA':'NEJ'}</span>${r.error?`<br>Fel: ${esc(r.error)}`:''}</div>`).join('')});
 
     const startupBox=document.querySelector('#startupTrace'),submitBox=document.querySelector('#submitTrace'),traceStatus=document.querySelector('#traceStatus'),frame=document.querySelector('#testApp');
-    let startupEvents=[],submitEvents=[],submitActive=false,submitSeq=0;
+    const compareStatus=document.querySelector('#compareStatus'),compareResult=document.querySelector('#compareResult');
+    let startupEvents=[],submitEvents=[],submitActive=false,submitSeq=0,diarySelectedRef=null,frameWindow=null,frameForm=null;
     const renderTrace=(box,events,empty)=>{box.innerHTML=events.length?events.map((e,i)=>`<div class="row"><strong>${i+1}. ${esc(e.label)}</strong><pre>${esc(JSON.stringify(e.data,null,2))}</pre></div>`).join(''):`<p>${esc(empty)}</p>`};
     const addStartup=(label,data)=>{startupEvents.push({label,data});renderTrace(startupBox,startupEvents,'Ingen startup-/övrig skrivning observerad ännu.')};
     const addSubmit=(label,data)=>{submitEvents.push({label,data});renderTrace(submitBox,submitEvents,'Ingen SUBMIT START observerad ännu.')};
     document.querySelector('#clearTrace').addEventListener('click',()=>{startupEvents=[];submitEvents=[];submitActive=false;renderTrace(startupBox,startupEvents,'Ingen startup-/övrig skrivning observerad ännu.');renderTrace(submitBox,submitEvents,'Ingen SUBMIT START observerad ännu.')});
 
+    document.querySelector('#compareDraft').addEventListener('click',()=>{
+      if(!frameWindow||!frameForm){compareResult.innerHTML='<p>Testappen är inte färdigladdad ännu.</p>';return}
+      const draft=typeof frameWindow.malixMealDraftGet==='function'?frameWindow.malixMealDraftGet(frameForm):null;
+      const selected=diarySelectedRef?diarySelectedRef.map(x=>({...x})):null;
+      compareResult.innerHTML=`<div class="row"><strong>diary.js selected[]</strong><pre>${esc(JSON.stringify(selected,null,2))}</pre></div><div class="row"><strong>malixMealDraftGet(form)</strong><pre>${esc(JSON.stringify(draft,null,2))}</pre></div>`;
+      compareStatus.textContent=diarySelectedRef?' diary.js selected[] är fångad. Jämförelsen visas nedan.':' diary.js selected[] har ännu inte fångats. Välj först ett livsmedel i diary.js-gränssnittet.';
+    });
+
     frame.addEventListener('load',()=>{
       try{
         const w=frame.contentWindow,doc=w.document,form=doc.querySelector('#mealForm');
+        frameWindow=w;frameForm=form;diarySelectedRef=null;
         if(!form){traceStatus.textContent=' #mealForm hittades inte i testappen.';return}
+
+        const originalPush=w.Array.prototype.push;
+        let pushHookActive=true;
+        w.Array.prototype.push=function(...args){
+          if(pushHookActive&&args.length===1&&args[0]&&typeof args[0]==='object'&&Object.prototype.hasOwnProperty.call(args[0],'food')&&Object.prototype.hasOwnProperty.call(args[0],'quantity')){
+            const stack=(new w.Error('selected push')).stack||'';
+            if(stack.includes('diary.js')){
+              diarySelectedRef=this;
+              pushHookActive=false;
+              w.Array.prototype.push=originalPush;
+              compareStatus.textContent=' diary.js selected[] är fångad. Tryck på ”Jämför nu – före submit”.';
+            }
+          }
+          return originalPush.apply(this,args);
+        };
 
         const proto=w.Storage.prototype,previous=proto.setItem;
         if(!proto.__malixMealSubmitTraceWrapped){
@@ -109,8 +139,9 @@
           w.setTimeout(()=>addSubmit('SUBMIT END – nästa event-loop',{submitSeq,storedFirst:first(w.localStorage.getItem('malix-meals'))}),0);
         },true);
 
-        traceStatus.textContent=' Spårningen är aktiv. Startup-skrivningar visas separat. Spara nu en ny vanlig måltid i appen nedan.';
-      }catch(err){traceStatus.textContent=' Kunde inte starta spårningen: '+err.message;}
+        traceStatus.textContent=' Spårningen är aktiv. Startup-skrivningar visas separat.';
+        compareStatus.textContent=' Väntar på ett val från diary.js. Välj t.ex. Kvarg och ange 2 dl.';
+      }catch(err){traceStatus.textContent=' Kunde inte starta spårningen: '+err.message;compareStatus.textContent=' Kunde inte starta jämförelsen: '+err.message;}
     });
   })();
   </script>
