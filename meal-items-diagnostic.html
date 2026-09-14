@@ -3,45 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Malix – diagnostik för senast sparade måltid</title>
+  <title>Malix – diagnostik för måltid och scriptversioner</title>
   <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:860px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:920px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
     .panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;margin:16px 0}
     h1,h2{line-height:1.2}
     code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
     pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:14px;border-radius:10px}
     .row{padding:8px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}
-    .ok{font-weight:700}.muted{color:#666}
+    .ok{font-weight:700}.muted{color:#666}.yes{font-weight:700}.no{font-weight:700}
   </style>
 </head>
 <body>
-  <h1>Teknisk kontroll – senast sparade måltid</h1>
-  <p class="muted">Den här sidan läser endast <code>malix-meals</code> från localStorage. Den skriver inte tillbaka någon data.</p>
+  <h1>Teknisk kontroll – måltid och scriptversioner</h1>
+  <p class="muted">Den här sidan läser endast <code>malix-meals</code> och hämtar fyra JavaScript-filer för kontroll. Den skriver inte tillbaka någon data.</p>
+
+  <h2>1. Senast sparade måltid</h2>
   <div id="status" class="panel">Läser data…</div>
   <div id="summary" class="panel" hidden></div>
   <div id="items" class="panel" hidden></div>
   <div id="raw" class="panel" hidden></div>
+
+  <h2>2. Vilka scriptversioner levereras?</h2>
+  <p class="muted">Varje rad hämtar exakt samma relativa script-URL som används i <code>index.html</code> och söker efter ett kännetecken som finns i den nya implementationen.</p>
+  <div id="scripts" class="panel">Kontrollerar scriptfiler…</div>
 
   <script>
   (()=>{
     const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     const status=document.querySelector('#status'),summary=document.querySelector('#summary'),itemsBox=document.querySelector('#items'),raw=document.querySelector('#raw');
     let meals;
-    try{meals=JSON.parse(localStorage.getItem('malix-meals')||'[]')}catch(err){status.textContent='Kunde inte läsa malix-meals: '+err.message;return}
-    if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.';return}
-    const meal=meals[0],hasItems=Object.prototype.hasOwnProperty.call(meal,'items'),items=Array.isArray(meal.items)?meal.items:[];
-    status.innerHTML='<span class="ok">Senaste sparade posten hittades.</span>';
-    summary.hidden=false;
-    summary.innerHTML=`<h2>Sammanfattning</h2>
-      <div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div>
-      <div class="row"><strong>food:</strong> ${esc(meal.food)}</div>
-      <div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div>
-      <div class="row"><strong>antal items:</strong> ${items.length}</div>
-      <div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
-    itemsBox.hidden=false;
-    itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(items.length?items.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
-    raw.hidden=false;
-    raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
+    try{meals=JSON.parse(localStorage.getItem('malix-meals')||'[]')}catch(err){status.textContent='Kunde inte läsa malix-meals: '+err.message;meals=[]}
+    if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.'}
+    else{
+      const meal=meals[0],hasItems=Object.prototype.hasOwnProperty.call(meal,'items'),items=Array.isArray(meal.items)?meal.items:[];
+      status.innerHTML='<span class="ok">Senaste sparade posten hittades.</span>';
+      summary.hidden=false;
+      summary.innerHTML=`<h2>Sammanfattning</h2>
+        <div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div>
+        <div class="row"><strong>food:</strong> ${esc(meal.food)}</div>
+        <div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div>
+        <div class="row"><strong>antal items:</strong> ${items.length}</div>
+        <div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
+      itemsBox.hidden=false;
+      itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(items.length?items.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
+      raw.hidden=false;
+      raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
+    }
+
+    const checks=[
+      {file:'app.js',url:'app.js?v=20260906-1715',marker:'window.malixMealDraftGet'},
+      {file:'meal-log-polish.js',url:'meal-log-polish.js?v=20260906-1715',marker:'window.malixMealDraftUpsertManual'},
+      {file:'breakfast-buffet.js',url:'breakfast-buffet.js?v=20260906-1715',marker:"source:'breakfast-buffet'"},
+      {file:'ready-made-foods.js',url:'ready-made-foods.js?v=20260906-1715',marker:"source:'ready-made'"}
+    ];
+    const scriptsBox=document.querySelector('#scripts');
+    Promise.all(checks.map(async check=>{
+      const requestUrl=new URL(check.url,location.href).href;
+      try{
+        const response=await fetch(check.url,{cache:'default'});
+        const text=await response.text();
+        return {...check,requestUrl,responseUrl:response.url,status:response.status,ok:response.ok,found:text.includes(check.marker)};
+      }catch(err){
+        return {...check,requestUrl,responseUrl:'',status:'fel',ok:false,found:false,error:err.message};
+      }
+    })).then(results=>{
+      scriptsBox.innerHTML=results.map(r=>`<div class="row">
+        <strong>${esc(r.file)}</strong><br>
+        <span>Begärd URL: <code>${esc(r.requestUrl)}</code></span><br>
+        <span>Faktiskt svar från: <code>${esc(r.responseUrl||'–')}</code></span><br>
+        <span>HTTP-status: ${esc(r.status)}</span><br>
+        <span>Kännetecken: <code>${esc(r.marker)}</code></span><br>
+        <span>Ny kod hittad: <span class="${r.found?'yes':'no'}">${r.found?'JA':'NEJ'}</span></span>
+        ${r.error?`<br><span>Fel: ${esc(r.error)}</span>`:''}
+      </div>`).join('');
+    });
   })();
   </script>
 </body>
