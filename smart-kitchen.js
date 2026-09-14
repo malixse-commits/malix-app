@@ -1,3 +1,3 @@
 (() => {
-  throw new Error('temporary restore guard');
+  const KEY='malix-smart-kitchen-v1';
 })();
