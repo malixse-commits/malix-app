@@ -7,7 +7,38 @@
   function diagRowsFromRaw(raw){try{return diagRowsFromState(JSON.parse(String(raw||'{}')))}catch{return[]}}
   function diag(label,extra={}){const entry={time:new Date().toLocaleTimeString('sv-SE',{hour12:false,fractionalSecondDigits:3}),label,...extra};window.__malixStockTrace=Array.isArray(window.__malixStockTrace)?window.__malixStockTrace:[];window.__malixStockTrace.push(entry);window.__malixStockTrace=window.__malixStockTrace.slice(-80);console.log('[STOCK TRACE]',entry);renderDiag()}
   function renderDiag(){const box=document.querySelector('#stockTraceDiag');if(!box)return;const rows=Array.isArray(window.__malixStockTrace)?window.__malixStockTrace:[];box.textContent=rows.length?rows.map(x=>`${x.time} · ${x.label}\n${JSON.stringify(Object.fromEntries(Object.entries(x).filter(([k])=>k!=='time'&&k!=='label')),null,2)}`).join('\n\n'):'Väntar på nästa test…'}
-  function installWriteTrace(){if(window.__malixStockWriteTraceInstalled)return;window.__malixStockWriteTraceInstalled=true;const previousSetItem=Storage.prototype.setItem,previousRemoveItem=Storage.prototype.removeItem;Storage.prototype.setItem=function(k,v){if(this!==localStorage||String(k)!==KEY)return previousSetItem.call(this,k,v);const beforeRaw=localStorage.getItem(KEY),stack=String(new Error().stack||'');const result=previousSetItem.call(this,k,v);const afterRaw=localStorage.getItem(KEY);diag('WRITE setItem malix-smart-kitchen-v1',{sourceStack:stack,before:diagRowsFromRaw(beforeRaw),after:diagRowsFromRaw(afterRaw)});return result};Storage.prototype.removeItem=function(k){if(this!==localStorage||String(k)!==KEY)return previousRemoveItem.call(this,k);const beforeRaw=localStorage.getItem(KEY),stack=String(new Error().stack||'');const result=previousRemoveItem.call(this,k);const afterRaw=localStorage.getItem(KEY);diag('WRITE removeItem malix-smart-kitchen-v1',{sourceStack:stack,before:diagRowsFromRaw(beforeRaw),after:diagRowsFromRaw(afterRaw)});return result}}
+  function parseKitchenState(raw){if(raw==null)return null;try{return JSON.parse(String(raw))}catch{return {__diagnosticError:'invalid-json',raw:String(raw)}}}
+  function indexStockForDiff(state){
+    const stock=Array.isArray(state?.stock)?state.stock:[];
+    const groups=new Map(),missingId=[];
+    for(const item of stock){
+      const id=String(item?.id||'').trim();
+      if(!id){missingId.push(item);continue}
+      const items=groups.get(id)||[];items.push(item);groups.set(id,items);
+    }
+    const byId=new Map(),duplicateIds=[];
+    for(const [id,items] of groups){
+      if(items.length===1)byId.set(id,items[0]);
+      else duplicateIds.push({id,items});
+    }
+    return {byId,missingId,duplicateIds};
+  }
+  function diffStock(beforeState,afterState){
+    const before=indexStockForDiff(beforeState),after=indexStockForDiff(afterState),changes=[];
+    for(const [id,beforeItem] of before.byId){
+      const afterItem=after.byId.get(id);
+      if(!afterItem){changes.push({id,type:'removed',before:beforeItem});continue}
+      const fields={};
+      for(const field of ['item','place','amount']){
+        const beforeValue=beforeItem?.[field]??null,afterValue=afterItem?.[field]??null;
+        if(String(beforeValue??'')!==String(afterValue??''))fields[field]={before:beforeValue,after:afterValue};
+      }
+      if(Object.keys(fields).length)changes.push({id,type:'changed',item:afterItem.item||beforeItem.item||'',fields});
+    }
+    for(const [id,afterItem] of after.byId){if(!before.byId.has(id))changes.push({id,type:'added',after:afterItem})}
+    return {changes,diagnostics:{beforeMissingId:before.missingId,afterMissingId:after.missingId,beforeDuplicateIds:before.duplicateIds,afterDuplicateIds:after.duplicateIds}};
+  }
+  function installWriteTrace(){if(window.__malixStockWriteTraceInstalled)return;window.__malixStockWriteTraceInstalled=true;const previousSetItem=Storage.prototype.setItem,previousRemoveItem=Storage.prototype.removeItem;Storage.prototype.setItem=function(k,v){if(this!==localStorage||String(k)!==KEY)return previousSetItem.call(this,k,v);const beforeRaw=localStorage.getItem(KEY),before=parseKitchenState(beforeRaw),writtenRaw=String(v),written=parseKitchenState(writtenRaw),sourceStack=String(new Error().stack||'');const result=previousSetItem.call(this,k,v);const afterRaw=localStorage.getItem(KEY),after=parseKitchenState(afterRaw);diag('WRITE setItem malix-smart-kitchen-v1',{sourceStack,before,written,after,diff:diffStock(before,after),writtenMatchesAfter:writtenRaw===afterRaw});return result};Storage.prototype.removeItem=function(k){if(this!==localStorage||String(k)!==KEY)return previousRemoveItem.call(this,k);const beforeRaw=localStorage.getItem(KEY),before=parseKitchenState(beforeRaw),sourceStack=String(new Error().stack||'');const result=previousRemoveItem.call(this,k);const afterRaw=localStorage.getItem(KEY),after=parseKitchenState(afterRaw);diag('WRITE removeItem malix-smart-kitchen-v1',{sourceStack,before,written:null,after,diff:diffStock(before,after)});return result}}
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(kg|g|dl|ml|l|tsk|msk|st|styck|stycken|skiva|skivor|bit|bitar|portion|portioner|paket|burk|burkar)\b/g,' ').replace(/\d+[\d,.]*/g,' ').replace(/[^a-zåäö ]/gi,' ').replace(/\s+/g,' ').trim();
   const words=s=>norm(s).split(' ').filter(w=>w.length>2&&!['eller','valfri','valfria','garna','lite','eventuellt','med','och','for'].includes(w));
   const aliases={
