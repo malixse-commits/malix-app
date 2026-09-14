@@ -1,149 +1,75 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Malix – diagnostik för måltid, script och sparning</title>
-  <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:980px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}
-    .panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;margin:16px 0}
-    h1,h2,h3{line-height:1.2} code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:14px;border-radius:10px}
-    .row{padding:8px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}
-    .ok,.yes{font-weight:700}.muted{color:#666}.no{font-weight:700}
-    iframe{width:100%;height:760px;border:1px solid #ccc;border-radius:12px;background:#fff}
-    button{padding:9px 12px}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Malix – isolerat test av diary.js items</title>
+<style>
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:980px;margin:0 auto;padding:24px;line-height:1.5;background:#f7f7f5;color:#1f1f1f}.panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;margin:16px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:14px;border-radius:10px}iframe{width:100%;height:760px;border:1px solid #ccc;border-radius:12px;background:#fff}button{padding:10px 14px}.ok{font-weight:700}.muted{color:#666}
+</style>
 </head>
 <body>
-  <h1>Teknisk kontroll – måltid, script och sparning</h1>
-  <p class="muted">Diagnostiken ändrar inte appens sparlogik. Startup-synk och användarens egen måltidssparning visas separat.</p>
-
-  <h2>1. Senast sparade måltid</h2>
-  <div id="status" class="panel">Läser data…</div>
-  <div id="summary" class="panel" hidden></div>
-  <div id="items" class="panel" hidden></div>
-  <div id="raw" class="panel" hidden></div>
-
-  <h2>2. Vilka scriptversioner levereras?</h2>
-  <div id="scripts" class="panel">Kontrollerar scriptfiler…</div>
-
-  <h2>3. Live-spårning av vanlig måltidssparning</h2>
-  <p class="muted">Vänta tills statusen säger att spårningen är aktiv. Logga sedan en ny vanlig måltid i appen i rutan. Händelser före din submit visas under Startup/övrigt. Händelser från din submit visas separat.</p>
-  <div class="panel"><button type="button" id="clearTrace">Rensa spårning</button><span id="traceStatus" class="muted"> Laddar testappen…</span></div>
-
-  <h3>Startup / övriga skrivningar</h3>
-  <div id="startupTrace" class="panel"><p>Ingen startup-/övrig skrivning observerad ännu.</p></div>
-
-  <h3>Din måltidssparning</h3>
-  <div id="submitTrace" class="panel"><p>Ingen SUBMIT START observerad ännu.</p></div>
-
-  <h2>4. Jämför diary.js selected[] med måltidsutkastet</h2>
-  <p class="muted">Test: välj exempelvis <strong>Kvarg</strong> i appen nedan och ange <strong>2 dl</strong>. Tryck sedan på knappen här innan du sparar måltiden.</p>
-  <div class="panel"><button type="button" id="compareDraft">Jämför nu – före submit</button><span id="compareStatus" class="muted"> Väntar på ett val från diary.js…</span></div>
-  <div id="compareResult" class="panel"><p>Ingen jämförelse gjord ännu.</p></div>
-
-  <iframe id="testApp" src="https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/index.html"></iframe>
-
-  <script>
-  (()=>{
-    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    const parse=s=>{try{return JSON.parse(s||'[]')}catch{return null}};
-    const first=s=>{const x=parse(s);return Array.isArray(x)?x[0]:null};
-
-    const status=document.querySelector('#status'),summary=document.querySelector('#summary'),itemsBox=document.querySelector('#items'),raw=document.querySelector('#raw');
-    const renderStored=()=>{
-      const meals=parse(localStorage.getItem('malix-meals'))||[];
-      if(!Array.isArray(meals)||!meals.length){status.textContent='Ingen sparad måltid hittades i malix-meals på den här origin.';return}
-      const meal=meals[0],hasItems=Object.prototype.hasOwnProperty.call(meal,'items'),mealItems=Array.isArray(meal.items)?meal.items:[];
-      status.innerHTML='<span class="ok">Senaste sparade posten hittades.</span>';
-      summary.hidden=false;summary.innerHTML=`<h2>Sammanfattning</h2><div class="row"><strong>meal:</strong> ${esc(meal.meal)}</div><div class="row"><strong>food:</strong> ${esc(meal.food)}</div><div class="row"><strong>items finns:</strong> ${hasItems?'ja':'nej'}</div><div class="row"><strong>antal items:</strong> ${mealItems.length}</div><div class="row"><strong>date:</strong> ${esc(meal.date)}</div>`;
-      itemsBox.hidden=false;itemsBox.innerHTML='<h2>Faktiska items-fält</h2>'+(mealItems.length?mealItems.map((item,i)=>`<div class="panel"><strong>Post ${i+1}</strong><pre>${esc(JSON.stringify(item,null,2))}</pre></div>`).join(''):'<p>Inga items-poster finns.</p>');
-      raw.hidden=false;raw.innerHTML=`<h2>Hela sparade posten</h2><pre>${esc(JSON.stringify(meal,null,2))}</pre>`;
-    };
-    renderStored();
-
-    const checks=[
-      {file:'app.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/app.js?v=20260906-1715',marker:'window.malixMealDraftGet'},
-      {file:'meal-log-polish.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/meal-log-polish.js?v=20260906-1715',marker:'window.malixMealDraftUpsertManual'},
-      {file:'breakfast-buffet.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/breakfast-buffet.js?v=20260906-1715',marker:"source:'breakfast-buffet'"},
-      {file:'ready-made-foods.js',url:'https://raw.githack.com/malixse-commits/malix-app/fa87367174743cc55df1ffc63dd11d1959694a01/ready-made-foods.js?v=20260906-1715',marker:"source:'ready-made'"}
-    ];
-    const scriptsBox=document.querySelector('#scripts');
-    Promise.all(checks.map(async c=>{try{const r=await fetch(c.url,{cache:'default'}),t=await r.text();return {...c,responseUrl:r.url,status:r.status,found:t.includes(c.marker)}}catch(e){return {...c,responseUrl:'',status:'fel',found:false,error:e.message}}})).then(results=>{scriptsBox.innerHTML=results.map(r=>`<div class="row"><strong>${esc(r.file)}</strong><br>Begärd URL: <code>${esc(r.url)}</code><br>Faktiskt svar från: <code>${esc(r.responseUrl||'–')}</code><br>HTTP-status: ${esc(r.status)}<br>Kännetecken: <code>${esc(r.marker)}</code><br>Ny kod hittad: <span class="${r.found?'yes':'no'}">${r.found?'JA':'NEJ'}</span>${r.error?`<br>Fel: ${esc(r.error)}`:''}</div>`).join('')});
-
-    const startupBox=document.querySelector('#startupTrace'),submitBox=document.querySelector('#submitTrace'),traceStatus=document.querySelector('#traceStatus'),frame=document.querySelector('#testApp');
-    const compareStatus=document.querySelector('#compareStatus'),compareResult=document.querySelector('#compareResult');
-    let startupEvents=[],submitEvents=[],submitActive=false,submitSeq=0,diarySelectedRef=null,frameWindow=null,frameForm=null;
-    const renderTrace=(box,events,empty)=>{box.innerHTML=events.length?events.map((e,i)=>`<div class="row"><strong>${i+1}. ${esc(e.label)}</strong><pre>${esc(JSON.stringify(e.data,null,2))}</pre></div>`).join(''):`<p>${esc(empty)}</p>`};
-    const addStartup=(label,data)=>{startupEvents.push({label,data});renderTrace(startupBox,startupEvents,'Ingen startup-/övrig skrivning observerad ännu.')};
-    const addSubmit=(label,data)=>{submitEvents.push({label,data});renderTrace(submitBox,submitEvents,'Ingen SUBMIT START observerad ännu.')};
-    document.querySelector('#clearTrace').addEventListener('click',()=>{startupEvents=[];submitEvents=[];submitActive=false;renderTrace(startupBox,startupEvents,'Ingen startup-/övrig skrivning observerad ännu.');renderTrace(submitBox,submitEvents,'Ingen SUBMIT START observerad ännu.')});
-
-    document.querySelector('#compareDraft').addEventListener('click',()=>{
-      if(!frameWindow||!frameForm){compareResult.innerHTML='<p>Testappen är inte färdigladdad ännu.</p>';return}
-      const draft=typeof frameWindow.malixMealDraftGet==='function'?frameWindow.malixMealDraftGet(frameForm):null;
-      const selected=diarySelectedRef?diarySelectedRef.map(x=>({...x})):null;
-      compareResult.innerHTML=`<div class="row"><strong>diary.js selected[]</strong><pre>${esc(JSON.stringify(selected,null,2))}</pre></div><div class="row"><strong>malixMealDraftGet(form)</strong><pre>${esc(JSON.stringify(draft,null,2))}</pre></div>`;
-      compareStatus.textContent=diarySelectedRef?' diary.js selected[] är fångad. Jämförelsen visas nedan.':' diary.js selected[] har ännu inte fångats. Välj först ett livsmedel i diary.js-gränssnittet.';
-    });
-
+<h1>Isolerat test – ny vanlig måltid</h1>
+<p>Det här testet använder appens riktiga <code>index.html</code> och den riktiga <code>diary.js</code> från commit <code>2cd1d38f...</code>. Endast lagringsnyckeln inne i testkopian av <code>diary.js</code> byts till en separat testnyckel. Cloud-sync tas bort ur testdokumentet.</p>
+<div class="panel"><strong>Säkerhet:</strong> testet blockerar läsning och skrivning av riktiga <code>malix-meals</code> inne i testappen. Testnyckeln töms varje gång sidan laddas.</div>
+<h2>1. Före testet</h2>
+<div id="before" class="panel">Förbereder isolerad app…</div>
+<h2>2. Gör ett enda val</h2>
+<p>Öppna <strong>Logga min mat</strong> i appen nedan. Välj <strong>Kvarg</strong> och ange <strong>2 dl</strong>. Tryck sedan på knappen här innan du sparar.</p>
+<button id="showDraft" type="button" disabled>Visa måltidsutkast före sparning</button>
+<div id="draft" class="panel">Inget val kontrollerat ännu.</div>
+<h2>3. Spara i testappen</h2>
+<p>Tryck därefter <strong>Spara måltid</strong> i appen. Resultatet nedan läses från den separata testnyckeln – inte från statusfrasen i appen.</p>
+<div id="result" class="panel">Ingen testpost skapad ännu.</div>
+<iframe id="app" title="Isolerad Malix-testapp"></iframe>
+<script>
+(async()=>{
+  const COMMIT='2cd1d38f616db1fe49d42dcc662c6d62c625ed1f';
+  const BASE=`https://raw.githack.com/malixse-commits/malix-app/${COMMIT}/`;
+  const TEST_KEY='malix-meals-isolated-test-v1';
+  const REAL_KEY='malix-meals';
+  const before=document.querySelector('#before'),draftBox=document.querySelector('#draft'),result=document.querySelector('#result'),frame=document.querySelector('#app'),showDraft=document.querySelector('#showDraft');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const pretty=v=>`<pre>${esc(JSON.stringify(v,null,2))}</pre>`;
+  try{
+    const [indexRes,diaryRes]=await Promise.all([fetch(BASE+'index.html',{cache:'no-store'}),fetch(BASE+'diary.js',{cache:'no-store'})]);
+    if(!indexRes.ok||!diaryRes.ok)throw new Error(`Kunde inte läsa testkällorna (${indexRes.status}/${diaryRes.status}).`);
+    let index=await indexRes.text();
+    const diary=await diaryRes.text();
+    if(!diary.includes("const items=typeof window.malixMealDraftGet==='function'?window.malixMealDraftGet(form):[]"))throw new Error('Den förväntade diary.js-ändringen med malixMealDraftGet saknas.');
+    if(!diary.includes('meals.unshift({...values,items,date:date.toISOString()})'))throw new Error('Den förväntade nya posten med items saknas i diary.js.');
+    const isolatedDiary=diary.split(`'${REAL_KEY}'`).join(`'${TEST_KEY}'`);
+    if(isolatedDiary.includes(`'${REAL_KEY}'`))throw new Error('Kunde inte isolera diary.js från riktiga malix-meals.');
+    index=index.replace(/<script[^>]+src=["']cloud-sync\.js[^"']*["'][^>]*><\/script>/i,'');
+    const diaryTag=/<script[^>]+src=["']diary\.js[^"']*["'][^>]*><\/script>/i;
+    if(!diaryTag.test(index))throw new Error('Hittade inte diary.js-scriptet i index.html.');
+    index=index.replace(diaryTag,`<script>${isolatedDiary.replace(/<\/script/gi,'<\\/script')}<\/script>`);
+    const guard=`<script>(function(){const REAL='${REAL_KEY}',TEST='${TEST_KEY}',p=Storage.prototype,g=p.getItem,s=p.setItem,r=p.removeItem,c=p.clear;r.call(localStorage,TEST);p.getItem=function(k){if(this===localStorage&&k===REAL)return '[]';return g.call(this,k)};p.setItem=function(k,v){if(this===localStorage&&k===REAL){console.warn('ISOLERAT TEST: blockerade skrivning till '+REAL);return}return s.call(this,k,v)};p.removeItem=function(k){if(this===localStorage&&k===REAL){console.warn('ISOLERAT TEST: blockerade borttagning av '+REAL);return}return r.call(this,k)};p.clear=function(){if(this===localStorage){console.warn('ISOLERAT TEST: blockerade localStorage.clear()');return}return c.call(this)}})();<\/script>`;
+    index=index.replace('<head>',`<head><base href="${BASE}">${guard}`);
+    frame.srcdoc=index;
+    before.innerHTML=`<span class="ok">Tomt isolerat testläge klart.</span><br>Testnyckel: <code>${TEST_KEY}</code><br>Innehåll före test: <code>[]</code><br>Cloud-sync: borttaget ur testdokumentet.<br>Riktiga <code>${REAL_KEY}</code>: blockerad i testappen.`;
     frame.addEventListener('load',()=>{
+      showDraft.disabled=false;
+      const w=frame.contentWindow;
+      let last='';
+      const poll=()=>{
+        try{
+          const raw=w.localStorage.getItem(TEST_KEY)||'[]';
+          if(raw!==last){last=raw;const rows=JSON.parse(raw);result.innerHTML=Array.isArray(rows)&&rows.length?`<strong>Ny testpost skapad:</strong>${pretty(rows[0])}`:'Ingen testpost skapad ännu.'}
+        }catch(e){result.textContent='Kunde inte läsa testresultatet: '+e.message}
+      };
+      poll();setInterval(poll,250);
+    },{once:true});
+    showDraft.addEventListener('click',()=>{
       try{
-        const w=frame.contentWindow,doc=w.document,form=doc.querySelector('#mealForm');
-        frameWindow=w;frameForm=form;diarySelectedRef=null;
-        if(!form){traceStatus.textContent=' #mealForm hittades inte i testappen.';return}
-
-        const originalPush=w.Array.prototype.push;
-        let pushHookActive=true;
-        w.Array.prototype.push=function(...args){
-          if(pushHookActive&&args.length===1&&args[0]&&typeof args[0]==='object'&&Object.prototype.hasOwnProperty.call(args[0],'food')&&Object.prototype.hasOwnProperty.call(args[0],'quantity')){
-            const stack=(new w.Error('selected push')).stack||'';
-            if(stack.includes('diary.js')){
-              diarySelectedRef=this;
-              pushHookActive=false;
-              w.Array.prototype.push=originalPush;
-              compareStatus.textContent=' diary.js selected[] är fångad. Tryck på ”Jämför nu – före submit”.';
-            }
-          }
-          return originalPush.apply(this,args);
-        };
-
-        const proto=w.Storage.prototype,previous=proto.setItem;
-        if(!proto.__malixMealSubmitTraceWrapped){
-          proto.__malixMealSubmitTraceWrapped=true;
-          proto.setItem=function(k,v){
-            if(this===w.localStorage&&k==='malix-meals'){
-              const before=this.getItem(k),written=String(v),stack=(new w.Error('malix-meals write')).stack||'';
-              const target=submitActive?addSubmit:addStartup;
-              const phase=submitActive?'SUBMIT WRITE':'STARTUP/OTHER WRITE';
-              target(`${phase} – setItem före skrivning`,{submitSeq:submitActive?submitSeq:null,beforeFirst:first(before),writtenFirst:first(written),stack});
-              const result=previous.call(this,k,v);
-              target(`${phase} – direkt efter setItem`,{submitSeq:submitActive?submitSeq:null,storedFirst:first(this.getItem(k))});
-              if(submitActive){
-                const seq=submitSeq;
-                w.setTimeout(()=>addSubmit('SUBMIT RESULT – 100 ms efter',{submitSeq:seq,storedFirst:first(w.localStorage.getItem(k))}),100);
-                w.setTimeout(()=>{addSubmit('SUBMIT RESULT – 1500 ms efter',{submitSeq:seq,storedFirst:first(w.localStorage.getItem(k))});renderStored();if(submitSeq===seq)submitActive=false},1500);
-              }
-              return result;
-            }
-            return previous.call(this,k,v);
-          };
-        }
-
-        form.addEventListener('submit',()=>{
-          submitSeq+=1;submitActive=true;submitEvents=[];
-          const draft=typeof w.malixMealDraftGet==='function'?w.malixMealDraftGet(form):null;
-          const fd={};for(const [k,v] of new w.FormData(form).entries())fd[k]=v;
-          addSubmit('SUBMIT START',{submitSeq,formData:fd,items:draft,hasDraftFunction:typeof w.malixMealDraftGet==='function',storedBeforeSubmit:first(w.localStorage.getItem('malix-meals'))});
-          w.setTimeout(()=>addSubmit('SUBMIT END – nästa event-loop',{submitSeq,storedFirst:first(w.localStorage.getItem('malix-meals'))}),0);
-        },true);
-
-        traceStatus.textContent=' Spårningen är aktiv. Startup-skrivningar visas separat.';
-        compareStatus.textContent=' Väntar på ett val från diary.js. Välj t.ex. Kvarg och ange 2 dl.';
-      }catch(err){traceStatus.textContent=' Kunde inte starta spårningen: '+err.message;compareStatus.textContent=' Kunde inte starta jämförelsen: '+err.message;}
+        const w=frame.contentWindow,form=w.document.querySelector('#mealForm');
+        const items=typeof w.malixMealDraftGet==='function'?w.malixMealDraftGet(form):null;
+        const food=form?.querySelector('textarea[name="food"]')?.value??null;
+        draftBox.innerHTML=`<strong>food före sparning:</strong> ${esc(food)}<br><strong>malixMealDraftGet(form):</strong>${pretty(items)}`;
+      }catch(e){draftBox.textContent='Kunde inte läsa utkastet: '+e.message}
     });
-  })();
-  </script>
+  }catch(e){before.textContent='Testet kunde inte byggas: '+e.message;result.textContent='Ingen testning ska göras förrän felet ovan är löst.'}
+})();
+</script>
 </body>
 </html>
