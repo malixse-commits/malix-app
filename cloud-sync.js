@@ -43,7 +43,7 @@
     setExplicitLogout(true);
     clearAppData();
     const {error:signOutError}=await client.auth.signOut({scope:'local'});
-    if(signOutError)console.error(signOutError);
+    if(signOutError)console.error(error);
     user=null;
     renderAccount();
     showGate();
