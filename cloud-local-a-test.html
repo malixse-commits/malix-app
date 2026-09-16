@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MALIX – TEST LOKAL A</title>
+</head>
+<body>
+  <main>
+    <h1>TEST LOKAL A</h1>
+    <p>Den här testsidan skapar endast den lokala testposten för molnsynktestet.</p>
+    <button id="createLocalA" type="button">Skapa TEST LOKAL A</button>
+    <p id="status"></p>
+  </main>
+  <script>
+    document.getElementById('createLocalA').addEventListener('click', () => {
+      localStorage.setItem('malix-self-care-v1', 'TEST LOKAL A');
+      document.getElementById('status').textContent = 'TEST LOKAL A är skapad.';
+    });
+  </script>
+</body>
+</html>
