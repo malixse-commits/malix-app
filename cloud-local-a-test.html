@@ -11,11 +11,17 @@
     <p>Den här testsidan skapar endast den lokala testposten för molnsynktestet.</p>
     <button id="createLocalA" type="button">Skapa TEST LOKAL A</button>
     <p id="status"></p>
+    <button id="readLocalA" type="button">Läs TEST LOKAL A</button>
+    <p id="readStatus"></p>
   </main>
   <script>
     document.getElementById('createLocalA').addEventListener('click', () => {
       localStorage.setItem('malix-self-care-v1', 'TEST LOKAL A');
       document.getElementById('status').textContent = 'TEST LOKAL A är skapad.';
+    });
+    document.getElementById('readLocalA').addEventListener('click', () => {
+      const value = localStorage.getItem('malix-self-care-v1');
+      document.getElementById('readStatus').textContent = value === null ? 'Inget värde finns.' : value;
     });
   </script>
 </body>
