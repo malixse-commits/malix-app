@@ -27,7 +27,7 @@
   function hideGate(){gate().style.display='none'}
   async function signIn(email,password){setExplicitLogout(false);const {data,error}=await client.auth.signInWithPassword({email,password});if(error){setExplicitLogout(true);throw error}user=data.user;await firstSync();hideGate();renderAccount()}
   async function signUp(email,password){setExplicitLogout(false);const {data,error}=await client.auth.signUp({email,password});if(error){setExplicitLogout(true);throw error}if(!data.session){setStatus('Kontrollera din e-post och bekräfta kontot.');setExplicitLogout(true);return}user=data.user;await firstSync();hideGate();renderAccount()}
-  async function signOut(){setExplicitLogout(true);if(user)await push();const {error}=await client.auth.signOut({scope:'local'});if(error)console.error(error);user=null;clearAppData();renderAccount();showGate()}
+  async function signOut(){setExplicitLogout(true);if(user){const result=await push();if(result==='conflict'){setExplicitLogout(false);return}}const {error}=await client.auth.signOut({scope:'local'});if(error)console.error(error);user=null;clearAppData();renderAccount();showGate()}
   async function deleteSyncedData(){
     if(!client||!user)return;
     const ok=window.confirm('Detta raderar alla synkade appuppgifter från molnet och från den här webbläsaren. Ditt inloggningskonto finns kvar. Vill du fortsätta?');
