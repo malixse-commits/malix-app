@@ -85,10 +85,15 @@
   }
 
   function donenessFor(r){
-    const n=lower(r.name),all=lower((r.ingredients||[]).join(' '));
-    if(/kyckling/.test(n+' '+all))return 'Kycklingen ska vara helt genomlagad utan rå kärna. Med termometer: minst 72 °C i den tjockaste delen.';
-    if(/köttfärs|färs|köttbull|pannbiff|järp|köttfärslimpa/.test(n+' '+all))return 'Färsrätter ska vara helt genomlagade. Med termometer: minst 70 °C i mitten.';
-    if(/fisk|lax|torsk|sej/.test(n+' '+all))return 'Fisken ska vara genomlagad och lätt dela sig i flagor. Följ även eventuell anvisning på förpackningen.';
+    const n=lower(r.name),
+          all=lower((r.ingredients||[]).join(' ')),
+          steps=lower((r.steps||[]).join(' ')),
+          text=n+' '+all,
+          cooks=/\b(kok\w*|stek\w*|bryn\w*|fräs\w*|bak\w*|ugnsbak\w*|grädd\w*|sjud\w*|tillag\w*|värm\w*|rost\w*|gratin\w*)\b/.test(steps);
+    if(/\bkyckling\w*\b/.test(text)&&/\b(stek\w*|bryn\w*|tillag\w*|ugnsbak\w*|sjud\w*)\b/.test(steps)&&!/\bgenomlagad kyckling\b/.test(all))return 'Kycklingen ska vara helt genomlagad utan rå kärna. Med termometer: minst 72 °C i den tjockaste delen.';
+    if(/\b(köttfärs\w*|blandfärs\w*|nötfärs\w*|färs|köttbull\w*|pannbiff\w*|järp\w*|köttfärslimpa\w*)\b/.test(text)&&/\b(stek\w*|bryn\w*|tillag\w*|ugnsbak\w*|grädd\w*|genomlag\w*|genomstekt\w*)\b/.test(steps))return 'Färsrätter ska vara helt genomlagade. Med termometer: minst 70 °C i mitten.';
+    if(/\b(fisk\w*|lax\w*|torsk\w*|sej\w*)\b/.test(text)&&/\b(stek\w*|bak\w*|ugnsbak\w*|tillag\w*|sjud\w*|grädd\w*)\b/.test(steps))return 'Fisken ska vara genomlagad och lätt dela sig i flagor. Följ även eventuell anvisning på förpackningen.';
+    if(!cooks)return '';
     if(/soppa|gryta|sås|chili|kalops|stroganoff/.test(n))return 'Rätten är klar när den är genomvarm och har den konsistens som beskrivs i stegen.';
     if(/paj|pudding|ugnspannkaka|omelett|lasagne|gratäng/.test(n))return 'Rätten ska ha stannat eller blivit genomvarm i mitten och fått den färg som beskrivs i stegen.';
     return 'Rätten är klar när alla delar är genomlagade eller genomvarma och konsistensen stämmer med stegen.';
