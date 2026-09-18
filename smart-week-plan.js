@@ -27,6 +27,13 @@
       grid.appendChild(card);
     });
     panel.addEventListener('click',e=>{
+      const kitchen=e.target.closest('[data-open="smartKitchen"]');
+      if(kitchen){
+        document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id==='smartKitchen'));
+        window.malixRenderSmartKitchen?.();
+        window.scrollTo({top:0,behavior:'smooth'});
+        return;
+      }
       const b=e.target.closest('[data-week-open]');
       if(!b)return;
       const id=b.dataset.weekOpen;
