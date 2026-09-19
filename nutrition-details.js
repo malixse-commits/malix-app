@@ -44,6 +44,26 @@
       ],
       doneness:'Brödpuddingen är klar när äggstanningen har stannat även i mitten och ytan fått lite färg.'
     },
+    'pasta-tonfisk':{
+      time:20,
+      prepTime:5,
+      cookTime:15,
+      ingredients:[
+        '320 g pasta',
+        '1 burk tonfisk, avrunnen',
+        '1 st citron',
+        '2 st vitlöksklyftor',
+        '2 dl crème fraîche eller tjock yoghurt',
+        '250 g ärtor'
+      ],
+      steps:[
+        'Koka pasta och ärtor.',
+        'Rör ihop tonfisk med citron, vitlök och crème fraîche eller yoghurt.',
+        'Vänd ner den varma pastan och ärtorna i tonfiskblandningen.',
+        'Smaka av med peppar.'
+      ],
+      doneness:'Pastan och ärtorna ska vara kokta och allt ska vara jämnt blandat till en krämig pasta.'
+    },
     'quesadilla-rester':{
       time:15,
       prepTime:5,
