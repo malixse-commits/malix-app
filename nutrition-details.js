@@ -64,6 +64,25 @@
       ],
       doneness:'Pastan och ärtorna ska vara kokta och allt ska vara jämnt blandat till en krämig pasta.'
     },
+    'tonfiskmacka':{
+      time:10,
+      prepTime:10,
+      cookTime:0,
+      ingredients:[
+        '2 burkar tonfisk, avrunna',
+        '1 dl tjock yoghurt – eller',
+        '0,5 dl majonnäs',
+        '0,5 st citron',
+        'gurka eller sallad till topping',
+        '8 skivor bröd'
+      ],
+      steps:[
+        'Låt tonfisken rinna av och blanda den med yoghurt eller majonnäs och saften från citronen.',
+        'Fördela tonfiskröran på brödet.',
+        'Toppa med gurka eller sallad.'
+      ],
+      doneness:'Röran ska vara jämnt blandad och krämig men inte rinnig.'
+    },
     'quesadilla-rester':{
       time:15,
       prepTime:5,
