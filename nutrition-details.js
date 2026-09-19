@@ -25,6 +25,25 @@
       ],
       doneness:'Potatisen ska vara mjuk. Använder du nötkött i grytbitar ska köttet vara genomlagat och mört. Använder du köttfärs ska färsen vara helt genomstekt.'
     },
+    'brödpudding-mat':{
+      time:35,
+      prepTime:10,
+      cookTime:25,
+      ingredients:[
+        '8 skivor torrt bröd',
+        '4 st ägg',
+        '3 dl mjölk',
+        '150 g ost',
+        'cirka 2–3 dl tomat eller andra grönsaker'
+      ],
+      steps:[
+        'Riv eller bryt brödet i mindre bitar och lägg det i en ugnsform.',
+        'Fördela ost och tomat eller andra grönsaker över brödet. Låt mycket blöta grönsaker rinna av först.',
+        'Vispa ihop ägg och mjölk och häll äggstanningen jämnt över brödet.',
+        'Gratinera tills äggstanningen har stannat även i mitten och ytan fått lite färg.'
+      ],
+      doneness:'Brödpuddingen är klar när äggstanningen har stannat även i mitten och ytan fått lite färg.'
+    },
     'kyckling-senap':{ingredients:[
       '600 g kyckling',
       '1 st gul lök',
