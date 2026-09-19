@@ -44,6 +44,23 @@
       ],
       doneness:'Brödpuddingen är klar när äggstanningen har stannat även i mitten och ytan fått lite färg.'
     },
+    'quesadilla-rester':{
+      time:15,
+      prepTime:5,
+      cookTime:10,
+      ingredients:[
+        '4 st tortillas',
+        '150 g ost',
+        'cirka 3 dl valfri fyllning, till exempel tillagad kyckling, bönor eller grönsaker'
+      ],
+      tip:'Lite av mycket räcker fint i en quesadilla.',
+      steps:[
+        'Fördela ost och valfri fyllning på ena halvan av varje tortilla.',
+        'Vik tortillas över fyllningen.',
+        'Stek på båda sidor tills tortillan fått färg, osten smält och fyllningen blivit varm.'
+      ],
+      doneness:'Quesadillan är klar när tortillan fått färg på båda sidor, osten har smält och fyllningen är varm.'
+    },
     'kyckling-senap':{ingredients:[
       '600 g kyckling',
       '1 st gul lök',
