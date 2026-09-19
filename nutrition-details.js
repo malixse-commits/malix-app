@@ -3,6 +3,7 @@
 
   const exactOverrides={
     'gulaschsoppa':{
+      time:90,
       prepTime:15,
       cookTime:75,
       ingredients:[
