@@ -2,6 +2,14 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kyckling-pesto':{ingredients:[
+      '600 g kyckling',
+      'efter behov: pesto',
+      '400 g tomater',
+      '150 g mozzarella eller ost',
+      '320 g pasta – eller',
+      '800 g potatis'
+    ]},
     'falukorv-ugn':{ingredients:[
       '500 g falukorv',
       '400 g tomat',
