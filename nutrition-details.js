@@ -2,6 +2,15 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'falukorv-ugn':{ingredients:[
+      '500 g falukorv',
+      '400 g tomat',
+      '1 msk senap',
+      '150 g ost',
+      '4 portioner potatismos – eller',
+      '800 g potatis',
+      '300 g grönsaker'
+    ]},
     'kycklingwok':{ingredients:[
       '600 g kyckling',
       '300 g wokgrönsaker',
