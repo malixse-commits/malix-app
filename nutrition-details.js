@@ -2,6 +2,28 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'gulaschsoppa':{
+      prepTime:15,
+      cookTime:75,
+      ingredients:[
+        '500 g nötkött i grytbitar – eller',
+        '500 g köttfärs',
+        '800 g potatis',
+        '2 st paprika',
+        '1 st gul lök',
+        '2 st vitlöksklyftor',
+        '400 g tomat',
+        '1 tsk paprikapulver',
+        '5 dl buljong'
+      ],
+      steps:[
+        'Bryn nötköttet och löken. Använder du köttfärs, bryn färsen tills den är genomstekt.',
+        'Tillsätt paprika, kryddor och tomat.',
+        'Häll på buljongen. Använder du nötkött i grytbitar, låt köttet sjuda tills det börjar bli mört innan potatisen läggs i. Använder du köttfärs kan potatisen läggas i direkt.',
+        'Koka tills potatisen är mjuk och, om du använder grytbitar, köttet är mört.'
+      ],
+      doneness:'Potatisen ska vara mjuk. Använder du nötkött i grytbitar ska köttet vara genomlagat och mört. Använder du köttfärs ska färsen vara helt genomstekt.'
+    },
     'kyckling-senap':{ingredients:[
       '600 g kyckling',
       '1 st gul lök',
