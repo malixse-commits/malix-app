@@ -24,6 +24,13 @@
     const s=lower(text),name=lower(r.name),tags=(r.tags||[]).map(lower);
     if(hasAmount(text))return text;
     if(/valfri|valfritt|efter smak|på en höft/.test(s))return `valfri mängd ${text}`;
+    if(
+      s==='bostongurka' ||
+      s==='kryddpeppar' ||
+      s==='pikant- eller vitlöksfärskost/flødeost' ||
+      (r.id==='kycklingmalix' && s==='majsstärkelse') ||
+      (r.id==='malix-appelpaj-pa-en-hoft' && s.startsWith('lite potatismjöl till saftig fyllning'))
+    )return `efter behov: ${text}`;
     if(/salt/.test(s))return `0,5 tsk ${text}`;
     if(/svartpeppar|vitpeppar|peppar/.test(s))return `0,25 tsk ${text}`;
     if(/saffran/.test(s))return `0,5 g ${text}`;
