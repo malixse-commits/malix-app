@@ -83,6 +83,25 @@
       ],
       doneness:'Röran ska vara jämnt blandad och krämig men inte rinnig.'
     },
+    'pulledpork':{
+      time:480,
+      prepTime:10,
+      cookTime:470,
+      ingredients:[
+        '600 g fläskkött för långkok',
+        '1 st gul lök',
+        '2 st vitlöksklyftor',
+        '1 dl cola',
+        'kryddor efter smak',
+        '1 dl BBQ-sås eller ketchup'
+      ],
+      steps:[
+        'Lägg fläskkött, lök och vitlök i slowcookern. Tillsätt cola, kryddor och BBQ-sås eller ketchup.',
+        'Tillaga på låg värme i cirka 8 timmar, tills köttet är genomlagat och så mört att det lätt går att dra isär.',
+        'Dra isär köttet med två gafflar och blanda det med såsen i slowcookern.'
+      ],
+      doneness:'Köttet ska vara genomlagat och så mört att det lätt går att dra isär med två gafflar.'
+    },
     'quesadilla-rester':{
       time:15,
       prepTime:5,
