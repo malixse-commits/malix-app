@@ -2,6 +2,15 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'torsk-tomat':{ingredients:[
+      '600 g torsk eller annan vit fisk',
+      '400 g krossade tomater',
+      '2 st vitlöksklyftor',
+      '1 st gul lök',
+      '2 msk örter',
+      '800 g potatis – eller',
+      '3 dl okokt ris'
+    ]},
     fiskpanetter:{servings:4,prepTime:10,cookTime:20,equipment:['kastrull med lock','stekpanna eller ugnsplåt','skål','kniv','mått'],ingredients:['8 st fiskpanetter','3 dl okokt ris','2 dl gröna ärtor','1,5 dl majs','1 st röd paprika','2 dl filmjölk','2 msk majonnäs','2 msk bostongurka','2 msk hackad dill','0,5 st citron'],doneness:'Fiskpanetterna ska vara genomvarma och riset mjukt med lite tuggmotstånd.'},
     tzatziki:{servings:6,prepTime:15,cookTime:0,equipment:['rivjärn','sil eller durkslag','skål','mått'],ingredients:['1 kg turkisk yoghurt','1 st gurka','7 st vitlöksklyftor','1 msk olivolja','0,5 tsk salt','0,25 tsk svartpeppar','0,5 st citron – valfritt'],doneness:'Tzatzikin är klar när gurkan är väl avrunnen och allt är jämnt blandat.'},
     fetaostkram:{servings:4,prepTime:10,cookTime:0,equipment:['skål','gaffel','vitlökspress'],ingredients:['2 dl turkisk yoghurt','150 g fetaost','2 st vitlöksklyftor'],doneness:'Krämen ska vara jämn och krämig. Smaka av innan servering.'},
