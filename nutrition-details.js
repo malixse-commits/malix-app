@@ -2,6 +2,16 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kyckling-senap':{ingredients:[
+      '600 g kyckling',
+      '1 st gul lök',
+      '1 msk dijonsenap',
+      '1 tsk dragon',
+      '3 dl grädde',
+      '5 dl buljong',
+      '3 dl okokt ris – eller',
+      '800 g potatis'
+    ]},
     'kyckling-pesto':{ingredients:[
       '600 g kyckling',
       'efter behov: pesto',
