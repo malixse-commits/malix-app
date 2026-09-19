@@ -2,6 +2,15 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kycklingwok':{ingredients:[
+      '600 g kyckling',
+      '300 g wokgrönsaker',
+      '2 msk soja',
+      '2 st vitlöksklyftor',
+      '1 msk ingefära',
+      '3 dl okokt ris – eller',
+      '300 g nudlar'
+    ]},
     'torsk-tomat':{ingredients:[
       '600 g torsk eller annan vit fisk',
       '400 g krossade tomater',
