@@ -2,6 +2,42 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'köttfärspaj':{
+      servings:4,
+      time:85,
+      prepTime:20,
+      cookTime:35,
+      ingredients:[
+        '2,5 dl glutenfri mjölmix, till exempel Leilas',
+        '1 krm salt',
+        '125 g smör',
+        '2 msk kallt vatten, lite mer vid behov',
+        '500 g köttfärs',
+        '1 st gul lök, hackad',
+        '1 msk tomatpuré',
+        '1 buljongtärning, gärna umami',
+        '1 dl mjölk',
+        'cirka 1,5 msk majsstärkelse',
+        'svartpeppar efter smak',
+        'salt vid behov efter avsmakning',
+        '2 st tomater, skivade',
+        '1 st gul lök, skuren i tunna ringar',
+        'cirka 75 g riven ost'
+      ],
+      steps:[
+        'Blanda glutenfri mjölmix och salt. Arbeta in smöret. Tillsätt 2 msk kallt vatten och arbeta snabbt ihop till en deg. Om degen fortfarande är för smulig, tillsätt bara lite mer vatten tills den precis går ihop. Låt vila kallt i minst 30 minuter.',
+        'Sätt ugnen på 200 °C över-/undervärme. Tryck ut degen i en pajform och nagga botten. Förgrädda cirka 10 minuter.',
+        'Stek köttfärsen tillsammans med den hackade löken. Rör ner tomatpuré och buljongtärning. Krydda med svartpeppar och smaka av med salt först efter att buljongen kommit i.',
+        'Rör ut majsstärkelsen i mjölken. Häll ner blandningen i köttfärsen och låt fyllningen tjockna. Den ska vara sammanhållen och krämig, inte rinnig.',
+        'Lägg köttfärsfyllningen i det förgräddade pajskalet.',
+        'Lägg på skivade tomater och lökringar. Strö över den rivna osten.',
+        'Grädda ytterligare cirka 20–25 minuter, tills pajskalet är färdiggräddat och osten har smält och fått fin färg.'
+      ],
+      oven:'200 °C över-/undervärme',
+      tip:'Paj är bra matlådemat och smakar gott även dagen efter.',
+      serving:'Servera gärna köttfärspajen med en grönsallad eller pizzasallad.',
+      doneness:'Pajen är klar när pajskalet är färdiggräddat, fyllningen är varm och fast och osten har smält och fått fin färg.'
+    },
     'fruktsoppa-klassisk':{
       servings:4,
       time:40,
