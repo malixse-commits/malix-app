@@ -83,6 +83,30 @@
       ],
       doneness:'Röran ska vara jämnt blandad och krämig men inte rinnig.'
     },
+    'carbonara':{
+      time:25,
+      prepTime:10,
+      cookTime:15,
+      ingredients:[
+        '320 g pasta',
+        '1 st gul lök',
+        '200 g bacon',
+        '2 dl grädde',
+        '2 st ägg',
+        '0,5 tsk svartpeppar',
+        '100 g parmesan'
+      ],
+      steps:[
+        'Koka pastan enligt anvisningen på förpackningen.',
+        'Hacka löken och skär baconet i bitar. Stek lök och bacon i en stor stekpanna tills löken mjuknat och baconet fått färg.',
+        'Vänd ner den kokta pastan i stekpannan. Häll över grädden, tillsätt svartpeppar och låt allt bli varmt.',
+        'Vispa upp äggen lätt och rör ner dem i pastan. Fortsätt röra på svag värme tills ägget har tillagats och såsen blivit lätt grynig och krämig.',
+        'Ta från värmen och strö över parmesan.'
+      ],
+      tip:'Spara lite pastavatten och späd med en skvätt om carbonaran blir för tjock.',
+      swaps:'Parmesan kan bytas mot annan lagrad hårdost.',
+      doneness:'Carbonaran är klar när allt är genomvarmt, ägget har tillagats och grädden och ägget bildat en lätt grynig, krämig sås runt pastan.'
+    },
     'pulledpork':{
       time:480,
       prepTime:10,
