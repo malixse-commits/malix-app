@@ -107,6 +107,33 @@
       swaps:'Parmesan kan bytas mot annan lagrad hårdost.',
       doneness:'Carbonaran är klar när allt är genomvarmt, ägget har tillagats och grädden och ägget bildat en lätt grynig, krämig sås runt pastan.'
     },
+    'pastamurklor':{
+      time:30,
+      prepTime:10,
+      cookTime:20,
+      ingredients:[
+        '320 g pasta',
+        '1 burk konserverade murklor, väl avrunna',
+        '1 st gul lök',
+        '1–2 st vitlöksklyftor',
+        '2–3 dl grädde',
+        'cirka 75 g Riddarost eller parmesan',
+        'grovkornig svartpeppar efter smak',
+        'salt efter smak'
+      ],
+      steps:[
+        'Koka pastan enligt anvisningen på förpackningen.',
+        'Hacka lök och vitlök och låt murklorna rinna av ordentligt.',
+        'Stek lök, vitlök och murklor i en stor stekpanna.',
+        'Vänd ner den färdigkokta pastan och tillsätt först cirka 2 dl grädde.',
+        'Krydda med salt och grovkornig svartpeppar. Tillsätt mer grädde vid behov, upp till cirka 3 dl.',
+        'Tillsätt Riddarost eller parmesan och vänd runt tills osten har smält och pastan blivit varm och krämig.'
+      ],
+      tip:'Riddarost eller parmesan fungerar bra. Väljer du en mer smakrik ost kan du ta lite mindre så att osten inte tar över smaken från murklorna.',
+      serving:'Något grönt passar bra till. Spenat, grönkål eller svartkål kan också vändas ner i pastan som variation.',
+      swaps:'Murklor kan bytas mot annan matsvamp. Om den varianten ska göras matigare kan tunt strimlad benfri kotlett, oxfilé eller entrecôte användas som tillägg. Annan ost fungerar också. En mer smakrik ost används i mindre mängd så att den inte tar över svampsmaken.',
+      doneness:'Pastan ska vara varm och krämig, osten ska ha smält och murklor och lök ska vara jämnt fördelade i pastan.'
+    },
     'pulledpork':{
       time:480,
       prepTime:10,
