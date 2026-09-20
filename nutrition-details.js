@@ -2,6 +2,21 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'fruktsoppa-klassisk':{
+      servings:4,
+      time:40,
+      prepTime:10,
+      cookTime:30,
+      ingredients:[
+        '250 g blandad torkad frukt, till exempel katrinplommon, aprikoser, russin och äpple',
+        '1,25 liter vatten',
+        '1 kanelstång',
+        'socker efter smak',
+        'cirka 2 msk potatismjöl',
+        'lite kallt vatten till redningen'
+      ],
+      doneness:'Fruktbitarna ska vara mjuka men fortfarande finnas kvar. Vätskan ska vara lätt redd, simmig och krämig – inte mixad och inte tjock som kräm.'
+    },
     'gulaschsoppa':{
       time:90,
       prepTime:15,
