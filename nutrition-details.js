@@ -2,6 +2,35 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'dillkött':{
+      servings:4,time:120,prepTime:20,cookTime:100,
+      ingredients:[
+        'cirka 600 g grytkött',
+        'morötter',
+        '1 gul lök',
+        'vatten och buljong till kokningen',
+        'dill efter smak',
+        'ättika – lite i taget efter smak',
+        'Maizena/majsstärkelse till redning',
+        'lite kallt vatten till redningen',
+        'grädde – valfritt',
+        'salt efter smak',
+        'svartpeppar efter smak',
+        'kokt potatis till servering'
+      ],
+      steps:[
+        'Skala lök och morötter och skär dem.',
+        'Lägg kött, lök och morötter i en gryta med vatten och buljong. Låt sjuda tills köttet är riktigt mört.',
+        'Spara kokspadet och använd det som grund till såsen.',
+        'Gör såsen av kokspadet. Grädde är valfritt.',
+        'Rör ut Maizena i lite kallt vatten. Tillsätt redningen lite i taget och låt såsen koka upp.',
+        'Smaksätt med dill. Tillsätt ättika lite i taget och smaka mellan gångerna. Smaka av med salt och svartpeppar.',
+        'Lägg tillbaka kött och grönsaker och låt allt bli varmt tillsammans.'
+      ],
+      serving:'Servera med kokt potatis.',
+      tip:'Smaka dig fram med ättikan. Börja med lite och tillsätt mer efter hand.',
+      doneness:'Dillköttet är klart när köttet är riktigt mört, morötterna är mjuka, såsen är sammanhållen och smaken av dill och ättika är balanserad.'
+    },
     'kottgrotta':{
       ingredients:[
         'efter behov: köttfärssmet',
