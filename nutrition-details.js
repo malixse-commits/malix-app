@@ -2,6 +2,61 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kalops':{
+      servings:4,time:135,prepTime:15,cookTime:120,
+      ingredients:[
+        'cirka 600 g grytbitar av nötkött','1 gul lök','2–3 morötter','5 dl vatten','1 buljongtärning',
+        'lite extra vatten vid behov under kokningen','8–10 hela kryddpepparkorn','2 lagerblad',
+        'salt efter smak','svartpeppar efter smak','cirka 1–1,5 msk Maizena/majsstärkelse','lite kallt vatten till redningen'
+      ],
+      steps:[
+        'Skala och hacka löken. Skala morötterna och skär dem i bitar.',
+        'Bryn köttet tillsammans med löken så att köttet får färg.',
+        'Lägg ner morötterna. Tillsätt 5 dl vatten, buljongtärningen, kryddpepparkornen och lagerbladen.',
+        'Låt kalopsen sjuda under lock på låg värme i cirka 1½–2 timmar, tills köttet är riktigt mört. Kontrollera grytan ibland och tillsätt lite extra vatten om det behövs.',
+        'När köttet är mört, smaka av med salt och svartpeppar.',
+        'Rör ut Maizena i lite kallt vatten. Rör ner redningen lite i taget i grytan tills såsen har den konsistens du vill ha. All redning behöver inte användas.',
+        'Låt kalopsen koka upp efter redningen. Kontrollera konsistensen och smaka av en sista gång.'
+      ],
+      serving:'Servera kalopsen med kokt potatis och rödbetor.',
+      tip:'Låt köttet bestämma tiden. Efter ungefär 1½ timme kan man börja känna efter. Är köttet fortfarande segt får kalopsen sjuda vidare. Tillsätt lite mer vatten om det behövs.',
+      doneness:'Kalopsen är klar när köttet är riktigt mört, morötterna är mjuka och såsen är lätt redd och sammanhållen.'
+    },
+    'kycklingmalix':{
+      servings:4,time:45,prepTime:15,cookTime:30,
+      ingredients:[
+        '600 g kycklingfilé','cirka 1 dl Maizena/majsstärkelse','lite extra Maizena vid behov','rikligt med olja till tillagningen',
+        '1 hel burk färdig satésås/jordnötssås','cirka 2,5 dl kokosgrädde','cirka 2 nävar jordnötter, grovt hackade',
+        '1 förpackning grönkål eller svartkål','1 paket bacon','vitpeppar efter smak','salt endast vid behov'
+      ],
+      steps:[
+        'Skär kycklingfilén i mindre strimlor. Lägg cirka 1 dl Maizena på en tallrik. Vänd och gnid in kycklingstrimlorna i Maizenan så att alla bitar får ett ordentligt lager. Använd lite extra Maizena om det behövs.',
+        'Skär baconet i bitar och stek det i en panna. Låt baconet få färg och släppa sitt fett. Lägg grönkålen eller svartkålen i samma panna och stek tillsammans tills kålen har mjuknat men fortfarande har lite struktur. Krydda med vitpeppar. Smaka innan du eventuellt tillsätter salt. Ställ åt sidan och håll varmt.',
+        'Värm den färdiga satésåsen tillsammans med cirka 2,5 dl kokosgrädde i en kastrull. Grovhacka cirka två nävar jordnötter, rör ner dem och låt såsen bli genomvarm. Håll den varm på låg värme.',
+        'Hetta upp rikligt med olja i en stekpanna, nästan som vid grundfritering. Tillaga kycklingen i omgångar så att pannan inte blir överfull.',
+        'Stek kycklingstrimlorna tills de har fått en krispig yta och är helt genomstekta. Ta upp den färdiga omgången och lägg åt sidan medan nästa tillagas.',
+        'Servera den nygjorda krispiga kycklingen tillsammans med den varma jordnötssåsen och grönkålen eller svartkålen med bacon.'
+      ],
+      serving:'Servera den nygjorda krispiga kycklingen tillsammans med den varma jordnötssåsen och grönkålen eller svartkålen med bacon.',
+      swaps:'Vill du ha kålen mer såsig kan du tillsätta cirka 1–2 dl grädde när kålen har stekt tillsammans med baconet. Låt grädden koka ihop en kort stund med kålen och baconet.',
+      tip:'Stek kycklingen i omgångar. Fyller du pannan med för mycket kyckling på en gång blir det svårare att få den krispiga ytan. Låt hellre varje omgång få ordentligt med plats.',
+      doneness:'Kycklingen ska vara krispig utanpå och helt genomstekt. Jordnötssåsen ska vara varm och sammanhållen, och kålen ska ha mjuknat men fortfarande ha lite struktur.'
+    },
+    'stektkalbacon':{
+      servings:4,time:20,prepTime:5,cookTime:15,
+      ingredients:['1 förpackning grönkål eller svartkål','1 paket bacon','vitpeppar efter smak','salt endast vid behov'],
+      steps:[
+        'Skär baconet i bitar.',
+        'Stek baconet i en stekpanna tills det börjar få färg och har släppt sitt fett.',
+        'Lägg grönkålen eller svartkålen i samma panna. Stek kålen tillsammans med baconet och låt den ta smak av baconfettet.',
+        'Fortsätt steka tills kålen har mjuknat men fortfarande har lite struktur.',
+        'Krydda med vitpeppar. Smaka innan du tillsätter salt – baconet ger redan mycket sälta.'
+      ],
+      serving:'Servera varmt som tillbehör till många olika rätter.',
+      swaps:'Vill du ha kålen mer såsig kan du tillsätta cirka 1–2 dl grädde. Låt grädden koka ihop en kort stund med kålen och baconet.',
+      tip:'Smaka innan du saltar. Baconet ger både fett, smak och sälta till kålen, så ofta behövs inget extra salt alls.',
+      doneness:'Kålen ska ha mjuknat men fortfarande ha lite struktur, och baconet ska vara stekt och ha fått färg. Gör du den såsiga varianten ska grädden ha kokat ihop med kålen och baconet.'
+    },
     'köttfärspaj':{
       servings:4,
       time:85,
