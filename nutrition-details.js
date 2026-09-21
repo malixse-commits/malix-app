@@ -39,6 +39,69 @@
       timeNote:'30 minuters vilotid för pajdegen ingår i totaltiden.',
       doneness:'Pajen är klar när pajskalet är färdiggräddat, fyllningen är varm och fast och osten har smält och fått fin färg.'
     },
+    'spenatpaj':{
+      servings:4,
+      time:90,
+      prepTime:20,
+      cookTime:40,
+      ingredients:[
+        '2,5 dl glutenfri mjölmix, till exempel Leilas',
+        '1 krm salt',
+        '125 g smör',
+        '2 msk kallt vatten, lite mer vid behov',
+        '300 g spenat – färsk eller fryst fungerar',
+        '150 g fetaost',
+        '1 st gul lök',
+        '3 st ägg',
+        '2,5 dl mjölk',
+        'krydda efter smak'
+      ],
+      steps:[
+        'Blanda glutenfri mjölmix och salt. Arbeta in smöret. Tillsätt 2 msk kallt vatten och arbeta snabbt ihop till en deg. Om den fortfarande är för smulig, tillsätt bara lite mer vatten tills den precis går ihop. Låt vila kallt i minst 30 minuter.',
+        'Sätt ugnen på 200 °C över-/undervärme. Tryck ut degen i en pajform och nagga botten. Förgrädda cirka 10 minuter.',
+        'Hacka löken och fräs den tillsammans med spenaten. Färsk spenat får sjunka ihop. Fryst spenat ska bli genomvarm och överflödig vätska ska få ånga bort. Krydda efter smak.',
+        'Fördela spenat och lök i pajskalet och smula över 150 g fetaost.',
+        'Vispa ihop 3 ägg och 2,5 dl mjölk och häll äggstanningen jämnt över fyllningen.',
+        'Grädda cirka 25–30 minuter, tills äggstanningen har stannat även i mitten och pajen fått fin färg.'
+      ],
+      oven:'200 °C över-/undervärme',
+      serving:'Servera gärna med en enkel grönsallad eller pizzasallad.',
+      tip:'Både färsk och fryst spenat fungerar. Använder du fryst spenat, låt överflödig vätska ånga bort så att pajen inte blir blöt.',
+      timeNote:'30 minuters vilotid för pajdegen ingår i totaltiden.',
+      doneness:'Pajen är klar när äggstanningen har stannat även i mitten, pajskalet är färdiggräddat och pajen har fått fin färg.'
+    },
+    'malix-appelpaj-pa-en-hoft':{
+      servings:4,
+      time:50,
+      prepTime:15,
+      cookTime:35,
+      ingredients:[
+        'ca 300 g smör',
+        'ca 1,5 dl socker',
+        'rikligt med havregryn',
+        'glutenfritt mjöl, lite i taget tills degen går ihop',
+        'vaniljsocker om du vill',
+        'kokos om du tycker om det',
+        '5–6 äpplen, beroende på storlek och vad du har hemma',
+        'kanel efter smak',
+        'socker efter smak'
+      ],
+      oven:'175 °C över-/undervärme',
+      serving:'Gott som det är eller med vaniljsås, glass eller grädde.',
+      tip:'Ser äpplena lite tråkiga ut? Gör en paj av dem. De behöver inte vara perfekta för att bli goda i en paj.',
+      swaps:'Päron kan användas ungefär som äpplen med kanel och lite socker efter smak, men päronen ska fortfarande vara fina och fräscha. För blåbär eller rabarber används så mycket att det blir ett ordentligt lager. Sockra efter smak. Vid saftig fyllning används lite potatismjöl.',
+      steps:[
+        'Sätt ugnen på 175 °C över-/undervärme.',
+        'Smält smöret i en kastrull.',
+        'Blanda ner socker och rikligt med havregryn. Tillsätt glutenfritt mjöl lite i taget tills allt går ihop till en mjuk deg som går att platta ut. Degen ska hålla ihop men inte bli hård. Tillsätt vaniljsocker och kokos om du vill.',
+        'Tryck ut en del av degen i botten av pajformen. Spara resten till toppen.',
+        'För äppelversionen: skala och klyfta 5–6 äpplen. Lägg dem i en påse med kanel och socker efter smak och skaka så att äppelbitarna täcks. Fördela över pajbotten.',
+        'För blåbär/rabarber: fördela fyllningen över botten och sockra efter smak. Pudra potatismjölet lätt över fyllningen. Lägg potatismjölet i en tesil och sikta ett tunt, jämnt lager över bären eller rabarbern.',
+        'Lägg, tryck eller smula resten av degen över fyllningen.',
+        'Grädda mitt i ugnen cirka 30–45 minuter. Låt framför allt färgen avgöra när pajen är färdig.'
+      ],
+      doneness:'Pajen är klar när pajskalet och degen ovanpå har blivit gyllenbruna. Fyllningen ska vara varm och inte safta sig alltför mycket.'
+    },
     'fruktsoppa-klassisk':{
       servings:4,
       time:40,
