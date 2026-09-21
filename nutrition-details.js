@@ -2,6 +2,14 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kottgrotta':{
+      ingredients:[
+        'efter behov: köttfärssmet',
+        '200 g pikant- eller vitlöksfärskost/flødeost',
+        '1 paket bacon',
+        'valfri mängd valfria tillbehör'
+      ]
+    },
     'kalops':{
       servings:4,time:135,prepTime:15,cookTime:120,
       ingredients:[
