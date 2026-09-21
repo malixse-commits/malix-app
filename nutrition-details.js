@@ -36,6 +36,7 @@
       oven:'200 °C över-/undervärme',
       tip:'Paj är bra matlådemat och smakar gott även dagen efter.',
       serving:'Servera gärna köttfärspajen med en grönsallad eller pizzasallad.',
+      timeNote:'30 minuters vilotid för pajdegen ingår i totaltiden.',
       doneness:'Pajen är klar när pajskalet är färdiggräddat, fyllningen är varm och fast och osten har smält och fått fin färg.'
     },
     'fruktsoppa-klassisk':{
