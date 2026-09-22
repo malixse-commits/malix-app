@@ -81,7 +81,8 @@
         'Klicka ut rejäla matskedar av smeten i en het stekpanna och stek biffarna minst 4–5 minuter per sida.'
       ],
       serving:'Servera bönbiffarna nystekta med tzatziki.',
-      tip:'Tzatziki finns som eget recept i appen.'
+      tip:'Tzatziki finns som eget recept i appen.',
+      doneness:'Biffarna är klara när de är genomvarma och har fått fin stekyta på båda sidor.'
     },
     'potatissallad-varm':{
       servings:4,time:25,prepTime:10,cookTime:15,
