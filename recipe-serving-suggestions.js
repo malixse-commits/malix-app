@@ -14,7 +14,7 @@
   recipes.forEach(recipe => {
     const isPasta = pastaIds.has(recipe.id) || (Array.isArray(recipe.tags) && recipe.tags.includes('pasta'));
     if (!isPasta) return;
-    recipe.malixItalyTip = 'Vill jag ta maten en liten sväng till Italien åker basilika och oregano fram. Det räcker långt för att ge vardagsmaten en italiensk känsla – i alla fall i mitt kök.';
+    recipe.malixItalyTip = 'Vill jag ta maten en liten sväng till Italien åker basilika, oregano och vitlök fram. Det räcker långt för att ge vardagsmaten en italiensk känsla – i alla fall i mitt kök.';
     recipe.parmesanTip = 'Lite parmesan på toppen kan ge extra smak till många pastarätter. Ta så mycket eller lite du tycker passar.';
   });
 
