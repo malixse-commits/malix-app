@@ -2,6 +2,27 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'risgryn':{
+      servings:4,time:240,prepTime:5,cookTime:235,
+      ingredients:[
+        '4 dl grötris',
+        '7,5 dl vatten',
+        '9 dl mjölk',
+        '50 g smör',
+        '2 msk socker',
+        '1 kanelstång',
+        '1 tsk salt',
+        '1–2 dl grädde'
+      ],
+      steps:[
+        'Häll grötris, vatten, mjölk, smör, socker, kanelstång och salt i slowcookern.',
+        'Tillaga på låg värme i cirka 4 timmar. Rör om då och då och fyll på med mer mjölk om gröten verkar bli torr.',
+        'Rör ner 1–2 dl grädde mot slutet och låt gröten stå kvar tills grädden blivit varm.',
+        'Stäng av innan gröten blivit för tjock – den fortsätter att tjockna efteråt.'
+      ],
+      tip:'Stäng av innan gröten känns helt färdigtjock – den fortsätter att tjockna efteråt.',
+      doneness:'Gröten är klar när riset är mjukt och gröten är krämig men fortfarande lite lös. Stäng av innan den blir för tjock – den fortsätter att tjockna efteråt.'
+    },
     'kebab-ris':{
       doneness:'Kebaben är klar när den är ordentligt genomvarm.'
     },
