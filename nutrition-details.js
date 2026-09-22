@@ -2,6 +2,27 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'pastamexicana':{
+      ingredients:[
+        '320 g pasta',
+        '400 g Tomatsås à la Malix',
+        '600 g fläskkött eller nötkött i bitar',
+        '1 lök i bitar',
+        '2 paprikor i bitar',
+        '2 vitlöksklyftor',
+        'chili efter smak',
+        'svartpeppar efter smak',
+        '1 buljongtärning',
+        'majs – om du vill'
+      ],
+      steps:[
+        'Koka pastan.',
+        'Skär köttet i bitar och bryn det.',
+        'Lägg i lök och paprika i bitar och stek vidare. Tillsätt rikligt med vitlök, chili och svartpeppar.',
+        'Häll på Tomatsås à la Malix. Smula ner buljongtärningen och rör om. Lägg i majs om du vill.',
+        'Låt allt puttra ihop och servera med pastan.'
+      ]
+    },
     'ugnsomelett-malix':{
       ingredients:[
         '4 ägg',
