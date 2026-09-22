@@ -2,6 +2,27 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'veg-biffar':{
+      servings:4,time:30,prepTime:10,cookTime:20,
+      ingredients:[
+        '690 g vita bönor, avrunnen vikt',
+        '1 ägg',
+        '2 msk potatismjöl',
+        '1 msk spiskummin',
+        '1 klyfta vitlök, krossad',
+        'salt efter smak',
+        'svartpeppar efter smak',
+        'tzatziki till servering'
+      ],
+      steps:[
+        'Spola hastigt av bönorna med kallt vatten och låt dem rinna av.',
+        'Mixa bönorna i en matberedare eller med stavmixer.',
+        'Tillsätt spiskummin, den krossade vitlöken, ägget och potatismjölet. Smaka av med salt och svartpeppar.',
+        'Klicka ut rejäla matskedar av smeten i en het stekpanna och stek biffarna minst 4–5 minuter per sida.'
+      ],
+      serving:'Servera bönbiffarna nystekta med tzatziki.',
+      tip:'Tzatziki finns som eget recept i appen.'
+    },
     'potatissallad-varm':{
       servings:4,time:25,prepTime:10,cookTime:15,
       ingredients:['cirka 800 g kokt potatis','1 rödlök','1 msk dijonsenap','cirka 2 msk olja','vinäger – lite i taget efter smak','örter','salt efter smak','svartpeppar efter smak'],
