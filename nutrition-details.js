@@ -2,6 +2,13 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'potatissallad-varm':{
+      servings:4,time:25,prepTime:10,cookTime:15,
+      ingredients:['cirka 800 g kokt potatis','1 rödlök','1 msk dijonsenap','cirka 2 msk olja','vinäger – lite i taget efter smak','örter','salt efter smak','svartpeppar efter smak'],
+      steps:['Koka/dela potatisen och använd den varm eller ljummen.','Skiva rödlöken.','Blanda senap och olja och smaka fram vinägern lite i taget.','Vänd försiktigt ihop potatisen med dressingen, löken och örterna.'],
+      serving:'Servera varm eller ljummen till fisk, kyckling eller bönbiffar.',
+      tip:'Tillsätt vinägern lite i taget och smaka dig fram.'
+    },
     'dillkött':{
       servings:4,time:120,prepTime:20,cookTime:100,
       ingredients:[
