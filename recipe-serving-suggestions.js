@@ -14,7 +14,6 @@
   recipes.forEach(recipe => {
     const isPasta = pastaIds.has(recipe.id) || (Array.isArray(recipe.tags) && recipe.tags.includes('pasta'));
     if (!isPasta) return;
-    recipe.parmesanTip = 'Lite parmesan på toppen kan ge extra smak till många pastarätter. Ta så mycket eller lite du tycker passar.';
   });
 
   const originalOpenRecipe = window.openRecipe;
@@ -39,7 +38,6 @@
     };
     insert('🍚 Vad kan jag ha till?', recipe.serving, 'data-serving-suggestion');
     insert('🔄 Du kan byta eller använda det du har', recipe.swaps, 'data-recipe-swaps');
-    insert('🧀 Parmesan?', recipe.parmesanTip, 'data-parmesan-tip');
   }
   openWithIdeas.__malixRecipeIdeas = true;
   window.openRecipe = openWithIdeas;
