@@ -2,6 +2,23 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'ugnsomelett-malix':{
+      ingredients:[
+        '4 ägg',
+        '3 dl mjölk',
+        '1 msk Maizena/majsstärkelse för glutenfri variant – eller 1½ msk vetemjöl om du tål gluten',
+        '½ tsk salt',
+        'svartpeppar efter smak',
+        '1 msk smör till formen'
+      ],
+      steps:[
+        'Sätt ugnen på cirka 200 grader och smörj en ugnsform.',
+        'Värm mjölken. Gör en liten slät redning av 1 msk Maizena/majsstärkelse och lite kall mjölk för glutenfri variant – eller 1½ msk vetemjöl om du tål gluten. Vispa ner redningen i den varma mjölken och låt den tjockna lätt.',
+        'Låt mjölkblandningen svalna något. Vispa upp äggen försiktigt med salt och peppar.',
+        'Vispa ner mjölkblandningen i äggen.',
+        'Häll i formen och grädda tills omeletten har stannat och blivit luftig.'
+      ]
+    },
     'veg-biffar':{
       servings:4,time:30,prepTime:10,cookTime:20,
       ingredients:[
