@@ -2,6 +2,28 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'pastacapri':{
+      servings:4,time:30,prepTime:10,cookTime:20,
+      ingredients:[
+        '320 g pasta',
+        '400 g benfri kotlett',
+        '1 lök',
+        'svartpeppar efter smak',
+        'basilika efter smak',
+        'oregano efter smak',
+        '3 dl Tomatsås à la Malix',
+        'en skvätt grädde – valfritt'
+      ],
+      steps:[
+        'Koka pastan.',
+        'Skär den benfria kotletten i mindre bitar eller strimlor och stek den.',
+        'Tillsätt lök och låt den mjukna. Krydda med svartpeppar, basilika och oregano.',
+        'Häll på Tomatsås à la Malix och låt såsen gå ihop. Tillsätt en skvätt grädde om du vill ha en mildare och krämigare sås.',
+        'Vänd ihop med pastan och servera.'
+      ],
+      swaps:'Tomatsås à la Malix är basen. En skvätt grädde är valfritt om du vill ha en mildare och krämigare sås.',
+      tip:'Tomatsås à la Malix är grunden i Pasta Capri. Tillsätt en skvätt grädde om du vill runda av smaken.'
+    },
     'pastamexicana':{
       ingredients:[
         '320 g pasta',
