@@ -13,7 +13,7 @@
       ],
       steps:[
         'Sätt ugnen på cirka 200 grader och smörj en ugnsform.',
-        'Värm mjölken. Gör en liten slät redning av 1 msk Maizena/majsstärkelse och lite kall mjölk för glutenfri variant – eller 1½ msk vetemjöl om du tål gluten. Vispa ner redningen i den varma mjölken och låt den tjockna lätt.',
+        'Värm mjölken. Gör en slät redning av 1 msk Maizena/majsstärkelse och lite kall mjölk för glutenfri variant – eller 1½ msk vetemjöl om du tål gluten. Vispa ner redningen i den varma mjölken och låt koka upp under omrörning. Ta kastrullen från värmen.',
         'Låt mjölkblandningen svalna något. Vispa upp äggen försiktigt med salt och peppar.',
         'Vispa ner mjölkblandningen i äggen.',
         'Häll i formen och grädda tills omeletten har stannat och blivit luftig.'
