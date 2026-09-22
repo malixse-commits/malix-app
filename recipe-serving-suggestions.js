@@ -14,7 +14,6 @@
   recipes.forEach(recipe => {
     const isPasta = pastaIds.has(recipe.id) || (Array.isArray(recipe.tags) && recipe.tags.includes('pasta'));
     if (!isPasta) return;
-    recipe.flavourLift = 'Smaka först. Vill du lyfta smaken lite kan du prova något enkelt: färska eller torkade örter, lite citron, chili, vitlök, svartpeppar, en skvätt olivolja eller parmesan – välj det som passar just rätten och det du har hemma.';
     recipe.malixItalyTip = 'Vill jag ta maten en liten sväng till Italien åker basilika och oregano fram. Det räcker långt för att ge vardagsmaten en italiensk känsla – i alla fall i mitt kök.';
     recipe.parmesanTip = 'Lite parmesan på toppen kan ge extra smak till många pastarätter. Ta så mycket eller lite du tycker passar.';
   });
@@ -41,7 +40,6 @@
     };
     insert('🍚 Vad kan jag ha till?', recipe.serving, 'data-serving-suggestion');
     insert('🔄 Du kan byta eller använda det du har', recipe.swaps, 'data-recipe-swaps');
-    insert('✨ Lite Jamie-känsla', recipe.flavourLift, 'data-flavour-lift');
     insert('🇮🇹 Malix-tips', recipe.malixItalyTip, 'data-malix-italy');
     insert('🧀 Parmesan?', recipe.parmesanTip, 'data-parmesan-tip');
   }
