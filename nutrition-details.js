@@ -2,6 +2,9 @@
   if(typeof recipes==='undefined'||!Array.isArray(recipes))return;
 
   const exactOverrides={
+    'kebab-ris':{
+      doneness:'Kebaben är klar när den är ordentligt genomvarm.'
+    },
     'pastacapri':{
       servings:4,time:30,prepTime:10,cookTime:20,
       ingredients:[
