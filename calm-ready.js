@@ -1,4 +1,86 @@
 (() => {
+  const SNAPSHOT_KEY = 'malix-reflection-snapshots-v1';
+  const emptySnapshots = () => ({ weeks: {}, months: {} });
+  const isObject = value => !!value && typeof value === 'object' && !Array.isArray(value);
+  const clone = value => JSON.parse(JSON.stringify(value));
+
+  function normalizeSnapshots(value) {
+    const out = emptySnapshots();
+    if (!isObject(value)) return out;
+    if (isObject(value.weeks)) {
+      Object.entries(value.weeks).forEach(([key, snapshot]) => {
+        if (isObject(snapshot)) out.weeks[key] = clone(snapshot);
+      });
+    }
+    if (isObject(value.months)) {
+      Object.entries(value.months).forEach(([key, snapshot]) => {
+        if (isObject(snapshot)) out.months[key] = clone(snapshot);
+      });
+    }
+    return out;
+  }
+
+  function readAllSnapshots() {
+    try {
+      const raw = localStorage.getItem(SNAPSHOT_KEY);
+      return raw ? normalizeSnapshots(JSON.parse(raw)) : emptySnapshots();
+    } catch {
+      return emptySnapshots();
+    }
+  }
+
+  function writeAllSnapshots(value) {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(normalizeSnapshots(value)));
+  }
+
+  function periodKey(value, label) {
+    const key = String(value ?? '').trim();
+    if (!key) throw new TypeError(`${label} krävs.`);
+    return key;
+  }
+
+  function snapshotObject(value) {
+    if (!isObject(value)) throw new TypeError('Snapshot måste vara ett objekt.');
+    return clone(value);
+  }
+
+  function getWeek(periodStart) {
+    const key = periodKey(periodStart, 'periodStart');
+    const snapshot = readAllSnapshots().weeks[key];
+    return snapshot ? clone(snapshot) : null;
+  }
+
+  function getMonth(monthKey) {
+    const key = periodKey(monthKey, 'monthKey');
+    const snapshot = readAllSnapshots().months[key];
+    return snapshot ? clone(snapshot) : null;
+  }
+
+  function setWeek(periodStart, snapshot) {
+    const key = periodKey(periodStart, 'periodStart');
+    const all = readAllSnapshots();
+    all.weeks[key] = snapshotObject(snapshot);
+    writeAllSnapshots(all);
+    return clone(all.weeks[key]);
+  }
+
+  function setMonth(monthKey, snapshot) {
+    const key = periodKey(monthKey, 'monthKey');
+    const all = readAllSnapshots();
+    all.months[key] = snapshotObject(snapshot);
+    writeAllSnapshots(all);
+    return clone(all.months[key]);
+  }
+
+  window.malixReflectionSnapshots = Object.freeze({
+    storageKey: SNAPSHOT_KEY,
+    readAll: readAllSnapshots,
+    getWeek,
+    getMonth,
+    setWeek,
+    setMonth
+  });
+
   // Den gamla HTML-hemsidan finns kvar som reserv/struktur medan moduler laddas.
   // free-plus-preview.js laddar nu kärnmodulerna innan denna fil körs.
   function moveFoodLogFirst() {
