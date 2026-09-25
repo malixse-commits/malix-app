@@ -29,6 +29,22 @@
     }
   }
 
+  function readSnapshotsForWrite() {
+    const raw = localStorage.getItem(SNAPSHOT_KEY);
+    if (raw === null) return emptySnapshots();
+    const value = JSON.parse(raw);
+    if (!isObject(value)) throw new TypeError('Snapshotlagret har ogiltig rotstruktur.');
+    if (!isObject(value.weeks)) throw new TypeError('Snapshotlagrets weeks måste vara ett objekt.');
+    if (!isObject(value.months)) throw new TypeError('Snapshotlagrets months måste vara ett objekt.');
+    Object.entries(value.weeks).forEach(([key, snapshot]) => {
+      if (!isObject(snapshot)) throw new TypeError(`Ogiltig veckosnapshot: ${key}.`);
+    });
+    Object.entries(value.months).forEach(([key, snapshot]) => {
+      if (!isObject(snapshot)) throw new TypeError(`Ogiltig månadssnapshot: ${key}.`);
+    });
+    return normalizeSnapshots(value);
+  }
+
   function writeAllSnapshots(value) {
     localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(normalizeSnapshots(value)));
   }
@@ -58,7 +74,7 @@
 
   function setWeek(periodStart, snapshot) {
     const key = periodKey(periodStart, 'periodStart');
-    const all = readAllSnapshots();
+    const all = readSnapshotsForWrite();
     all.weeks[key] = snapshotObject(snapshot);
     writeAllSnapshots(all);
     return clone(all.weeks[key]);
@@ -66,7 +82,7 @@
 
   function setMonth(monthKey, snapshot) {
     const key = periodKey(monthKey, 'monthKey');
-    const all = readAllSnapshots();
+    const all = readSnapshotsForWrite();
     all.months[key] = snapshotObject(snapshot);
     writeAllSnapshots(all);
     return clone(all.months[key]);
