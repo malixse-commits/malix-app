@@ -34,6 +34,8 @@
     if (raw === null) return emptySnapshots();
     const value = JSON.parse(raw);
     if (!isObject(value)) throw new TypeError('Snapshotlagret har ogiltig rotstruktur.');
+    const unknownRootKeys = Object.keys(value).filter(key => key !== 'weeks' && key !== 'months');
+    if (unknownRootKeys.length) throw new TypeError(`Snapshotlagret innehåller okända rotfält: ${unknownRootKeys.join(', ')}.`);
     if (!isObject(value.weeks)) throw new TypeError('Snapshotlagrets weeks måste vara ett objekt.');
     if (!isObject(value.months)) throw new TypeError('Snapshotlagrets months måste vara ett objekt.');
     Object.entries(value.weeks).forEach(([key, snapshot]) => {
