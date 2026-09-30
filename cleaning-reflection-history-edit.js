@@ -15,9 +15,9 @@
         if (raw.startsWith('Dagens egna::')) {
           const dailyId = raw.slice('Dagens egna::'.length);
           const item = (state.dailyTasks?.[key] || []).find(x => String(x.id) === dailyId);
-          return item?.text
-            ? {type:'daily', text:String(item.text)}
-            : {type:'daily-missing', raw};
+          return item
+            ? {type:'daily', text:String(item.text ?? '')}
+            : {type:'ambiguous', raw};
         }
         const parts = raw.split('::');
         if (parts.length === 2 && parts[0] && parts[1]) {
@@ -32,7 +32,6 @@
     return `<section data-clean-completions><h4>Utförd städning</h4><ul>${entries.map(entry => {
       if (entry.type === 'task') return `<li><strong>${esc(entry.room)}</strong>: ${esc(entry.task)}</li>`;
       if (entry.type === 'daily') return `<li><strong>Dagens egna:</strong> ${esc(entry.text)}</li>`;
-      if (entry.type === 'daily-missing') return `<li><strong>Dagens egna:</strong> <span class="note">Completionreferensen ${esc(entry.raw)} finns sparad, men uppgiftstexten saknas.</span></li>`;
       return `<li><strong>Äldre registrering – kan inte delas upp säkert:</strong> ${esc(entry.raw)}</li>`;
     }).join('')}</ul></section>`;
   }
