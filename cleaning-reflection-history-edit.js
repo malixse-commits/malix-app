@@ -141,12 +141,30 @@
     return `<section data-clean-reflection style="margin-top:10px"><h4>Reflektion</h4>${reflection.managed ? `<p><strong>Orkade jag?</strong> ${esc(reflection.managed)}</p>` : ''}${reflection.feeling ? `<p><strong>Hur blev det?</strong> ${esc(reflection.feeling)}</p>` : ''}${reflection.helped ? `<p><strong>Det här hjälpte mig:</strong> ${esc(reflection.helped)}</p>` : ''}${reflection.notice ? `<p><strong>Jag märkte:</strong> ${esc(reflection.notice)}</p>` : ''}${reflection.note ? `<p><strong>Tar med mig:</strong> ${esc(reflection.note)}</p>` : ''}${reflection.energy ? `<p><strong>Utrymme efteråt:</strong> ${esc(reflection.energy)}</p>` : ''}</section>`;
   }
 
+  function todayRoomName(state, now = new Date()) {
+    const room = String(state.schedule?.[now.getDay()] ?? '').trim();
+    if (!room || room === 'Vila / valfritt') return null;
+    return Object.prototype.hasOwnProperty.call(state.rooms || {}, room) ? room : null;
+  }
+
   function renderHistoryMvp(force = false) {
     const history = document.querySelector('#cleanHistory');
     if (!history || (!force && history.dataset.cleanHistoryMvp === '1')) return;
-    const model = buildHistoryModel(load());
-    const parts = [
-      roomGroupHtml('Aktuell städvecka', model.currentSchedule, true),
+    const state = load();
+    const model = buildHistoryModel(state);
+    const todayRoom = todayRoomName(state);
+    const todayItem = todayRoom
+      ? model.currentSchedule.find(item => item.room === todayRoom) || null
+      : null;
+    const remainingCurrent = todayItem
+      ? model.currentSchedule.filter(item => item.room !== todayRoom)
+      : [...model.currentSchedule];
+
+    const primary = todayItem
+      ? roomGroupHtml('Dagens städhistorik', [todayItem], true)
+      : '';
+    const otherParts = [
+      roomGroupHtml('Övrig aktuell städvecka', remainingCurrent, true),
       roomGroupHtml('Rum utanför städveckan', model.outsideSchedule),
       roomGroupHtml('Historiska rum', model.historicalRooms),
       datedListHtml('Dagens egna', model.daily, text => `<li>${esc(text)}</li>`, 'data-clean-daily-history'),
@@ -154,10 +172,9 @@
       model.legacy.length ? `<section data-clean-legacy-history style="margin-top:18px"><h3>Äldre registreringar</h3><p class="note">Dessa visas separat och har inte slagits ihop med övrig historik.</p><div class="recipe-grid">${model.legacy.map(item => `<article class="recipe-card"><strong>${esc(item.date)}</strong><ul>${item.entries.map(legacyEntryHtml).join('')}</ul></article>`).join('')}</div></section>` : '',
       model.reflections.length ? `<section data-clean-reflection-history style="margin-top:18px"><h3>Städreflektioner</h3><div class="recipe-grid">${model.reflections.map(item => `<article class="recipe-card" data-clean-reflection-date="${esc(item.date)}"><strong>${esc(item.date)}</strong>${reflectionHistoryHtml(item.reflection)}</article>`).join('')}</div></section>` : ''
     ].filter(Boolean);
+    const other = `<details data-clean-other-history style="margin-top:18px"><summary><strong>Visa övrig historik</strong></summary><div style="margin-top:12px">${otherParts.length ? otherParts.join('') : '<p class="note">Ingen övrig städhistorik ännu.</p>'}</div></details>`;
 
-    history.innerHTML = parts.length
-      ? parts.join('')
-      : '<p class="note">Ingen sparad städhistorik ännu.</p>';
+    history.innerHTML = `${primary}${other}`;
     history.dataset.cleanHistoryMvp = '1';
   }
 
@@ -244,12 +261,14 @@
   document.addEventListener('click', event => {
     if (event.target.closest('[data-open-cleaning="cleaningStructure"], [data-calm-open="cleaningStructure"]')) scheduleEnhance();
   }, true);
-  document.addEventListener('malix-cleaning-changed', () => {
+  function refreshHistoryAfterDataChange() {
     if (document.querySelector('[data-clean-history-edit-form]')) return;
     const history = document.querySelector('#cleanHistory');
     if (history) delete history.dataset.cleanHistoryMvp;
     scheduleEnhance();
-  });
+  }
+  document.addEventListener('malix-cleaning-changed', refreshHistoryAfterDataChange);
+  document.addEventListener('malix-cloud-updated', refreshHistoryAfterDataChange);
   const observer = new MutationObserver(scheduleEnhance);
   observer.observe(document.body, {childList:true, subtree:true});
   scheduleEnhance();
