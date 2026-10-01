@@ -1,11 +1,13 @@
 (() => {
   const KEY = 'malix-cleaning-square-v2';
+  const DAY_ORDER = [1,2,3,4,5,6,0];
   const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } };
   const save = state => {
     localStorage.setItem(KEY, JSON.stringify(state));
     document.dispatchEvent(new CustomEvent('malix-cleaning-changed'));
   };
+  const weekdayName = day => ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'][Number(day)] || '';
 
   function completionEntriesForDay(state, key) {
     return Object.entries(state.done?.[key] || {})
@@ -27,25 +29,111 @@
       });
   }
 
-  function completionHistoryHtml(entries) {
-    if (!entries.length) return '';
-    return `<section data-clean-completions><h4>Utförd städning</h4><ul>${entries.map(entry => {
-      if (entry.type === 'task') return `<li><strong>${esc(entry.room)}</strong>: ${esc(entry.task)}</li>`;
-      if (entry.type === 'daily') return `<li><strong>Dagens egna:</strong> ${esc(entry.text)}</li>`;
-      return `<li><strong>Äldre registrering – kan inte delas upp säkert:</strong> ${esc(entry.raw)}</li>`;
-    }).join('')}</ul></section>`;
+  function buildHistoryModel(state) {
+    const roomDates = new Map();
+    const dailyDates = new Map();
+    const ambiguousDates = new Map();
+
+    Object.keys(state.done || {}).forEach(key => {
+      completionEntriesForDay(state, key).forEach(entry => {
+        if (entry.type === 'task') {
+          if (!roomDates.has(entry.room)) roomDates.set(entry.room, new Map());
+          const dates = roomDates.get(entry.room);
+          if (!dates.has(key)) dates.set(key, []);
+          dates.get(key).push(entry.task);
+        } else if (entry.type === 'daily') {
+          if (!dailyDates.has(key)) dailyDates.set(key, []);
+          dailyDates.get(key).push(entry.text);
+        } else if (entry.type === 'ambiguous') {
+          if (!ambiguousDates.has(key)) ambiguousDates.set(key, []);
+          ambiguousDates.get(key).push(entry.raw);
+        }
+      });
+    });
+
+    const historyByRoom = new Map();
+    roomDates.forEach((dates, room) => {
+      const recent = [...dates.keys()].sort().reverse().slice(0, 14);
+      historyByRoom.set(room, recent.map(date => ({date, tasks:[...dates.get(date)]})));
+    });
+
+    const scheduleByRoom = new Map();
+    DAY_ORDER.forEach(day => {
+      const room = String(state.schedule?.[day] ?? '').trim();
+      if (!room || room === 'Vila / valfritt') return;
+      if (!scheduleByRoom.has(room)) scheduleByRoom.set(room, []);
+      scheduleByRoom.get(room).push(weekdayName(day));
+    });
+
+    const currentRooms = new Set(Object.keys(state.rooms || {}));
+    const scheduledRooms = new Set(scheduleByRoom.keys());
+    const historyRooms = new Set(historyByRoom.keys());
+
+    const currentSchedule = [...scheduleByRoom.entries()].map(([room, weekdays]) => ({
+      room,
+      weekdays:[...weekdays],
+      history:historyByRoom.get(room) || []
+    }));
+    const outsideSchedule = [...historyRooms]
+      .filter(room => currentRooms.has(room) && !scheduledRooms.has(room))
+      .sort((a,b) => a.localeCompare(b, 'sv-SE'))
+      .map(room => ({room, history:historyByRoom.get(room) || []}));
+    const historicalRooms = [...historyRooms]
+      .filter(room => !currentRooms.has(room) && !scheduledRooms.has(room))
+      .sort((a,b) => a.localeCompare(b, 'sv-SE'))
+      .map(room => ({room, history:historyByRoom.get(room) || []}));
+
+    const recentMap = map => [...map.keys()].sort().reverse().slice(0, 14)
+      .map(date => ({date, entries:[...(map.get(date) || [])]}));
+
+    const legacy = Object.entries(state.activityLog || {})
+      .filter(([, entries]) => Array.isArray(entries) && entries.length)
+      .sort(([a],[b]) => b.localeCompare(a))
+      .slice(0, 14)
+      .map(([date, entries]) => ({date, entries}));
+
+    const reflections = Object.entries(state.reflections || {})
+      .filter(([, reflection]) => reflection?.date)
+      .sort(([a],[b]) => b.localeCompare(a))
+      .slice(0, 14)
+      .map(([date, reflection]) => ({date, reflection}));
+
+    return {
+      currentSchedule,
+      outsideSchedule,
+      historicalRooms,
+      daily:recentMap(dailyDates),
+      ambiguous:recentMap(ambiguousDates),
+      legacy,
+      reflections
+    };
   }
 
-  function legacyHistoryHtml(entries) {
-    if (!Array.isArray(entries) || !entries.length) return '';
-    return `<section class="panel calm" data-clean-legacy-history style="margin-top:10px"><h4>Äldre registreringar</h4><p class="note">Dessa visas separat och har inte slagits ihop med övrig historik.</p><ul>${entries.map(entry => {
-      const room = entry?.room == null ? '' : String(entry.room);
-      const text = entry?.text == null ? '' : String(entry.text);
-      if (room && text) return `<li><strong>${esc(room)}</strong>: ${esc(text)}</li>`;
-      if (room) return `<li><strong>Rum/område:</strong> ${esc(room)}</li>`;
-      if (text) return `<li>${esc(text)}</li>`;
-      return '<li><span class="note">Registreringen saknar sparad rum- och textuppgift.</span></li>';
-    }).join('')}</ul></section>`;
+  function roomHistoryHtml(item, weekdays = []) {
+    const days = weekdays.length ? `<p class="eyebrow">${esc(weekdays.join(' · '))}</p>` : '';
+    const dates = item.history.length
+      ? item.history.map(day => `<div data-clean-room-date="${esc(day.date)}" style="margin-top:10px"><strong>${esc(day.date)}</strong><ul>${day.tasks.map(task => `<li>${esc(task)}</li>`).join('')}</ul></div>`).join('')
+      : '<p class="note">Ingen registrerad historik för rummet ännu.</p>';
+    return `<article class="recipe-card" data-clean-room="${esc(item.room)}">${days}<h4>${esc(item.room)}</h4>${dates}</article>`;
+  }
+
+  function roomGroupHtml(title, items, withWeekdays = false) {
+    if (!items.length) return '';
+    return `<section data-clean-room-group style="margin-top:16px"><h3>${esc(title)}</h3><div class="recipe-grid">${items.map(item => roomHistoryHtml(item, withWeekdays ? item.weekdays : [])).join('')}</div></section>`;
+  }
+
+  function datedListHtml(title, items, renderEntry, attrs = '') {
+    if (!items.length) return '';
+    return `<section ${attrs} style="margin-top:18px"><h3>${esc(title)}</h3><div class="recipe-grid">${items.map(item => `<article class="recipe-card"><strong>${esc(item.date)}</strong><ul>${item.entries.map(renderEntry).join('')}</ul></article>`).join('')}</div></section>`;
+  }
+
+  function legacyEntryHtml(entry) {
+    const room = entry?.room == null ? '' : String(entry.room);
+    const text = entry?.text == null ? '' : String(entry.text);
+    if (room && text) return `<li><strong>${esc(room)}</strong>: ${esc(text)}</li>`;
+    if (room) return `<li><strong>Rum/område:</strong> ${esc(room)}</li>`;
+    if (text) return `<li>${esc(text)}</li>`;
+    return '<li><span class="note">Registreringen saknar sparad rum- och textuppgift.</span></li>';
   }
 
   function reflectionHistoryHtml(reflection) {
@@ -56,26 +144,19 @@
   function renderHistoryMvp(force = false) {
     const history = document.querySelector('#cleanHistory');
     if (!history || (!force && history.dataset.cleanHistoryMvp === '1')) return;
-    const state = load();
-    const doneDates = Object.entries(state.done || {})
-      .filter(([, items]) => Object.values(items || {}).some(Boolean))
-      .map(([key]) => key);
-    const legacyDates = Object.entries(state.activityLog || {})
-      .filter(([, items]) => Array.isArray(items) && items.length)
-      .map(([key]) => key);
-    const keys = [...new Set([
-      ...doneDates,
-      ...Object.keys(state.reflections || {}),
-      ...legacyDates
-    ])].sort().reverse().slice(0, 14);
+    const model = buildHistoryModel(load());
+    const parts = [
+      roomGroupHtml('Aktuell städvecka', model.currentSchedule, true),
+      roomGroupHtml('Rum utanför städveckan', model.outsideSchedule),
+      roomGroupHtml('Historiska rum', model.historicalRooms),
+      datedListHtml('Dagens egna', model.daily, text => `<li>${esc(text)}</li>`, 'data-clean-daily-history'),
+      datedListHtml('Osäkra äldre registreringar', model.ambiguous, raw => `<li><strong>Äldre registrering – kan inte delas upp säkert:</strong> ${esc(raw)}</li>`, 'data-clean-ambiguous-history'),
+      model.legacy.length ? `<section data-clean-legacy-history style="margin-top:18px"><h3>Äldre registreringar</h3><p class="note">Dessa visas separat och har inte slagits ihop med övrig historik.</p><div class="recipe-grid">${model.legacy.map(item => `<article class="recipe-card"><strong>${esc(item.date)}</strong><ul>${item.entries.map(legacyEntryHtml).join('')}</ul></article>`).join('')}</div></section>` : '',
+      model.reflections.length ? `<section data-clean-reflection-history style="margin-top:18px"><h3>Städreflektioner</h3><div class="recipe-grid">${model.reflections.map(item => `<article class="recipe-card" data-clean-reflection-date="${esc(item.date)}"><strong>${esc(item.date)}</strong>${reflectionHistoryHtml(item.reflection)}</article>`).join('')}</div></section>` : ''
+    ].filter(Boolean);
 
-    history.innerHTML = keys.length
-      ? keys.map(key => {
-          const completions = completionEntriesForDay(state, key);
-          const legacy = state.activityLog?.[key] || [];
-          const reflection = state.reflections?.[key] || {};
-          return `<article class="recipe-card" data-clean-history-date="${esc(key)}"><strong>${esc(key)}</strong>${completionHistoryHtml(completions)}${legacyHistoryHtml(legacy)}${reflectionHistoryHtml(reflection)}</article>`;
-        }).join('')
+    history.innerHTML = parts.length
+      ? parts.join('')
       : '<p class="note">Ingen sparad städhistorik ännu.</p>';
     history.dataset.cleanHistoryMvp = '1';
   }
@@ -113,9 +194,9 @@
     const history = document.querySelector('#cleanHistory');
     if (!history) return;
     const state = load();
-    const cards = Array.from(history.querySelectorAll('article.recipe-card[data-clean-history-date]'));
+    const cards = Array.from(history.querySelectorAll('article.recipe-card[data-clean-reflection-date]'));
     cards.forEach(card => {
-      const key = card.dataset.cleanHistoryDate;
+      const key = card.dataset.cleanReflectionDate;
       const reflection = state.reflections?.[key];
       if (!key || !reflection?.date || card.querySelector('[data-clean-history-edit]')) return;
       const button = document.createElement('button');
