@@ -39,8 +39,54 @@
   function formatAmount(parsed,preferred){if(parsed.group==='weight'){if(preferred==='kg'&&parsed.base>=1000)return`${tidy(parsed.base/1000)} kg`;return`${tidy(parsed.base)} g`}if(parsed.group==='volume'){if(preferred==='l'&&parsed.base>=1000)return`${tidy(parsed.base/1000)} l`;if(preferred==='dl'&&parsed.base>=100)return`${tidy(parsed.base/100)} dl`;if(preferred==='msk'&&parsed.base%15===0)return`${tidy(parsed.base/15)} msk`;if(preferred==='tsk'&&parsed.base%5===0)return`${tidy(parsed.base/5)} tsk`;return`${tidy(parsed.base)} ml`}if(parsed.group==='slice')return`${tidy(parsed.base)} skiva`;if(parsed.group==='piece')return`${tidy(parsed.base)} bit`;if(parsed.group==='portion')return`${tidy(parsed.base)} portion`;return`${tidy(parsed.base)} st`}
   function combineAmounts(current,extra){const a=parseAmount(current),b=parseAmount(extra);if(!a||!b||a.group!==b.group)return null;return formatAmount({...a,base:a.base+b.base},a.unit)}
   function subtractAmounts(current,used){const a=parseAmount(current),b=parseAmount(used);if(!a||!b||a.group!==b.group)return null;const base=Math.max(0,a.base-b.base);return {amount:formatAmount({...a,base},a.unit),empty:base<=0}}
-  function addShoppingBecauseEmpty(st,item){const clean=String(item||'').trim();if(!clean)return false;if(st.shopping.some(x=>matches(x.item,clean)&&!x.done))return false;st.shopping.push({id:'plus-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:clean,source:'Tog slut när du lagade mat',category:categoryFor(clean),done:false});return true}
-  function addStructuredShoppingBecauseEmpty(st,item){const clean=String(item||'').trim();if(!clean)return false;if(st.shopping.some(x=>norm(x.item)===norm(clean)&&!x.done))return false;st.shopping.push({id:'meal-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:clean,source:'Tog slut efter måltid',category:categoryFor(clean),done:false});return true}
+  const DEDUCTION_STATUSES=Object.freeze(['updated','emptied','no_match','multiple_matches','invalid_amount','incompatible_unit','insufficient_stock','skipped_unstructured','user_left_unchanged']);
+  function parseStrictAmount(value){
+    const raw=String(value||'').trim().toLowerCase().replace(',','.');
+    const m=raw.match(/^(\d+(?:\.\d+)?)\s*(kg|g|l|dl|ml|tsk|msk|st|styck|stycken|skiva|skivor|bit|bitar|portion|portioner)$/i);
+    if(!m)return null;
+    const parsed=parseAmount(`${m[1]} ${m[2]}`);
+    return parsed&&parsed.base>0?parsed:null;
+  }
+  const resultEnvelope=()=>({updated:0,emptied:0,results:[]});
+  function pushResult(result,item,status,extra={}){
+    const row={item:String(item||''),status,...extra};
+    result.results.push(row);
+    if(status==='updated'||status==='emptied')result.updated++;
+    if(status==='emptied')result.emptied++;
+    return row;
+  }
+  function hasOpenShoppingItem(st,item){const clean=String(item||'').trim();return !!clean&&st.shopping.some(x=>!x.done&&matches(x.item,clean))}
+  function addEmptyShopping(st,item,source='Tog slut i lagret'){
+    const clean=String(item||'').trim();if(!clean||hasOpenShoppingItem(st,clean))return false;
+    st.shopping.push({id:'empty-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:clean,source,category:categoryFor(clean),done:false});
+    return true;
+  }
+  function finalizeEmptyStock(st,stockItem,source){
+    if(!stockItem)return false;
+    st.stock=st.stock.filter(x=>String(x.id)!==String(stockItem.id));
+    addEmptyShopping(st,stockItem.item,source);
+    return true;
+  }
+  function analyzeDeduction(stockAmount,requestedText,{strictRequested=false,strictStock=false}={}){
+    const requested=(strictRequested?parseStrictAmount:parseAmount)(requestedText);
+    const current=(strictStock?parseStrictAmount:parseAmount)(stockAmount);
+    if(!requested||requested.base<=0||!current||current.base<0)return {status:'invalid_amount',requested,current};
+    if(current.group!==requested.group)return {status:'incompatible_unit',requested,current};
+    if(requested.base>current.base)return {status:'insufficient_stock',requested,current};
+    const base=current.base-requested.base;
+    return {status:base===0?'emptied':'updated',requested,current,amount:formatAmount({...current,base},current.unit)};
+  }
+  function deductSelectedStock(st,stockItem,requestedText,{strictRequested=true,strictStock=true,source='Tog slut efter lagerjustering'}={}){
+    const result=resultEnvelope();
+    if(!stockItem){pushResult(result,'','no_match');return result}
+    const analysis=analyzeDeduction(stockItem.amount,requestedText,{strictRequested,strictStock});
+    const extra={stockId:stockItem.id,requestedAmount:String(requestedText||''),currentAmount:String(stockItem.amount||'')};
+    if(analysis.status==='updated'){stockItem.amount=analysis.amount;pushResult(result,stockItem.item,'updated',extra);return result}
+    if(analysis.status==='emptied'){finalizeEmptyStock(st,stockItem,source);pushResult(result,stockItem.item,'emptied',extra);return result}
+    pushResult(result,stockItem.item,analysis.status,extra);return result;
+  }
+  function addShoppingBecauseEmpty(st,item){return addEmptyShopping(st,item,'Tog slut när du lagade mat')}
+  function addStructuredShoppingBecauseEmpty(st,item){return addEmptyShopping(st,item,'Tog slut efter måltid')}
   function clearCoveredAutoShopping(st,item){st.shopping=st.shopping.filter(x=>!(x.source&&matches(item,x.item)))}
   function addStock(st,item,place,amount){const clean=String(item||'').trim();if(!clean)return;const existing=st.stock.find(x=>norm(x.item)===norm(clean)&&x.place===place);if(existing){const combined=combineAmounts(existing.amount,amount);existing.amount=combined||String(amount||existing.amount||'1 st').trim()}else st.stock.push({id:'stock-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),item:clean,place,amount:String(amount||'1 st').trim()});clearCoveredAutoShopping(st,clean)}
   function ensureView(){let s=document.querySelector('main > #smartKitchen');if(!s){s=document.createElement('section');s.id='smartKitchen';s.className='view';document.querySelector('main')?.appendChild(s)}return s}
@@ -54,8 +100,24 @@
   window.malixKitchenHasStock=food=>load().stock.some(x=>matches(x.item,food));
   window.malixGetKitchenStock=()=>load().stock.map(x=>({...x}));
   window.malixAddKitchenItem=(item,place='Kyl',amount='1 portion')=>{const st=load();addStock(st,item,place,amount);save(st);renderData();return true};
-  window.malixDeductKitchenItems=items=>{const st=load();let changed=0,unmatched=0,emptied=0;for(const entry of items||[]){const food=entry?.food,quantity=entry?.quantity;if(!food)continue;const candidates=st.stock.filter(x=>matches(x.item,food));if(candidates.length!==1){unmatched++;continue}const item=candidates[0],result=subtractAmounts(item.amount,quantity);if(!result){unmatched++;continue}if(result.empty){st.stock=st.stock.filter(x=>x.id!==item.id);addShoppingBecauseEmpty(st,item.item);emptied++;changed++}else{item.amount=result.amount;changed++}}if(changed){save(st);renderData()}return {changed,unmatched,emptied}};
-  window.malixDeductStructuredMealItems=items=>{const st=load(),preferenceVariants={musli:['glutenfri müsli'],havregryn:['glutenfria havregryn'],filmjolk:['laktosfri filmjölk'],yoghurt:['laktosfri yoghurt'],kvarg:['laktosfri kvarg'],gradfil:['laktosfri gräddfil'],gradde:['laktosfri grädde'],mjolk:['laktosfri mjölk'],farskost:['laktosfri färskost'],'riven ost':['laktosfri riven ost']};let changed=0,skipped=0;for(const entry of items||[]){if(entry?.kind!=='structured'||entry?.source!=='food-bank'||!String(entry?.originalFood||'').trim()||entry?.amount==null||!String(entry?.unit||'').trim()){skipped++;continue}const usedText=`${entry.amount} ${entry.unit}`,used=parseAmount(usedText);if(!used||used.base<=0){skipped++;continue}const originalName=norm(entry.originalFood),allowedNames=new Set([entry.originalFood,entry.displayFood,...(preferenceVariants[originalName]||[])].map(norm).filter(Boolean)),candidates=st.stock.filter(stockItem=>allowedNames.has(norm(stockItem.item)));if(candidates.length!==1){skipped++;continue}const stockItem=candidates[0],stockAmount=parseAmount(stockItem.amount);if(!stockAmount||stockAmount.group!==used.group||used.base>stockAmount.base){skipped++;continue}const result=subtractAmounts(stockItem.amount,usedText);if(!result){skipped++;continue}stockItem.amount=result.amount;if(result.empty)addStructuredShoppingBecauseEmpty(st,stockItem.item);changed++}if(changed){save(st);renderData()}return {changed,skipped}};
+  window.malixKitchenDeductionStatuses=Object.freeze([...DEDUCTION_STATUSES]);
+  window.malixParseStrictKitchenAmount=value=>{const parsed=parseStrictAmount(value);return parsed?{...parsed}:null};
+  window.malixDeductKitchenStockById=(stockId,amount,unit,options={})=>{
+    const st=load(),stockItem=st.stock.find(x=>String(x.id)===String(stockId)),requestedText=unit==null?String(amount??''):`${amount} ${unit}`;
+    const result=deductSelectedStock(st,stockItem,requestedText,{strictRequested:true,strictStock:true,source:String(options?.source||'Tog slut efter lagerjustering')});
+    if(result.updated){save(st);renderData()}
+    return result;
+  };
+  window.malixEmptyKitchenStockById=(stockId,source='Tog slut efter lagerjustering')=>{
+    const st=load(),stockItem=st.stock.find(x=>String(x.id)===String(stockId)),result=resultEnvelope();
+    if(!stockItem){pushResult(result,'','no_match',{stockId});return result}
+    finalizeEmptyStock(st,stockItem,String(source||'Tog slut efter lagerjustering'));
+    pushResult(result,stockItem.item,'emptied',{stockId:stockItem.id,currentAmount:String(stockItem.amount||'')});
+    save(st);renderData();return result;
+  };
+  // Legacy name-matching wrapper kept compatible until the recipe caller is moved in Unit 2.
+  window.malixDeductKitchenItems=items=>{const st=load(),result=resultEnvelope();let unmatched=0;for(const entry of items||[]){const food=entry?.food,quantity=entry?.quantity;if(!food){unmatched++;pushResult(result,'','skipped_unstructured');continue}const candidates=st.stock.filter(x=>matches(x.item,food));if(!candidates.length){unmatched++;pushResult(result,food,'no_match',{requestedAmount:String(quantity||'')});continue}if(candidates.length!==1){unmatched++;pushResult(result,food,'multiple_matches',{requestedAmount:String(quantity||'')});continue}const item=candidates[0],currentAmount=String(item.amount||''),analysis=analyzeDeduction(item.amount,quantity);if(analysis.status==='invalid_amount'||analysis.status==='incompatible_unit'){unmatched++;pushResult(result,item.item,analysis.status,{stockId:item.id,requestedAmount:String(quantity||''),currentAmount});continue}if(analysis.status==='insufficient_stock'){finalizeEmptyStock(st,item,'Tog slut när du lagade mat');pushResult(result,item.item,'emptied',{stockId:item.id,requestedAmount:String(quantity||''),currentAmount,legacyOverdraw:true});continue}if(analysis.status==='emptied'){finalizeEmptyStock(st,item,'Tog slut när du lagade mat');pushResult(result,item.item,'emptied',{stockId:item.id,requestedAmount:String(quantity||''),currentAmount});continue}item.amount=analysis.amount;pushResult(result,item.item,'updated',{stockId:item.id,requestedAmount:String(quantity||''),currentAmount})}if(result.updated){save(st);renderData()}return {changed:result.updated,unmatched,emptied:result.emptied,updated:result.updated,results:result.results}};
+  window.malixDeductStructuredMealItems=items=>{const st=load(),preferenceVariants={musli:['glutenfri müsli'],havregryn:['glutenfria havregryn'],filmjolk:['laktosfri filmjölk'],yoghurt:['laktosfri yoghurt'],kvarg:['laktosfri kvarg'],gradfil:['laktosfri gräddfil'],gradde:['laktosfri grädde'],mjolk:['laktosfri mjölk'],farskost:['laktosfri färskost'],'riven ost':['laktosfri riven ost']},result=resultEnvelope();let skipped=0;for(const entry of items||[]){if(entry?.kind!=='structured'||entry?.source!=='food-bank'||!String(entry?.originalFood||'').trim()||entry?.amount==null||!String(entry?.unit||'').trim()){skipped++;pushResult(result,entry?.originalFood||entry?.displayFood||entry?.text||'','skipped_unstructured');continue}const usedText=`${entry.amount} ${entry.unit}`,used=parseAmount(usedText);if(!used||used.base<=0){skipped++;pushResult(result,entry.originalFood,'invalid_amount',{requestedAmount:usedText});continue}const originalName=norm(entry.originalFood),allowedNames=new Set([entry.originalFood,entry.displayFood,...(preferenceVariants[originalName]||[])].map(norm).filter(Boolean)),candidates=st.stock.filter(stockItem=>allowedNames.has(norm(stockItem.item)));if(!candidates.length){skipped++;pushResult(result,entry.originalFood,'no_match',{requestedAmount:usedText});continue}if(candidates.length!==1){skipped++;pushResult(result,entry.originalFood,'multiple_matches',{requestedAmount:usedText});continue}const stockItem=candidates[0],currentAmount=String(stockItem.amount||''),analysis=analyzeDeduction(stockItem.amount,usedText);if(analysis.status==='invalid_amount'||analysis.status==='incompatible_unit'||analysis.status==='insufficient_stock'){skipped++;pushResult(result,stockItem.item,analysis.status,{stockId:stockItem.id,requestedAmount:usedText,currentAmount});continue}if(analysis.status==='emptied'){finalizeEmptyStock(st,stockItem,'Tog slut efter måltid');pushResult(result,stockItem.item,'emptied',{stockId:stockItem.id,requestedAmount:usedText,currentAmount});continue}stockItem.amount=analysis.amount;pushResult(result,stockItem.item,'updated',{stockId:stockItem.id,requestedAmount:usedText,currentAmount})}if(result.updated){save(st);renderData()}return {changed:result.updated,skipped,emptied:result.emptied,updated:result.updated,results:result.results}};
   window.malixAddRecipeMissingToPlusShopping=()=>0;
   renderView();
 })();
