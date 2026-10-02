@@ -100,6 +100,17 @@
   window.malixKitchenHasStock=food=>load().stock.some(x=>matches(x.item,food));
   window.malixGetKitchenStock=()=>load().stock.map(x=>({...x}));
   window.malixAddKitchenItem=(item,place='Kyl',amount='1 portion')=>{const st=load();addStock(st,item,place,amount);save(st);renderData();return true};
+  window.malixAddPlusShoppingItem=(item,options={})=>{
+    const clean=String(item||'').trim(),source=String(options?.source||'Tillagd efter måltid').trim()||'Tillagd efter måltid';
+    if(!clean)return {added:false,duplicate:false,invalid:true,item:''};
+    const st=load();
+    if(hasOpenShoppingItem(st,clean))return {added:false,duplicate:true,invalid:false,item:clean};
+    const added=addEmptyShopping(st,clean,source);
+    if(!added)return {added:false,duplicate:hasOpenShoppingItem(st,clean),invalid:false,item:clean};
+    save(st);renderData();
+    return {added:true,duplicate:false,invalid:false,item:clean};
+  };
+
   window.malixKitchenDeductionStatuses=Object.freeze([...DEDUCTION_STATUSES]);
   window.malixParseStrictKitchenAmount=value=>{const parsed=parseStrictAmount(value);return parsed?{...parsed}:null};
   window.malixDeductKitchenStockById=(stockId,amount,unit,options={})=>{

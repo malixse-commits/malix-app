@@ -85,7 +85,24 @@
       pushKitchenResult(result,stockItem.item,'user_left_unchanged',{stockId:row.stockId,requestedAmount:row.requestedAmount,currentAmount:row.currentAmount,reason:'insufficient_stock'});
     }
   }
-  function deductStructuredMealItems(items,result){
+  function offerNoMatchShopping(itemName,row,result,askedNoMatch){
+    const clean=String(itemName||'').trim(),key=kitchenNorm(clean);
+    if(!clean||!key||askedNoMatch.has(key))return;
+    askedNoMatch.add(key);
+    const add=window.confirm(`${clean} finns inte registrerad i Kyl, frys & skafferi.\n\nVill du lägga ${clean} på PLUS-listan?\n\nOK: Lägg på PLUS-listan.\nAvbryt: Gör inget.`);
+    if(!add){
+      pushKitchenResult(result,clean,'no_match',{requestedAmount:row?.requestedAmount,shoppingAction:'declined'});
+      return;
+    }
+    if(typeof window.malixAddPlusShoppingItem!=='function'){
+      result.unavailable=true;
+      pushKitchenResult(result,clean,'no_match',{requestedAmount:row?.requestedAmount,shoppingAction:'unavailable'});
+      return;
+    }
+    const shopping=window.malixAddPlusShoppingItem(clean,{source:'Tillagd efter måltid'});
+    pushKitchenResult(result,clean,'no_match',{requestedAmount:row?.requestedAmount,shoppingAction:shopping?.added?'added':shopping?.duplicate?'duplicate':'not_added'});
+  }
+  function deductStructuredMealItems(items,result,askedNoMatch){
     if(typeof window.malixDeductStructuredMealItems!=='function'){result.unavailable=true;return}
     for(const entry of items.filter(item=>item?.kind==='structured'&&item?.source==='food-bank')){
       const part=window.malixDeductStructuredMealItems([entry]);
@@ -93,10 +110,12 @@
       if(row?.status==='insufficient_stock'){
         const stockItem=currentKitchenStock().find(item=>String(item.id)===String(row.stockId));
         resolveMealInsufficient(row,stockItem,result);
+      }else if(row?.status==='no_match'){
+        offerNoMatchShopping(entry.originalFood,row,result,askedNoMatch);
       }else mergeKitchenResult(result,part);
     }
   }
-  function deductSemiStructuredMealItems(items,result){
+  function deductSemiStructuredMealItems(items,result,askedNoMatch){
     for(const entry of items.filter(item=>item?.kind==='semi-structured')){
       const name=String(entry?.originalFood||'').trim(),rawQuantity=String(entry?.rawQuantity||'').trim();
       if(!name){pushKitchenResult(result,entry?.displayFood||'','skipped_unstructured');continue}
@@ -105,7 +124,7 @@
         continue;
       }
       const candidates=exactKitchenMatches(name);
-      if(!candidates.length){pushKitchenResult(result,name,'no_match',{requestedAmount:rawQuantity});continue}
+      if(!candidates.length){offerNoMatchShopping(name,{requestedAmount:rawQuantity},result,askedNoMatch);continue}
       if(candidates.length!==1){pushKitchenResult(result,name,'multiple_matches',{requestedAmount:rawQuantity});continue}
       if(typeof window.malixDeductKitchenStockById!=='function'){result.unavailable=true;continue}
       const stockItem=candidates[0],part=window.malixDeductKitchenStockById(stockItem.id,rawQuantity,null,{source:'Tog slut efter måltid'}),row=part?.results?.[0];
@@ -140,9 +159,9 @@
     else mergeKitchenResult(result,part);
   }
   function processNewMealKitchen(items){
-    const result=kitchenResult(),rows=Array.isArray(items)?items:[];
-    deductStructuredMealItems(rows,result);
-    deductSemiStructuredMealItems(rows,result);
+    const result=kitchenResult(),rows=Array.isArray(items)?items:[],askedNoMatch=new Set();
+    deductStructuredMealItems(rows,result,askedNoMatch);
+    deductSemiStructuredMealItems(rows,result,askedNoMatch);
     manualStockAdjustment(rows,result);
     for(const entry of rows){
       if(entry?.kind==='structured'&&entry?.source==='food-bank')continue;
@@ -154,15 +173,20 @@
   }
   function mealKitchenFeedback(result){
     if(result?.unavailable)return'Kyl, frys & skafferi kunde inte uppdateras just nu.';
-    const rows=result?.results||[],unresolved=rows.filter(row=>['no_match','multiple_matches','invalid_amount','incompatible_unit','insufficient_stock','skipped_unstructured'].includes(row.status)).length,left=rows.filter(row=>row.status==='user_left_unchanged').length;
+    const rows=result?.results||[],handledNoMatch=rows.filter(row=>row.status==='no_match'&&row.shoppingAction),genericUnresolved=rows.filter(row=>['no_match','multiple_matches','invalid_amount','incompatible_unit','insufficient_stock','skipped_unstructured'].includes(row.status)&&!row.shoppingAction),left=rows.filter(row=>row.status==='user_left_unchanged').length;
     const parts=[];
     if(result?.updated)parts.push(`Lagret uppdaterades för ${result.updated} vara${result.updated===1?'':'or'}.`);
     if(result?.emptied)parts.push(`${result.emptied} vara${result.emptied===1?'':'or'} tog slut och lades på PLUS-listan.`);
-    if(unresolved){
-      if(!result?.updated)parts.push('Kyl, frys & skafferi ändrades inte eftersom varorna inte kunde uppdateras säkert.');
-      else parts.push(`${unresolved} vara${unresolved===1?'':'or'} kunde inte uppdateras säkert.`);
+    handledNoMatch.forEach(row=>{
+      if(row.shoppingAction==='added')parts.push(`${row.item} finns inte registrerad i Kyl, frys & skafferi. ${row.item} lades på PLUS-listan.`);
+      else if(row.shoppingAction==='duplicate')parts.push(`${row.item} finns inte registrerad i Kyl, frys & skafferi. ${row.item} finns redan på PLUS-listan.`);
+      else if(row.shoppingAction==='declined')parts.push(`${row.item} finns inte registrerad i Kyl, frys & skafferi.`);
+    });
+    if(genericUnresolved.length){
+      if(!result?.updated&&!result?.emptied)parts.push('Kyl, frys & skafferi ändrades inte eftersom varorna inte kunde uppdateras säkert.');
+      else parts.push(`${genericUnresolved.length} vara${genericUnresolved.length===1?'':'or'} kunde inte uppdateras säkert.`);
     }
-    if(left&&!result?.updated&&!unresolved)parts.push('Kyl, frys & skafferi lämnades oförändrat.');
+    if(left&&!result?.updated&&!result?.emptied&&!genericUnresolved.length&&!handledNoMatch.length)parts.push('Kyl, frys & skafferi lämnades oförändrat.');
     else if(left)parts.push(`${left} lagerjustering${left===1?'':'ar'} lämnades oförändrad${left===1?'':'e'}.`);
     return parts.join(' ');
   }
