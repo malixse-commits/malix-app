@@ -56,8 +56,147 @@
     const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=duplicate?`${recipeName} finns redan i ${mealType.toLowerCase()} för den här dagen.`:`${recipeName} lades till i ${mealType.toLowerCase()} ✓`;
     if(typeof show==='function')show('foodLog');
   };
+  const kitchenNorm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  const kitchenResult=()=>({updated:0,emptied:0,results:[]});
+  function mergeKitchenResult(target,part){
+    target.updated+=Number(part?.updated||0);
+    target.emptied+=Number(part?.emptied||0);
+    if(Array.isArray(part?.results))target.results.push(...part.results);
+    if(part?.unavailable)target.unavailable=true;
+    return target;
+  }
+  function pushKitchenResult(target,item,status,extra={}){
+    target.results.push({item:String(item||''),status,...extra});
+    return target;
+  }
+  function currentKitchenStock(){
+    return typeof window.malixGetKitchenStock==='function'?window.malixGetKitchenStock():[];
+  }
+  function exactKitchenMatches(name){
+    const wanted=kitchenNorm(name);if(!wanted)return[];
+    return currentKitchenStock().filter(item=>kitchenNorm(item?.item)===wanted);
+  }
+  function resolveMealInsufficient(row,stockItem,result){
+    if(!row?.stockId||!stockItem){pushKitchenResult(result,row?.item||'','insufficient_stock',row||{});return}
+    const useZero=window.confirm(`Lagret visar ${row.currentAmount||stockItem.amount||'okänd mängd'} ${stockItem.item}, men måltiden använder ${row.requestedAmount||'mer'}.\n\nOK: Sätt lagret till 0 och lägg varan på PLUS-listan.\nAvbryt: Lämna lagret oförändrat.`);
+    if(useZero&&typeof window.malixEmptyKitchenStockById==='function'){
+      mergeKitchenResult(result,window.malixEmptyKitchenStockById(row.stockId,'Tog slut efter måltid'));
+    }else{
+      pushKitchenResult(result,stockItem.item,'user_left_unchanged',{stockId:row.stockId,requestedAmount:row.requestedAmount,currentAmount:row.currentAmount,reason:'insufficient_stock'});
+    }
+  }
+  function deductStructuredMealItems(items,result){
+    if(typeof window.malixDeductStructuredMealItems!=='function'){result.unavailable=true;return}
+    for(const entry of items.filter(item=>item?.kind==='structured'&&item?.source==='food-bank')){
+      const part=window.malixDeductStructuredMealItems([entry]);
+      const row=part?.results?.[0];
+      if(row?.status==='insufficient_stock'){
+        const stockItem=currentKitchenStock().find(item=>String(item.id)===String(row.stockId));
+        resolveMealInsufficient(row,stockItem,result);
+      }else mergeKitchenResult(result,part);
+    }
+  }
+  function deductSemiStructuredMealItems(items,result){
+    for(const entry of items.filter(item=>item?.kind==='semi-structured')){
+      const name=String(entry?.originalFood||'').trim(),rawQuantity=String(entry?.rawQuantity||'').trim();
+      if(!name){pushKitchenResult(result,entry?.displayFood||'','skipped_unstructured');continue}
+      if(typeof window.malixParseStrictKitchenAmount!=='function'||!window.malixParseStrictKitchenAmount(rawQuantity)){
+        pushKitchenResult(result,name,'invalid_amount',{requestedAmount:rawQuantity});
+        continue;
+      }
+      const candidates=exactKitchenMatches(name);
+      if(!candidates.length){pushKitchenResult(result,name,'no_match',{requestedAmount:rawQuantity});continue}
+      if(candidates.length!==1){pushKitchenResult(result,name,'multiple_matches',{requestedAmount:rawQuantity});continue}
+      if(typeof window.malixDeductKitchenStockById!=='function'){result.unavailable=true;continue}
+      const stockItem=candidates[0],part=window.malixDeductKitchenStockById(stockItem.id,rawQuantity,null,{source:'Tog slut efter måltid'}),row=part?.results?.[0];
+      if(row?.status==='insufficient_stock')resolveMealInsufficient(row,stockItem,result);
+      else mergeKitchenResult(result,part);
+    }
+  }
+  function manualStockAdjustment(items,result){
+    const manualItems=items.filter(item=>item?.kind==='manual'&&item?.source==='manual');
+    if(!manualItems.length)return;
+    if(!window.confirm('Måltiden är sparad. Vill du också uppdatera något i Kyl, frys & skafferi?')){
+      pushKitchenResult(result,manualItems.map(x=>x.text).filter(Boolean).join(', '),'user_left_unchanged',{reason:'manual_declined'});
+      return;
+    }
+    const stock=currentKitchenStock();
+    if(!stock.length){pushKitchenResult(result,'','no_match',{reason:'no_stock_available'});return}
+    const list=stock.map((item,index)=>`${index+1}. ${item.item} · ${item.place||''} · ${item.amount||''}`).join('\n');
+    const answer=window.prompt(`Vilken lagerpost vill du justera?\nSkriv numret.\n\n${list}`,'');
+    if(answer===null||!String(answer).trim()){pushKitchenResult(result,'','user_left_unchanged',{reason:'manual_cancelled'});return}
+    const choice=Number(String(answer).trim())-1,stockItem=Number.isInteger(choice)?stock[choice]:null;
+    if(!stockItem){pushKitchenResult(result,'','no_match',{reason:'invalid_stock_selection'});return}
+    const amount=window.prompt(`Hur mycket använde du av ${stockItem.item}?\nSkriv mängd och enhet, till exempel 2 dl eller 200 g.`,'');
+    if(amount===null||!String(amount).trim()){pushKitchenResult(result,stockItem.item,'user_left_unchanged',{stockId:stockItem.id,reason:'manual_amount_cancelled'});return}
+    const amountText=String(amount).trim();
+    if(typeof window.malixParseStrictKitchenAmount!=='function'||!window.malixParseStrictKitchenAmount(amountText)){
+      pushKitchenResult(result,stockItem.item,'invalid_amount',{stockId:stockItem.id,requestedAmount:amountText,currentAmount:stockItem.amount});
+      return;
+    }
+    if(typeof window.malixDeductKitchenStockById!=='function'){result.unavailable=true;return}
+    const part=window.malixDeductKitchenStockById(stockItem.id,amountText,null,{source:'Tog slut efter måltid'}),row=part?.results?.[0];
+    if(row?.status==='insufficient_stock')resolveMealInsufficient(row,stockItem,result);
+    else mergeKitchenResult(result,part);
+  }
+  function processNewMealKitchen(items){
+    const result=kitchenResult(),rows=Array.isArray(items)?items:[];
+    deductStructuredMealItems(rows,result);
+    deductSemiStructuredMealItems(rows,result);
+    manualStockAdjustment(rows,result);
+    for(const entry of rows){
+      if(entry?.kind==='structured'&&entry?.source==='food-bank')continue;
+      if(entry?.kind==='semi-structured')continue;
+      if(entry?.kind==='manual'&&entry?.source==='manual')continue;
+      pushKitchenResult(result,entry?.originalFood||entry?.displayFood||entry?.text||'','skipped_unstructured');
+    }
+    return result;
+  }
+  function mealKitchenFeedback(result){
+    if(result?.unavailable)return'Kyl, frys & skafferi kunde inte uppdateras just nu.';
+    const rows=result?.results||[],unresolved=rows.filter(row=>['no_match','multiple_matches','invalid_amount','incompatible_unit','insufficient_stock','skipped_unstructured'].includes(row.status)).length,left=rows.filter(row=>row.status==='user_left_unchanged').length;
+    const parts=[];
+    if(result?.updated)parts.push(`Lagret uppdaterades för ${result.updated} vara${result.updated===1?'':'or'}.`);
+    if(result?.emptied)parts.push(`${result.emptied} vara${result.emptied===1?'':'or'} tog slut och lades på PLUS-listan.`);
+    if(unresolved){
+      if(!result?.updated)parts.push('Kyl, frys & skafferi ändrades inte eftersom varorna inte kunde uppdateras säkert.');
+      else parts.push(`${unresolved} vara${unresolved===1?'':'or'} kunde inte uppdateras säkert.`);
+    }
+    if(left&&!result?.updated&&!unresolved)parts.push('Kyl, frys & skafferi lämnades oförändrat.');
+    else if(left)parts.push(`${left} lagerjustering${left===1?'':'ar'} lämnades oförändrad${left===1?'':'e'}.`);
+    return parts.join(' ');
+  }
+  function showNewMealSavedStatus(result){
+    const saved=document.querySelector('#mealSaved');if(!saved)return;
+    const mealMessage=`Måltiden är sparad på ${activeDateLabel()} ✓`,kitchenMessage=mealKitchenFeedback(result);
+    saved.style.whiteSpace='pre-line';
+    saved.textContent=kitchenMessage?`${mealMessage}\n${kitchenMessage}`:mealMessage;
+  }
+
   mealSelect.addEventListener('change',()=>{if(editingStorageIndex!==null)return;selected.length=0;renderGroups();renderSelected()});
-  form.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();const key=activeKey();if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}const textarea=form.querySelector('textarea[name="food"]'),ownText=textarea.value.trim(),pickedText=selected.map(item=>`${item.food} (${item.quantity})`).join(', '),foodText=[pickedText,ownText].filter(Boolean).join(', ');if(!foodText){alert('Välj minst ett livsmedel eller skriv vad du åt.');return}const values=Object.fromEntries(new FormData(form).entries());values.food=foodText;const items=typeof window.malixMealDraftGet==='function'?window.malixMealDraftGet(form):[];const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]');if(editingStorageIndex!==null&&meals[editingStorageIndex]){const original=meals[editingStorageIndex];meals[editingStorageIndex]={...original,...values,date:original.date};localStorage.setItem('malix-meals',JSON.stringify(meals));const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=`${values.meal} är uppdaterad ✓`}else{const date=new Date(`${key}T12:00:00`);meals.unshift({...values,items,date:date.toISOString()});localStorage.setItem('malix-meals',JSON.stringify(meals.slice(0,500)));try{if(typeof window.malixDeductStructuredMealItems==='function')window.malixDeductStructuredMealItems(items)}catch(error){console.error('Kunde inte uppdatera lagret efter måltidssparning:',error)}const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=`Måltiden är sparad på ${activeDateLabel()} ✓`}form.reset();selected.length=0;stopEditing();renderSelected();renderGroups();renderActiveDate();window.renderMeals();document.dispatchEvent(new CustomEvent('malix-day-changed'))},true);
+  form.addEventListener('submit',event=>{
+    event.preventDefault();event.stopImmediatePropagation();
+    const key=activeKey();if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}
+    const textarea=form.querySelector('textarea[name="food"]'),ownText=textarea.value.trim(),pickedText=selected.map(item=>`${item.food} (${item.quantity})`).join(', '),foodText=[pickedText,ownText].filter(Boolean).join(', ');
+    if(!foodText){alert('Välj minst ett livsmedel eller skriv vad du åt.');return}
+    const values=Object.fromEntries(new FormData(form).entries());values.food=foodText;
+    const items=typeof window.malixMealDraftGet==='function'?window.malixMealDraftGet(form):[];
+    const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]');
+    if(editingStorageIndex!==null&&meals[editingStorageIndex]){
+      const original=meals[editingStorageIndex];
+      meals[editingStorageIndex]={...original,...values,date:original.date};
+      localStorage.setItem('malix-meals',JSON.stringify(meals));
+      const saved=document.querySelector('#mealSaved');if(saved)saved.textContent=`${values.meal} är uppdaterad ✓`;
+    }else{
+      const date=new Date(`${key}T12:00:00`);
+      meals.unshift({...values,items,date:date.toISOString()});
+      localStorage.setItem('malix-meals',JSON.stringify(meals.slice(0,500)));
+      let kitchenResult=null;
+      try{kitchenResult=processNewMealKitchen(items)}catch(error){console.error('Kunde inte uppdatera lagret efter måltidssparning:',error);kitchenResult={updated:0,emptied:0,results:[],unavailable:true}}
+      showNewMealSavedStatus(kitchenResult);
+    }
+    form.reset();selected.length=0;stopEditing();renderSelected();renderGroups();renderActiveDate();window.renderMeals();document.dispatchEvent(new CustomEvent('malix-day-changed'));
+  },true);
   window.editMeal=storageIndex=>{const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]'),meal=meals[storageIndex];if(!meal)return;const key=mealDateKey(meal);if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}window.malixSelectedDateKey=key;editingStorageIndex=storageIndex;loadMealIntoPicker(meal);if(submitButton)submitButton.textContent=`Spara ändringar i ${meal.meal.toLowerCase()}`;editNotice.textContent=`✏️ Du redigerar ${meal.meal.toLowerCase()}. Lägg till eller ta bort val ovan och spara sedan ändringarna.`;form.scrollIntoView({behavior:'smooth',block:'start'})};
   window.deleteMeal=storageIndex=>{const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]'),meal=meals[storageIndex];if(!meal)return;const key=mealDateKey(meal);if(isLocked(key)){alert('Den här dagen är låst och kan inte ändras.');return}if(!confirm(`Ta bort ${meal.meal.toLowerCase()} – ${meal.food}?`))return;meals.splice(storageIndex,1);localStorage.setItem('malix-meals',JSON.stringify(meals));stopEditing();window.renderMeals();document.dispatchEvent(new CustomEvent('malix-day-changed'))};
   window.renderMeals=()=>{const meals=JSON.parse(localStorage.getItem('malix-meals')||'[]'),history=document.querySelector('#mealHistory');if(!history)return;const key=activeKey(),shown=meals.map((meal,storageIndex)=>({meal,storageIndex})).filter(x=>mealDateKey(x.meal)===key);history.innerHTML=shown.length?shown.map(({meal,storageIndex})=>`<article class="recipe-card"><h3>${meal.meal}</h3><p>${meal.food}</p><small>${[meal.portion,meal.taste,meal.satiety].filter(Boolean).join(' · ')}</small>${isLocked(key)?'<div class="badge">🔒 Låst dag</div>':`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" onclick="editMeal(${storageIndex})">✏️ Öppna ${meal.meal.toLowerCase()}</button><button type="button" class="secondary" onclick="deleteMeal(${storageIndex})">Ta bort måltiden</button></div>`}</article>`).join(''):`<div class="empty">Ingen måltid sparad på ${activeDateLabel()} ännu.</div>`;renderActiveDate()};
