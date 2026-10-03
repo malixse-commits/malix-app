@@ -46,9 +46,10 @@
       }else{
         const otherButton=simpleFlow.querySelector('[data-simple-action="other"]');
         otherButton?.click();
+        const legacyText=String(meal.food||'').trim();
+        if(legacyText)window.malixMealDraftUpsertManual(form,legacyText);
         const manualInput=form.querySelector('#manualMealText');
-        if(manualInput)manualInput.value=String(meal.food||'');
-        textarea.value=String(meal.food||'');
+        if(manualInput)manualInput.value=legacyText;
       }
     }else{
       const parts=String(meal.food||'').split(/,\s*/).filter(Boolean),known=knownFoodsForMeal(mealSelect.value),unknown=[];
