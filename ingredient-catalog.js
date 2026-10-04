@@ -2,7 +2,7 @@
   'use strict';
 
   const rawEntries = [
-    { id: 'potatis', name: 'Potatis', parentIngredientId: null, aliases: ['kokt potatis', 'bakad potatis'] },
+    { id: 'potatis', name: 'Potatis', parentIngredientId: null, aliases: [] },
     { id: 'potatismos', name: 'Potatismos', parentIngredientId: null, aliases: [] },
     { id: 'korv', name: 'Korv', parentIngredientId: null, aliases: [] },
     { id: 'falukorv', name: 'Falukorv', parentIngredientId: 'korv', aliases: [] },
