@@ -110,6 +110,39 @@
     save(st);renderData();
     return {added:true,duplicate:false,invalid:false,item:clean};
   };
+  window.malixAddCanonicalPlusShoppingItem=(input={})=>{
+    const catalog=window.MalixIngredientCatalog;
+    const ingredientId=String(input?.ingredientId||'').trim();
+    const source=String(input?.source||'Tillagd från recept').trim()||'Tillagd från recept';
+    if(!catalog||typeof catalog.getById!=='function'||typeof catalog.resolveExact!=='function'||!ingredientId){
+      return {added:false,duplicate:false,invalid:true,ingredientId:ingredientId||null,item:''};
+    }
+    const ingredient=catalog.getById(ingredientId);
+    if(!ingredient){
+      return {added:false,duplicate:false,invalid:true,ingredientId,item:''};
+    }
+    const st=load();
+    const duplicate=st.shopping.some(row=>{
+      if(row?.done)return false;
+      const persistedId=String(row?.ingredientId||'').trim();
+      if(persistedId)return persistedId===ingredient.id;
+      const derived=catalog.resolveExact(row?.item);
+      return derived?.id===ingredient.id;
+    });
+    if(duplicate){
+      return {added:false,duplicate:true,invalid:false,ingredientId:ingredient.id,item:ingredient.name};
+    }
+    st.shopping.push({
+      id:'canonical-shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),
+      item:ingredient.name,
+      ingredientId:ingredient.id,
+      source,
+      category:categoryFor(ingredient.name),
+      done:false
+    });
+    save(st);renderData();
+    return {added:true,duplicate:false,invalid:false,ingredientId:ingredient.id,item:ingredient.name};
+  };
 
   window.malixKitchenDeductionStatuses=Object.freeze([...DEDUCTION_STATUSES]);
   window.malixParseStrictKitchenAmount=value=>{const parsed=parseStrictAmount(value);return parsed?{...parsed}:null};
