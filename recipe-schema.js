@@ -44,6 +44,12 @@
     'external-api'
   ]);
 
+  const OPEN_LICENSE_RULES = Object.freeze({
+    'CC BY 4.0': 'PRODUCTION_ALLOWED',
+    'CC BY-SA 4.0': 'PRODUCTION_ALLOWED',
+    'CC BY-NC 4.0': 'PROHIBITED'
+  });
+
   const nonEmptyString = value => typeof value === 'string' && value.trim().length > 0;
   const nullableString = value => value == null || typeof value === 'string';
   const plainObject = value => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -205,12 +211,25 @@
       if (typeof value.modified !== 'boolean') {
         warnings.push(issue('OPEN_LICENSED_MODIFIED_REQUIRED', 'source.modified', 'modified måste vara boolean för open-licensed provenance.'));
       }
-      if (warnings.length) {
+
+      const licenseRule = nonEmptyString(value.license)
+        ? OPEN_LICENSE_RULES[value.license.trim()]
+        : null;
+
+      if (licenseRule === 'PROHIBITED') {
+        errors.push(issue('OPEN_LICENSED_LICENSE_PROHIBITED', 'source.license', 'Licensen är inte tillåten för receptinnehåll i den kommersiella betalappen.'));
+        rightsValidity = RIGHTS_VALIDITY.INVALID;
+        persistenceEligibility = PERSISTENCE_ELIGIBILITY.INVALID;
+      } else if (warnings.length) {
         rightsValidity = RIGHTS_VALIDITY.INVALID;
         persistenceEligibility = PERSISTENCE_ELIGIBILITY.RIGHTS_REVIEW_REQUIRED;
-      } else {
+      } else if (licenseRule === 'PRODUCTION_ALLOWED') {
         rightsValidity = RIGHTS_VALIDITY.VALID;
         persistenceEligibility = PERSISTENCE_ELIGIBILITY.PRODUCTION_ALLOWED;
+      } else {
+        warnings.push(issue('OPEN_LICENSED_LICENSE_REVIEW_REQUIRED', 'source.license', 'Licensen är inte uttryckligen produktionsgodkänd och kräver rättighetsgranskning.'));
+        rightsValidity = RIGHTS_VALIDITY.VALID_WITH_WARNINGS;
+        persistenceEligibility = PERSISTENCE_ELIGIBILITY.RIGHTS_REVIEW_REQUIRED;
       }
     }
 
