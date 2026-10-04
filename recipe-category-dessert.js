@@ -12,8 +12,20 @@
     chips.appendChild(btn);
 
     btn.addEventListener('click', () => {
-      if (typeof recipes === 'undefined' || !Array.isArray(recipes)) return;
-      const list = recipes.filter(r => Array.isArray(r.tags) && r.tags.includes('efterrätt'));
+      const entries = window.MalixParallelCanonicalCatalog?.entries;
+      if (!Array.isArray(entries)) return;
+
+      const list = entries
+        .filter(entry => Array.isArray(entry?.recipe?.tags) && entry.recipe.tags.includes('efterrätt'))
+        .map(entry => ({
+          id: entry.recipe.id,
+          name: entry.recipe.name,
+          emoji: entry.legacyMetadata?.emoji,
+          time: entry.recipe.time?.total,
+          budget: entry.recipe.budget,
+          tip: entry.recipe.tip
+        }));
+
       if (typeof renderBank === 'function') renderBank(list);
       chips.querySelectorAll('[data-recipe-tag]').forEach(b => b.classList.toggle('active', b === btn));
     });
