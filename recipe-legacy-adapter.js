@@ -19,12 +19,18 @@
     return value;
   }
 
-  function cloneArray(value) {
-    return Array.isArray(value) ? value.slice() : value;
+  function cloneValue(value) {
+    if (Array.isArray(value)) return value.map(cloneValue);
+    if (!isObject(value)) return value;
+    const copy = {};
+    Object.keys(value).forEach(key => {
+      copy[key] = cloneValue(value[key]);
+    });
+    return copy;
   }
 
   function adaptIngredient(value) {
-    if (typeof value !== 'string') return value;
+    if (typeof value !== 'string') return cloneValue(value);
     return {
       rawText: value,
       ingredientId: null,
@@ -38,14 +44,14 @@
   }
 
   function adaptIngredients(value) {
-    if (!Array.isArray(value)) return value;
+    if (!Array.isArray(value)) return cloneValue(value);
     return value.map(adaptIngredient);
   }
 
   function legacyMetadata(recipe) {
     const metadata = {};
     LEGACY_METADATA_FIELDS.forEach(key => {
-      if (hasOwn(recipe, key)) metadata[key] = recipe[key];
+      if (hasOwn(recipe, key)) metadata[key] = cloneValue(recipe[key]);
     });
     return metadata;
   }
@@ -58,57 +64,62 @@
     return current;
   }
 
+  function invalidCanonicalRecipe(currentSchema) {
+    return deepFreeze({
+      id: undefined,
+      schemaVersion: currentSchema.schemaVersion,
+      name: undefined,
+      language: 'sv',
+      servings: null,
+      time: { prep: null, cook: null, total: null },
+      budget: null,
+      tags: undefined,
+      ingredients: undefined,
+      steps: undefined,
+      equipment: null,
+      leftovers: null,
+      serving: null,
+      swaps: null,
+      tip: null,
+      doneness: null,
+      source: { kind: 'malix-original', provider: 'malix' },
+      media: []
+    });
+  }
+
   function adaptRecipe(recipe) {
+    const currentSchema = schema();
+
     if (!recipe || typeof recipe !== 'object' || Array.isArray(recipe)) {
-      const canonicalRecipe = deepFreeze({
-        id: undefined,
-        schemaVersion: schema().schemaVersion,
-        name: undefined,
-        language: 'sv',
-        servings: null,
-        time: { prep: null, cook: null, total: null },
-        budget: null,
-        tags: undefined,
-        ingredients: undefined,
-        steps: undefined,
-        equipment: null,
-        leftovers: null,
-        serving: null,
-        swaps: null,
-        tip: null,
-        doneness: null,
-        source: { kind: 'malix-original', provider: 'malix' },
-        media: []
-      });
+      const canonicalRecipe = invalidCanonicalRecipe(currentSchema);
       return deepFreeze({
         recipe: canonicalRecipe,
-        validation: schema().validateRecipe(canonicalRecipe),
+        validation: currentSchema.validateRecipe(canonicalRecipe),
         legacyMetadata: {}
       });
     }
 
-    const currentSchema = schema();
     const canonicalRecipe = {
-      id: recipe.id,
+      id: cloneValue(recipe.id),
       schemaVersion: currentSchema.schemaVersion,
-      name: recipe.name,
+      name: cloneValue(recipe.name),
       language: 'sv',
-      servings: hasOwn(recipe, 'servings') ? recipe.servings : null,
+      servings: hasOwn(recipe, 'servings') ? cloneValue(recipe.servings) : null,
       time: {
-        prep: hasOwn(recipe, 'prepTime') ? recipe.prepTime : null,
-        cook: hasOwn(recipe, 'cookTime') ? recipe.cookTime : null,
-        total: hasOwn(recipe, 'time') ? recipe.time : null
+        prep: hasOwn(recipe, 'prepTime') ? cloneValue(recipe.prepTime) : null,
+        cook: hasOwn(recipe, 'cookTime') ? cloneValue(recipe.cookTime) : null,
+        total: hasOwn(recipe, 'time') ? cloneValue(recipe.time) : null
       },
-      budget: hasOwn(recipe, 'budget') ? recipe.budget : null,
-      tags: cloneArray(recipe.tags),
+      budget: hasOwn(recipe, 'budget') ? cloneValue(recipe.budget) : null,
+      tags: cloneValue(recipe.tags),
       ingredients: adaptIngredients(recipe.ingredients),
-      steps: cloneArray(recipe.steps),
-      equipment: hasOwn(recipe, 'equipment') ? cloneArray(recipe.equipment) : null,
-      leftovers: hasOwn(recipe, 'leftovers') ? cloneArray(recipe.leftovers) : null,
-      serving: hasOwn(recipe, 'serving') ? recipe.serving : null,
-      swaps: hasOwn(recipe, 'swaps') ? recipe.swaps : null,
-      tip: hasOwn(recipe, 'tip') ? recipe.tip : null,
-      doneness: hasOwn(recipe, 'doneness') ? recipe.doneness : null,
+      steps: cloneValue(recipe.steps),
+      equipment: hasOwn(recipe, 'equipment') ? cloneValue(recipe.equipment) : null,
+      leftovers: hasOwn(recipe, 'leftovers') ? cloneValue(recipe.leftovers) : null,
+      serving: hasOwn(recipe, 'serving') ? cloneValue(recipe.serving) : null,
+      swaps: hasOwn(recipe, 'swaps') ? cloneValue(recipe.swaps) : null,
+      tip: hasOwn(recipe, 'tip') ? cloneValue(recipe.tip) : null,
+      doneness: hasOwn(recipe, 'doneness') ? cloneValue(recipe.doneness) : null,
       source: {
         kind: 'malix-original',
         provider: 'malix'
