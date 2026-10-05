@@ -23,6 +23,7 @@
     { id: 'blandfars', name: 'Blandfärs', parentIngredientId: 'kottfars', aliases: [] },
     { id: 'flaskfars', name: 'Fläskfärs', parentIngredientId: 'kottfars', aliases: [] },
     { id: 'kikarter', name: 'Kikärter', parentIngredientId: null, aliases: ['kikärtor'] },
+    { id: 'lok', name: 'Lök', parentIngredientId: null, aliases: [] },
     { id: 'gul-lok', name: 'Gul lök', parentIngredientId: null, aliases: [] },
     { id: 'rod-lok', name: 'Rödlök', parentIngredientId: null, aliases: ['röd lök'] },
     { id: 'vitlok', name: 'Vitlök', parentIngredientId: null, aliases: [] },
@@ -33,7 +34,15 @@
     { id: 'mjolk', name: 'Mjölk', parentIngredientId: null, aliases: [] },
     { id: 'matlagningsgradde', name: 'Matlagningsgrädde', parentIngredientId: null, aliases: [] },
     { id: 'ris', name: 'Ris', parentIngredientId: null, aliases: [] },
-    { id: 'pasta', name: 'Pasta', parentIngredientId: null, aliases: [] }
+    { id: 'pasta', name: 'Pasta', parentIngredientId: null, aliases: [] },
+    { id: 'rapsolja', name: 'Rapsolja', parentIngredientId: null, aliases: [] },
+    { id: 'chiliflakes', name: 'Chiliflakes', parentIngredientId: null, aliases: [] },
+    { id: 'tomatpure', name: 'Tomatpuré', parentIngredientId: null, aliases: [] },
+    { id: 'dijonsenap', name: 'Dijonsenap', parentIngredientId: null, aliases: [] },
+    { id: 'kottbuljongtarning', name: 'Köttbuljongtärning', parentIngredientId: null, aliases: [] },
+    { id: 'vatten', name: 'Vatten', parentIngredientId: null, aliases: [] },
+    { id: 'svartpeppar', name: 'Svartpeppar', parentIngredientId: null, aliases: [] },
+    { id: 'salt', name: 'Salt', parentIngredientId: null, aliases: [] }
   ];
 
   const normalizeLabel = value => String(value || '')
