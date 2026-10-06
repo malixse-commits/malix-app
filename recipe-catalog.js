@@ -44,4 +44,11 @@
   document.dispatchEvent(new CustomEvent('malix-recipe-catalog-ready', {
     detail: window.malixRecipeCatalogInfo
   }));
+
+  if (!document.querySelector('script[data-wikibooks-pilot]')) {
+    const script = document.createElement('script');
+    script.src = 'recipe-wikibooks-pilot.js?v=20261006-1005';
+    script.dataset.wikibooksPilot = 'true';
+    document.head.appendChild(script);
+  }
 })();
