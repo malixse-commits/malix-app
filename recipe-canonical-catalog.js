@@ -28,4 +28,11 @@
     entries,
     info
   });
+
+  if (document.readyState !== 'loading') {
+    throw new Error('RECIPE-BANK-002 pilot måste laddas under dokumentets scriptkedja.');
+  }
+  document.write('<script src="recipe-wikibooks-pilot.js?v=20261006-1425"><\/script>');
+  document.write('<script src="recipe-combined-canonical-catalog.js?v=20261006-1425"><\/script>');
+  document.write('<script src="recipe-bank-imported-pilot-ui.js?v=20261006-1425"><\/script>');
 })();
