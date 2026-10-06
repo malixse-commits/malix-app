@@ -61,6 +61,15 @@
     return allViews().filter(r => `${r.name} ${r.ingredients.join(' ')} ${r.tags.join(' ')}`.toLowerCase().includes(q));
   }
 
+  const recipeChips = document.querySelector('#recipeBank .chips');
+  if (recipeChips && !recipeChips.querySelector('[data-recipe-tag="snacks"]')) {
+    const snacksButton = document.createElement('button');
+    snacksButton.type = 'button';
+    snacksButton.dataset.recipeTag = 'snacks';
+    snacksButton.textContent = 'Snacks';
+    recipeChips.appendChild(snacksButton);
+  }
+
   document.querySelectorAll('[data-open="recipeBank"]').forEach(button => {
     button.addEventListener('click', () => render(allViews()));
   });
