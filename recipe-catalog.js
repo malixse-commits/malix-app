@@ -45,10 +45,23 @@
     detail: window.malixRecipeCatalogInfo
   }));
 
-  if (!document.querySelector('script[data-wikibooks-pilot]')) {
+  const loadWikibooksBatch2 = () => {
+    if (document.querySelector('script[data-wikibooks-batch2]')) return;
+    const batch = document.createElement('script');
+    batch.src = 'recipe-wikibooks-batch2.js?v=20261007-0635';
+    batch.dataset.wikibooksBatch2 = 'true';
+    document.head.appendChild(batch);
+  };
+
+  const existingPilot = document.querySelector('script[data-wikibooks-pilot]');
+  if (existingPilot) {
+    if (window.MalixImportedRecipeCatalog) loadWikibooksBatch2();
+    else existingPilot.addEventListener('load', loadWikibooksBatch2, { once: true });
+  } else {
     const script = document.createElement('script');
     script.src = 'recipe-wikibooks-pilot.js?v=20261006-1005';
     script.dataset.wikibooksPilot = 'true';
+    script.addEventListener('load', loadWikibooksBatch2, { once: true });
     document.head.appendChild(script);
   }
 })();
