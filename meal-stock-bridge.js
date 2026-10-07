@@ -1,9 +1,35 @@
 (() => {
   const MEALS_KEY='malix-meals';
+  const COOKED_KEY='malix-cooked-recipes';
   const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 
+  function legacyRecipeById(id){
+    return typeof recipes!=='undefined'&&Array.isArray(recipes)
+      ? recipes.find(r=>String(r?.id||'')===String(id))||null
+      : null;
+  }
+
+  function canonicalRecipeById(id){
+    const entries=window.MalixCombinedCanonicalRecipeCatalog?.entries;
+    if(!Array.isArray(entries))return null;
+    const entry=entries.find(row=>String(row?.recipe?.id||'')===String(id));
+    return entry?.recipe||null;
+  }
+
+  function resolveRecipe(id){
+    return legacyRecipeById(id)||canonicalRecipeById(id);
+  }
+
+  function ingredientTexts(recipe){
+    return (recipe?.ingredients||[]).map(value=>{
+      if(typeof value==='string')return value;
+      if(value&&typeof value==='object')return String(value.rawText||'').trim();
+      return '';
+    }).filter(Boolean);
+  }
+
   function recipeKitchenItems(recipe){
-    return (recipe?.ingredients||[]).map(text=>{
+    return ingredientTexts(recipe).map(text=>{
       const raw=String(text||'').trim();
       if(!raw||/^(eventuellt|gärna|valfri|valfria|lite)\b/i.test(raw))return null;
       const m=raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|l|dl|ml|tsk|msk|st|styck|stycken|skiva|skivor|bit|bitar|portion|portioner)?\s+(.+)$/i);
@@ -13,6 +39,85 @@
       return food?{food,quantity}:null;
     }).filter(Boolean);
   }
+
+  function sharedCookedPanel(recipeId){
+    const panel=document.createElement('div');
+    panel.className='panel calm';
+    panel.setAttribute('data-recipe-cooked-actions','true');
+
+    const heading=document.createElement('h3');
+    heading.textContent='När maten är lagad';
+    const note=document.createElement('p');
+    note.textContent='Öppna receptet påverkar inte lagret. Tryck först när du faktiskt har lagat maten.';
+    const button=document.createElement('button');
+    button.className='primary';
+    button.type='button';
+    button.textContent='✓ Jag lagade detta';
+    button.addEventListener('click',()=>window.markRecipeCooked?.(recipeId));
+    const status=document.createElement('p');
+    status.id='recipeCookStatus';
+    status.className='status';
+    status.setAttribute('aria-live','polite');
+    panel.append(heading,note,button,status);
+    return panel;
+  }
+
+  function mountCookedActions(recipeId){
+    if(!resolveRecipe(recipeId))return false;
+    const root=document.querySelector('#recipeDetail .recipe-detail');
+    if(!root)return false;
+
+    root.querySelectorAll('[data-recipe-cooked-actions]').forEach(node=>node.remove());
+    for(const panel of root.querySelectorAll('.panel.calm')){
+      const heading=panel.querySelector('h3');
+      if(heading?.textContent?.trim()==='När maten är lagad')panel.remove();
+    }
+
+    const panel=sharedCookedPanel(recipeId);
+    const legacyNutrition=[...root.querySelectorAll('h3')].find(h=>h.textContent?.trim()==='Vad får jag med mig?');
+    const provenance=root.querySelector('[data-recipe-source-license]');
+    const anchor=legacyNutrition||provenance;
+    if(anchor)root.insertBefore(panel,anchor);
+    else root.appendChild(panel);
+    return true;
+  }
+
+  function wrapOpenRecipe(fn){
+    if(typeof fn!=='function')return fn;
+    if(fn.__malixCanonicalCookedBridge)return fn;
+    const wrapped=function(id,...args){
+      const result=fn.call(this,id,...args);
+      queueMicrotask(()=>mountCookedActions(id));
+      return result;
+    };
+    wrapped.__malixCanonicalCookedBridge=true;
+    wrapped.__malixWrappedOpenRecipe=fn;
+    return wrapped;
+  }
+
+  function installOpenRecipeBridge(){
+    const descriptor=Object.getOwnPropertyDescriptor(window,'openRecipe');
+    let current=wrapOpenRecipe(window.openRecipe);
+    if(descriptor&&!descriptor.configurable){
+      window.openRecipe=current;
+      return false;
+    }
+    Object.defineProperty(window,'openRecipe',{
+      configurable:true,
+      enumerable:true,
+      get(){return current;},
+      set(value){current=wrapOpenRecipe(value);}
+    });
+    return true;
+  }
+
+  window.MalixRecipeCookedActions=Object.freeze({
+    resolveRecipe,
+    ingredientTexts,
+    mountCookedActions
+  });
+
+  installOpenRecipeBridge();
 
   function mealTypeNow(){const h=new Date().getHours();if(h<10)return'Frukost';if(h<14)return'Lunch';if(h<17)return'Mellanmål';if(h<21)return'Middag';return'Kvällsmål'}
   function chooseMealType(){
@@ -35,8 +140,19 @@
     return storedMeals().some(m=>String(m.recipeId||'')===String(id)&&String(m.meal||'')===String(mealType)&&m.date&&Math.abs(now.getTime()-new Date(m.date).getTime())<2000);
   }
 
-  function saveCookedRecipeToMeals(id,mealType){
-    const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;if(!recipe)return false;
+  function registerCookedRecipe(recipe){
+    if(!recipe)return false;
+    let cooked=[];
+    try{const parsed=JSON.parse(localStorage.getItem(COOKED_KEY)||'[]');cooked=Array.isArray(parsed)?parsed:[]}catch{}
+    cooked.unshift({recipeId:recipe.id,name:recipe.name,date:new Date().toISOString()});
+    localStorage.setItem(COOKED_KEY,JSON.stringify(cooked.slice(0,100)));
+    const status=document.querySelector('#recipeCookStatus');
+    if(status)status.textContent='Lagat ✓ Receptet registrerades.';
+    return true;
+  }
+
+  function saveCookedRecipeToMeals(recipe,mealType){
+    if(!recipe)return false;
     let meals=[];try{const parsed=JSON.parse(localStorage.getItem(MEALS_KEY)||'[]');meals=Array.isArray(parsed)?parsed:[]}catch{}
     const now=new Date(),immediateDuplicate=meals.some(m=>String(m.recipeId||'')===String(recipe.id)&&String(m.meal||'')===String(mealType)&&m.date&&Math.abs(now.getTime()-new Date(m.date).getTime())<2000);
     if(immediateDuplicate)return false;
@@ -104,26 +220,22 @@
 
   function openFoodToday(){const trigger=document.querySelector('[data-calm-open="foodToday"]');if(trigger){trigger.click();return}const target=document.querySelector('#foodToday')||document.querySelector('#foodLog');if(!target)return;document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active-view'));target.classList.add('active-view');window.scrollTo({top:0,behavior:'smooth'})}
 
-  const originalMarkRecipeCooked=window.markRecipeCooked;
-  if(typeof originalMarkRecipeCooked==='function'){
-    window.markRecipeCooked=id=>{
-      const mealType=chooseMealType();if(!mealType)return;
-      const recipe=typeof recipes!=='undefined'?recipes.find(r=>String(r.id)===String(id)):null;if(!recipe)return;
-      if(isImmediateDuplicate(id,mealType)){
-        sessionStorage.removeItem('malix-selected-meal-type');
-        const status=document.querySelector('#recipeCookStatus');
-        if(status)status.textContent='Receptet är redan registrerat som lagat för den måltiden.';
-        return;
-      }
-      const registered=originalMarkRecipeCooked(id);
-      if(registered===false){sessionStorage.removeItem('malix-selected-meal-type');return}
-      const saved=saveCookedRecipeToMeals(id,mealType);
+  window.markRecipeCooked=id=>{
+    const mealType=chooseMealType();if(!mealType)return;
+    const recipe=resolveRecipe(id);if(!recipe)return;
+    if(isImmediateDuplicate(id,mealType)){
       sessionStorage.removeItem('malix-selected-meal-type');
-      if(!saved)return;
-      const result=deductRecipeFromPlus(recipe);
-      recipeStatus(mealType,result);
-      document.dispatchEvent(new CustomEvent('malix-recipe-cooked',{detail:{recipe,mealType,kitchenResult:result}}));
-      setTimeout(openFoodToday,50);
-    };
-  }
+      const status=document.querySelector('#recipeCookStatus');
+      if(status)status.textContent='Receptet är redan registrerat som lagat för den måltiden.';
+      return;
+    }
+    if(!registerCookedRecipe(recipe)){sessionStorage.removeItem('malix-selected-meal-type');return}
+    const saved=saveCookedRecipeToMeals(recipe,mealType);
+    sessionStorage.removeItem('malix-selected-meal-type');
+    if(!saved)return;
+    const result=deductRecipeFromPlus(recipe);
+    recipeStatus(mealType,result);
+    document.dispatchEvent(new CustomEvent('malix-recipe-cooked',{detail:{recipe,mealType,kitchenResult:result}}));
+    setTimeout(openFoodToday,50);
+  };
 })();
