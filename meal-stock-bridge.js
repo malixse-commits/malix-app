@@ -17,7 +17,7 @@
   }
 
   function resolveRecipe(id){
-    return legacyRecipeById(id)||canonicalRecipeById(id);
+    return legacyRecipeById(id)||window.MalixUserRecipes?.getById?.(id)||canonicalRecipeById(id);
   }
 
   function ingredientTexts(recipe){
@@ -29,6 +29,17 @@
   }
 
   function recipeKitchenItems(recipe){
+    if(recipe?.source?.kind==='user-created'){
+      const catalog=window.MalixIngredientCatalog;
+      return (recipe.ingredients||[]).map(ingredient=>{
+        if(!ingredient||typeof ingredient!=='object')return null;
+        const ingredientId=String(ingredient.ingredientId||'').trim();
+        const amount=Number(ingredient.amount),unit=String(ingredient.unit||'').trim();
+        if(!ingredientId||!Number.isFinite(amount)||amount<=0||!unit||!catalog?.getById)return null;
+        const canonical=catalog.getById(ingredientId);
+        return canonical?.name?{food:canonical.name,quantity:`${amount} ${unit}`,ingredientId}:null;
+      }).filter(Boolean);
+    }
     return ingredientTexts(recipe).map(text=>{
       const raw=String(text||'').trim();
       if(!raw||/^(eventuellt|gärna|valfri|valfria|lite)\b/i.test(raw))return null;
