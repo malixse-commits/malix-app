@@ -23,26 +23,42 @@
     addDraftEntry(form,{kind:'structured',source:'smart-kitchen-stock',originalFood:current.item,displayFood:current.item,amount:requested.amount,unit:requested.unit,rawQuantity:null,text:null,stockId:String(current.id),stockAmountAtSelection:String(current.amount||'')});
     return true;
   }
+  const baseUnitForGroup=group=>({weight:'g',volume:'ml',count:'st',slice:'skiva',piece:'bit',portion:'portion'})[group]||null;
   function commitKitchenDraft(form){
     const rows=ensureDraft(form).entries.filter(row=>row?.source==='smart-kitchen-stock'&&row?.stockId);
     if(!rows.length)return true;
-    if(typeof window.malixGetKitchenStock!=='function'||typeof window.malixDeductKitchenStockById!=='function')return false;
-    const latest=window.malixGetKitchenStock();
+    if(typeof window.malixGetKitchenStock!=='function'||typeof window.malixDeductKitchenStockById!=='function'||typeof window.malixParseStrictKitchenAmount!=='function')return false;
+    const latest=window.malixGetKitchenStock(),groups=new Map();
     for(const row of rows){
-      const stock=latest.find(item=>String(item?.id)===String(row.stockId));
-      if(!stock){window.alert(`${row.displayFood||'Maten'} finns inte längre kvar i lagret. Måltiden sparades inte.`);return false}
-      const requested=`${row.amount} ${row.unit}`;
-      const stockParsed=window.malixParseStrictKitchenAmount?.(stock.amount),requestParsed=window.malixParseStrictKitchenAmount?.(requested);
-      if(!stockParsed||!requestParsed||stockParsed.group!==requestParsed.group||requestParsed.base>stockParsed.base){
-        window.alert(`Lagret för ${stock.item} har ändrats och mängden kan inte användas säkert. Måltiden sparades inte.`);
+      const stockId=String(row.stockId),requested=window.malixParseStrictKitchenAmount(`${row.amount} ${row.unit}`);
+      if(!requested){
+        window.alert(`Mängden för ${row.displayFood||'maten'} kan inte tolkas säkert. Måltiden sparades inte.`);
         return false;
       }
+      const group=groups.get(stockId);
+      if(group&&group.group!==requested.group){
+        window.alert(`Mängderna för ${row.displayFood||'maten'} använder inkompatibla enheter. Måltiden sparades inte.`);
+        return false;
+      }
+      if(group)group.base+=requested.base;
+      else groups.set(stockId,{stockId,group:requested.group,base:requested.base,label:row.displayFood||row.originalFood||'maten'});
     }
-    for(const row of rows){
-      const result=window.malixDeductKitchenStockById(row.stockId,row.amount,row.unit,{source:'Tog slut efter måltid'});
+    const deductions=[];
+    for(const group of groups.values()){
+      const stock=latest.find(item=>String(item?.id)===group.stockId);
+      if(!stock){window.alert(`${group.label} finns inte längre kvar i lagret. Måltiden sparades inte.`);return false}
+      const stockParsed=window.malixParseStrictKitchenAmount(stock.amount),unit=baseUnitForGroup(group.group);
+      if(!stockParsed||!unit||stockParsed.group!==group.group||group.base>stockParsed.base){
+        window.alert(`Lagret för ${stock.item} har ändrats och den totala mängden kan inte användas säkert. Måltiden sparades inte.`);
+        return false;
+      }
+      deductions.push({stockId:group.stockId,amount:group.base,unit,label:stock.item});
+    }
+    for(const deduction of deductions){
+      const result=window.malixDeductKitchenStockById(deduction.stockId,deduction.amount,deduction.unit,{source:'Tog slut efter måltid'});
       const status=result?.results?.[0]?.status;
       if(!['updated','emptied'].includes(status)){
-        window.alert(`Lagret för ${row.displayFood||'maten'} kunde inte uppdateras säkert. Måltiden sparades inte.`);
+        window.alert(`Lagret för ${deduction.label||'maten'} kunde inte uppdateras säkert. Måltiden sparades inte.`);
         return false;
       }
     }
