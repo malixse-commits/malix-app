@@ -72,11 +72,15 @@
     if(!root){root=document.createElement('section');root.id='nutritionPlusDay';root.className='panel calm';root.style.marginTop='18px';const history=document.querySelector('#mealHistory');history?.insertAdjacentElement('afterend',root)}
     return root;
   }
+  function renderMealSummaries(meals){
+    if(!meals.length)return'';
+    return `<h4 style="margin-top:16px">Näring per måltid</h4><div class="recipe-grid">${meals.map(meal=>{const result=calculateItems(mealItems(meal));return `<details class="recipe-card"><summary><strong>${esc(meal.meal||'Måltid')}</strong> · ${esc(statusText(result))}</summary><div style="margin-top:12px">${summaryHtml(result)}</div></details>`}).join('')}</div>`;
+  }
   function renderDay(){
     const root=ensureDayPanel();if(!root)return;
     if(!isPlus()){root.hidden=true;return}
     root.hidden=false;const meals=dayMeals(),result=calculateMeals(meals);
-    root.innerHTML=`<p class="eyebrow">PLUS · officiell näringsdata</p><h3>🥗 Näring för vald dag</h3>${meals.length?summaryHtml(result):'<p class="note">Ingen mat registrerad den här dagen.</p>'}${attributionHtml()}`;
+    root.innerHTML=`<p class="eyebrow">PLUS · officiell näringsdata</p><h3>🥗 Näring för vald dag</h3>${meals.length?`${renderMealSummaries(meals)}<h4 style="margin-top:18px">Hela dagen</h4>${summaryHtml(result)}`:'<p class="note">Ingen mat registrerad den här dagen.</p>'}${attributionHtml()}`;
   }
   function ensureHomePanel(){
     const home=document.querySelector('#home .dashboard-panel');if(!home)return null;
@@ -137,7 +141,7 @@
     root.querySelectorAll('[data-nutrition-grams]').forEach(b=>b.onclick=()=>setDraftGrams(b.dataset.nutritionGrams));
   }
   function renderAll(){renderDraft();renderDay();renderHome()}
-  window.MalixNutritionPlusV1=Object.freeze({gramsForItem,itemStatus,calculateItems,calculateMeals,dayMeals,render:renderAll});
+  window.MalixNutritionPlusV1=Object.freeze({gramsForItem,itemStatus,calculateItems,calculateMeals,dayMeals,renderMealSummaries,render:renderAll});
   ['malix-entitlement-changed','malix-meal-draft-changed','malix-meals-updated','malix-day-changed','malix-log-date-changed','malix-cloud-updated'].forEach(name=>document.addEventListener(name,()=>setTimeout(renderAll,0)));
   window.addEventListener('storage',()=>setTimeout(renderAll,0));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(renderAll,0),{once:true});else setTimeout(renderAll,0);
