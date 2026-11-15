@@ -39,3 +39,5 @@ jobs:
           git add nutrition-data-v1.js
           git commit -m "NUTRITION import SLV data 2026-07-01 [skip ci]"
           git push
+
+# connector-trigger
