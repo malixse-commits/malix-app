@@ -74,6 +74,7 @@
     form.dispatchEvent(new CustomEvent('malix-meal-draft-changed',{bubbles:true,detail:{entries:draftSnapshot(form)}}));
   }
   function addDraftEntry(form,entry){const row={id:itemId(),...entry};ensureDraft(form).entries.push(row);renderDraft(form);return row.id}
+  function updateDraftEntry(form,id,patch){const row=ensureDraft(form).entries.find(x=>String(x.id)===String(id));if(!row||!patch||typeof patch!=='object')return null;Object.assign(row,patch);renderDraft(form);return {...row}}
   function removeDraftEntry(form,id){const draft=ensureDraft(form);draft.entries=draft.entries.filter(x=>String(x.id)!==String(id));renderDraft(form)}
   function resetDraft(form){ensureDraft(form).entries=[];renderDraft(form)}
   function upsertManualEntry(form,text){
@@ -84,6 +85,7 @@
     renderDraft(form);return row.id;
   }
   window.malixMealDraftAdd=addDraftEntry;
+  window.malixMealDraftUpdate=updateDraftEntry;
   window.malixMealDraftRemove=removeDraftEntry;
   window.malixMealDraftReset=resetDraft;
   window.malixMealDraftGet=draftSnapshot;
