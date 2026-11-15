@@ -1,0 +1,41 @@
+name: Import SLV nutrition dataset
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/import-slv-nutrition.mjs
+      - .github/workflows/import-slv-nutrition.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate reduced local SLV dataset
+        run: node scripts/import-slv-nutrition.mjs
+      - name: Validate generated JavaScript
+        run: |
+          node --check nutrition-data-v1.js
+          git diff --check
+      - name: Commit generated dataset
+        run: |
+          if git diff --quiet -- nutrition-data-v1.js; then
+            echo "nutrition-data-v1.js is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nutrition-data-v1.js
+          git commit -m "NUTRITION import SLV data 2026-07-01 [skip ci]"
+          git push
