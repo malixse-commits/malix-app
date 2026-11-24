@@ -7,7 +7,21 @@
   const schema=()=>window.MalixRecipeSchema;
   const newId=()=>{const used=new Set(read().map(r=>String(r?.id||'')));for(let attempt=0;attempt<10;attempt++){const id=`user-recipe-${crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2,9)}`;if(!used.has(id))return id}throw new Error('Kunde inte skapa ett unikt recept-ID.');};
   const normalizeTags=value=>[...new Set(String(value||'').split(',').map(x=>x.trim().toLocaleLowerCase('sv-SE')).filter(Boolean))];
-  const ingredientRows=value=>String(value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(rawText=>({rawText,ingredientId:null}));
+  const parseIngredientRow=rawText=>{
+    const text=String(rawText||'').trim(),catalog=window.MalixIngredientCatalog;
+    const quantity=text.match(/^(\d+(?:[.,]\d+)?)\s+(kg|g|l|dl|ml|tsk|msk|st|skiva|bit|portion)\s+(.+)$/i);
+    if(quantity){
+      const amount=Number(quantity[1].replace(',','.')),unit=quantity[2].toLowerCase(),name=quantity[3].trim(),canonical=catalog?.resolveExact?.(name);
+      return {rawText:text,ingredientId:canonical?.id||null,amount:Number.isFinite(amount)&&amount>0?amount:null,unit};
+    }
+    const canonical=catalog?.resolveExact?.(text);
+    return {rawText:text,ingredientId:canonical?.id||null,amount:null,unit:null};
+  };
+  const ingredientRows=(value,existing=[])=>String(value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map((rawText,index)=>{
+    const previous=Array.isArray(existing)?existing[index]:null;
+    if(previous&&String(previous.rawText||'').trim()===rawText)return {...previous,rawText};
+    return parseIngredientRow(rawText);
+  });
   const stepRows=value=>String(value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   const getById=id=>read().find(r=>String(r?.id)===String(id))||null;
   const validationOk=result=>result&&result.persistenceEligibility==='PRODUCTION_ALLOWED'&&result.status!=='INVALID';
@@ -20,7 +34,7 @@
       name:String(values.name||'').trim(),
       language:'sv',
       tags:normalizeTags(values.tags),
-      ingredients:ingredientRows(values.ingredients),
+      ingredients:ingredientRows(values.ingredients,existing?.ingredients),
       steps:stepRows(values.steps),
       servings:servings?Number(servings):null,
       source:{kind:'user-created'},
@@ -35,6 +49,26 @@
     if(!validationOk(validation))return {saved:false,validation,recipe};
     if(index>=0)rows[index]=recipe;else rows.unshift(recipe);
     write(rows);return {saved:true,validation,recipe};
+  }
+  function updateIngredientNutrition(id,index,patch={}){
+    const rows=read(),recipeIndex=rows.findIndex(r=>String(r?.id)===String(id));
+    if(recipeIndex<0)return {saved:false,error:'RECIPE_NOT_FOUND'};
+    const recipe=rows[recipeIndex],ingredients=Array.isArray(recipe.ingredients)?recipe.ingredients.map(i=>({...i})):[];
+    if(!Number.isInteger(index)||index<0||index>=ingredients.length)return {saved:false,error:'INGREDIENT_NOT_FOUND'};
+    const next={...ingredients[index]};
+    if(Object.prototype.hasOwnProperty.call(patch,'nutritionRef')){
+      if(patch.nutritionRef==null)delete next.nutritionRef;
+      else next.nutritionRef={...patch.nutritionRef};
+    }
+    if(Object.prototype.hasOwnProperty.call(patch,'nutritionGrams')){
+      const grams=Number(patch.nutritionGrams);
+      if(patch.nutritionGrams==null||!Number.isFinite(grams)||grams<=0)delete next.nutritionGrams;
+      else next.nutritionGrams=grams;
+    }
+    ingredients[index]=next;
+    const updated={...recipe,ingredients,updatedAt:new Date().toISOString()},validation=schema().validateRecipe(updated);
+    if(!validationOk(validation))return {saved:false,validation,recipe:updated};
+    rows[recipeIndex]=updated;write(rows);return {saved:true,validation,recipe:updated};
   }
   function removeRecipe(id){const rows=read(),next=rows.filter(r=>String(r?.id)!==String(id));if(next.length===rows.length)return false;write(next);return true}
   function renderRecipe(recipe){
@@ -71,7 +105,7 @@
   function showBank(){document.querySelectorAll('main > .view').forEach(v=>v.classList.toggle('active-view',v.id==='recipeBank'));ensureUi();renderList();window.scrollTo({top:0,behavior:'smooth'})}
   const previousOpen=window.openRecipe;
   window.openRecipe=function(id,...args){const recipe=getById(id);if(recipe)return renderRecipe(recipe);return typeof previousOpen==='function'?previousOpen.call(this,id,...args):undefined};
-  window.MalixUserRecipes=Object.freeze({key:KEY,list:()=>read().map(r=>({...r})),getById,save:saveRecipe,remove:removeRecipe,renderList,openEditor});
+  window.MalixUserRecipes=Object.freeze({key:KEY,list:()=>read().map(r=>({...r})),getById,save:saveRecipe,remove:removeRecipe,updateIngredientNutrition,renderList,openEditor});
   document.addEventListener('malix-user-recipes-updated',renderList);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureUi,{once:true});else ensureUi();
 })();
